@@ -17,7 +17,7 @@ const listParametersSearch = require('../../libs/listParametersSearch');
 const informationForHeader = require('../../libs/informationForHeader');
 const informationForPageLogFilter = require('../../libs/management_log_filter/informationForPageLogFilter');
 
-module.exports = function(req, res, socketIo) {
+module.exports = function(req, res) {
     let redis = controllers.connectRedis();
     const userId = req.session.passport.user;
 

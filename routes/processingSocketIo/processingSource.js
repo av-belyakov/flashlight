@@ -392,7 +392,7 @@ exports.deleteSource = function(socketIo, obj) {
                 writeLogFile.writeLog('\tError: ' + err.toString());
                 showNotify(socketIo, 'danger', `Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</storng>`);
             } else {
-                showNotify(socketIo, 'info', `11111 Информация об источнике №<strong>${obj.sourceId}</strong> успешно удалена`);
+                showNotify(socketIo, 'info', `Информация об источнике №<strong>${obj.sourceId}</strong> успешно удалена`);
             }
         });
     });

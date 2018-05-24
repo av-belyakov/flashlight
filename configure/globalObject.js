@@ -94,10 +94,6 @@ class GlobalObject {
     }
 
     setData(type, group, key = null, value = null) {
-
-        //        console.log(`---type: ${type}, ---group: ${group}, ---key: ${key}, ---value: ${value}`);
-        //        console.log(this.getData('sources'));
-
         if (this._checkKeys(type)) return false;
         if (typeof group === 'undefined') return false;
         if (key === null) return false;

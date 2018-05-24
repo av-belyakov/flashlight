@@ -42,7 +42,7 @@ const processingChangeTaskStatus = require('./processingSocketIo/processingChang
 const processingExecuteFiltering = require('./processingSocketIo/processingExecuteFiltering');
 const processingInformationTaskIndex = require('./processingSocketIo/processingInformationTaskIndex');
 const processingDeleteTaskInformation = require('./processingSocketIo/processingDeleteTaskInformation');
-const processingListFilesForFiltering = require('../libs/list_file_management/processingListFilesForFiltering');
+//const processingListFilesForFiltering = require('../libs/list_file_management/processingListFilesForFiltering');
 
 const redis = controllers.connectRedis();
 
@@ -129,12 +129,18 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                     //сообщения об изменении статуса задач
                     new Promise((resolve, reject) => {
+                        debug('FILTERING COMPLETE 111');
+
                         getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', function(err, objTaskStatus) {
                             if (err) reject(err);
                             else resolve(objTaskStatus);
                         });
                     }).then((objTaskStatus) => {
+                        debug(objTaskStatus);
+                        debug('FILTERING COMPLETE 222');
+
                         return new Promise((resolve, reject) => {
+                            debug('FILTERING COMPLETE 333');
                             getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
                                 if (err) reject(err);
                                 else resolve({
@@ -144,6 +150,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                             });
                         });
                     }).then((obj) => {
+                        debug(obj);
+                        debug('FILTERING COMPLETE 444');
+
                         socketIoS.emit('change object status', {
                             processingType: 'showChangeObject',
                             informationPageJobLog: obj.status,

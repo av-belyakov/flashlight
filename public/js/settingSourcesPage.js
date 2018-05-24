@@ -18,6 +18,7 @@ import openModalWindowSourceInformation from './setting_sources_page/openModalWi
 
         buttons.forEach(element => {
             let dataSetSourceId = element.parentElement.dataset;
+
             if ((typeof dataSetSourceId !== 'undefined') && (typeof dataSetSourceId.sourceId !== 'undefined')) {
                 let sourceId = dataSetSourceId.sourceId;
 
@@ -115,17 +116,27 @@ import openModalWindowSourceInformation from './setting_sources_page/openModalWi
 
             buttonShow.forEach(element => {
                 let dataSetSourceId = element.parentElement.dataset;
+
                 if ((typeof dataSetSourceId !== 'undefined') && (typeof dataSetSourceId.sourceId !== 'undefined')) {
                     element.addEventListener('click', () => {
                         document.querySelector('#modalLabelDelete .modal-title').innerHTML = 'Удаление';
                         let modalBody = document.querySelector('#modalDelete .modal-body');
                         modalBody.innerHTML = `<p>Действительно удалить всю информацию об источнике №<strong>${dataSetSourceId.sourceId}</strong>?</p>`;
 
-                        document.querySelector('#modalDelete [type="submit"]').addEventListener('click', () => {
+                        let modalDelete = document.querySelector('#modalDelete [type="submit"]');
+
+                        if (modalDelete.getAttribute('data-exist') !== null) {
+                            $('#modalDelete').modal('show');
+                            return;
+                        }
+
+                        modalDelete.addEventListener('click', () => {
                             let sourceId = document.querySelector('#modalDelete strong').innerHTML;
                             socket.emit('delete source', { processingType: 'deleteSource', sourceId: sourceId });
 
                             $('#modalDelete').modal('hide');
+
+                            modalDelete.dataset.exist = 'emit exist';
                         });
 
                         $('#modalDelete').modal('show');

@@ -354,12 +354,12 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 if (~listFilesUnprocessing.indexOf(',')) {
                     let array = listFilesUnprocessing.split(',');
                     array.push(self.info.infoProcessingFile.directoryLocation + '/' + self.info.infoProcessingFile.fileName);
-                    stringResultFilesUnprocessing = array.Join();
+                    stringResultFilesUnprocessing = array.join();
                 } else if (listFilesUnprocessing.length > 0) {
                     let arrayTmp = [];
                     arrayTmp.push(listFilesUnprocessing);
                     arrayTmp.push(self.info.infoProcessingFile.directoryLocation + '/' + self.info.infoProcessingFile.fileName);
-                    stringResultFilesUnprocessing = arrayTmp.Join();
+                    stringResultFilesUnprocessing = arrayTmp.join();
                 } else {
                     listFilesUnprocessing = self.info.infoProcessingFile.directoryLocation + '/' + self.info.infoProcessingFile.fileName;
                 }
@@ -379,8 +379,12 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
     }
 
     if (self.info.processing === 'complete') {
+        console.log(self.info);
+
         async.parallel([
             (callback) => {
+                console.log('--- routeWebsocket (message COMPLETE): 111');
+
                 redis.hmset('task_filtering_all_information:' + self.info.taskIndex, {
                     'jobStatus': self.info.processing,
                     'dateTimeEndFilter': +new Date(),
@@ -395,12 +399,16 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 });
             },
             (callback) => {
+                console.log('--- routeWebsocket (message COMPLETE): 222');
+
                 redis.lpush('task_filtering_index_processing_completed', self.info.taskIndex, function(err) {
                     if (err) callback(err);
                     else callback(null, true);
                 });
             },
             (callback) => {
+                console.log('--- routeWebsocket (message COMPLETE): 333');
+
                 globalObject.deleteData('processingTasks', self.info.taskIndex);
 
                 callback(null, true);
