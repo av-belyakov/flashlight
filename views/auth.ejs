@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <% include head.ejs %>
+    <style>
+        .well {
+            margin-top: 150px;
+        }
+    </style>
+    <script src='/dist/authPage.js'></script>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="well col-lg-5 col-lg-offset-4">
+            <div class="text-center">
+                <legend style="color: #8c8c8c">FLASHLIGHT</legend>
+            </div>
+            <div class="alert alert-danger text-center" style="display: none" id="divAlert">
+                <a href="#" class="close" data-dismiss="alert">x</a>некорректный логин или пароль
+            </div>
+            <form method="POST" action="auth" accept-charset="UTF-8" class="form-horizontal" role="form">
+                <div class="form-group">
+                    <div class="col-sm-6 col-sm-offset-3">
+                        <input type="text" class="form-control" id="inputLogin" name="login" placeholder="Логин">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-6 col-sm-offset-3">
+                        <input type="password" class="form-control" id="inputPassword" name="password" placeholder="Пароль">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-6 col-sm-offset-3 text-center">
+                        <button type="submit" class="btn btn-primary btn-success" value="entering">вход</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

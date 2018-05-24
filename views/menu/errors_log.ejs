@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<head>
+    <!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include ../head.ejs %>
+
+    <script src="/dist/errorsLog.js"></script>
+
+</head>
+<body>
+<!-- контент страницы -->
+<section id="container" >
+    <!-- ***************************************************************************************************************
+     ОСНОВНОЕ МЕНЮ
+    ********************************************************************************************************************-->
+    <% include ../header.ejs %>
+
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4 class="text-uppercase" style="margin-left: 10px; margin-right: 10px; padding-top: 10px;">журнал ошибок</h4>
+                </div>
+                <!-- поле поиска -->
+                <div class="col-md-12" style="margin: 10px 10px 10px 10px;">
+                    <div class="col-md-4">
+                        <form class="form-inline">
+                            <div class="form-group">
+                                <!-- время начала -->
+                                <div class="input-group date" id="dateTimeStart" style="width: 200px;">
+                                    <input type="text" class="form-control text-center" name="dateTimeStart" placeholder="начальное время"/>
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                </div>
+                                <!-- время окончания -->
+                                <div class="input-group date" id="dateTimeEnd" style="width: 200px;">
+                                    <input type="text" class="form-control text-center" name="dateTimeEnd" placeholder="конечное время"/>
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-8" id="selectList">
+                        <select data-placeholder="источники" class="chosen-select" style="display: none;" tabindex="-1">
+                            <option value=""></option>
+                            <% for(let type in parametersSearch){ %>
+                                <option value="<%= type %>"><%= type %> <%= parametersSearch[type] %></option>
+                            <% } %>
+                        </select>
+                        <button type="submit" class="btn btn-primary" id="buttonSearch">Поиск</button></div>
+                    </div>
+                </div>
+            </div>
+            <!-- таблица с данными -->
+            <div class="col-md-12" id="field_table"></div>
+            <!-- пагинатор -->
+            <div class="col-md-12" id="field_pagination"></div>
+            <!-- информация об общем количестве источников и количестве источников с ошибками -->
+            <div class="col-md-12 text-center">
+                источников всего: <strong><%= informationCountSourcesWithErrors.allCountSources %></strong>
+                с ошибками: <strong><%= informationCountSourcesWithErrors.errorCountSources %></strong>
+            </div>
+            <div class="col-md-12 text-center" id="field_information"></div>
+        </section>
+    </section>
+
+    <!-- ***************************************************************************************************************
+     ПОДВАЛ САЙТА
+    ********************************************************************************************************************-->
+    <% include ../footer.ejs %>
+</section>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
+<head>
+    <!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include ../../head.ejs %>
+
+    <script src="/dist/settingDashboard.js"></script>
+
+</head>
+<body>
+<!-- контент страницы -->
+<section id="container" >
+    <!-- ***************************************************************************************************************
+     ОСНОВНОЕ МЕНЮ
+    ********************************************************************************************************************-->
+    <% include ../../header.ejs %>
+
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+                <div class="col-sm-12 col-md-12 col-lg-12">
+                    <%
+                    let disabledEdit = (accessRights.edit[0] === false) ? 'disabled="disabled"' : '';
+                    %>
+                    <h4 class="text-uppercase" style="margin-left: 10px; margin-right: 10px; padding-top: 10px;">управление виджетами главной страницы</h4>
+                    <div class="table-responsive" style="margin-left: 10px;">
+                        <table class="table table-striped table-hover table-sm">
+                            <caption class="h5 text-uppercase">источники на главной странице</caption>
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>Идентификатор</th>
+                                <th>Название</th>
+                                <th>Дополнительная информация</th>
+                                <th class="text-right">
+                                    <!-- сохранение информации -->
+                                    <button type="button" id="buttonSave" class="btn btn-default btn-sm" <%= disabledEdit %>>
+                                        <span class="glyphicon glyphicon-save"></span> сохранить
+                                    </button>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <%
+                            for(let hostId in mainContent){
+                                let isChesked = (typeof itemSources === 'undefined') ? '': itemSources[hostId];
+                            %>
+                            <tr>
+                                <td class="text-right">
+                                    <input type="checkbox" name="sourceId" value="<%= hostId %>" <%= isChesked %>>
+                                </td>
+                                <td class="text-left"><%= hostId %></td>
+                                <%
+                                let settings = mainContent[hostId];
+                                for(let key in settings){
+                                    let value = settings[key];
+                                %>
+                                <td class="text-left"><%= value %></td>
+                                <% } %>
+                                <td class="text-left"></td>
+                            </tr>
+                            <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- ***************************************************************************************************************
+     ПОДВАЛ САЙТА
+    ********************************************************************************************************************-->
+    <% include ../../footer.ejs %>
+</section>
+</body>
+</html>

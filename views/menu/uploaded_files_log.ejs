@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include ../head.ejs %>
+
+    <script src="/dist/uploadedFilesLog.js"></script>
+
+</head>
+<body>
+<!-- контент страницы -->
+<section id="container" >
+
+    <!-- ***************************************************************************************************************
+         ОСНОВНОЕ МЕНЮ
+    ********************************************************************************************************************-->
+    <% include ../header.ejs %>
+
+    <!-- ***************************************************************************************************************
+         МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ
+    ******************************************************************************************************************** -->
+
+    <% include ../modal_windows/removal_request_delete.ejs %>
+
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4 class="text-uppercase" style="margin-left: 10px; margin-right: 10px; padding-top: 10px;">учет загруженных файлов</h4>
+                </div>
+                <!-- поле поиска -->
+                <div class="col-md-12" style="">
+                    <div class="col-md-2">
+                        <!-- время начала -->
+                        <div class="form-group" style="">
+                            <div class="input-group date" id="dateTimeStart">
+                                <input type="text" class="form-control text-center" name="dateTimeStart" placeholder="начальное время"/>
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <!-- время окончания -->
+                        <div class="form-group" style="">
+                            <div class="input-group date" id="dateTimeEnd">
+                                <input type="text" class="form-control text-center" name="dateTimeEnd" placeholder="конечное время"/>
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="checkbox" id="checkboxEvent" style="margin-top: -1px;">
+                            <label>
+                                <input type="checkbox" data-toggle="toggle" data-size="mini" data-onstyle="danger" data-offstyle="success">
+                                дата события
+                            </label>
+                        </div>
+                        <div class="checkbox" id="checkboxFiltering" style="margin-top: 3px;">
+                            <label>
+                                <input type="checkbox" data-toggle="toggle" data-size="mini" data-onstyle="danger" data-offstyle="success">
+                                фильтрации
+                            </label>
+                        </div>
+                        <div class="checkbox" id="checkboxUploaded" style="margin-top: 3px;">
+                            <label>
+                                <input type="checkbox" data-toggle="toggle" data-size="mini" data-onstyle="danger" data-offstyle="success">
+                                выгрузки файлов
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-8" id="selectList">
+                        <select data-placeholder="параметры поиска" style="display: none;" class="chosen-select" multiple="" tabindex="-1">
+                            <option value=""></option>
+                            <%
+                            let objName = {
+                                'actionType' : 'ТИП ДЕЙСТВИЯ',
+                                'users' : 'ПОЛЬЗОВАТЕЛИ',
+                                'sourceIndex' : 'ИСТОЧНИКИ'
+                            };
+
+                            for(let type in parametersSearch){
+                            %>
+                                <optgroup label="<%= objName[type] %>"><%
+                                for(let item in parametersSearch[type]){
+                                    if(type === 'sourceIndex'){
+                                        %><option value="<%= type %>:<%= item %>"><%= item %> <%= parametersSearch[type][item] %></option><%
+                                    } else {
+                                        %><option value="<%= type %>:<%= item %>"><%= parametersSearch[type][item] %></option><%
+                                    }
+                                } %>
+                                </optgroup>
+                            <% } %>
+                        </select>
+                        <button type="submit" class="btn btn-primary" id="buttonSearch">Поиск</button>
+                        <form class="form-inline" style="margin-top: 15px;">
+                            <div class="form-group">
+                                <input type="text" id="ipaddress" class="form-control input-md" style="width: 350px;">
+                            </div>
+                            <div class="form-group" id="checkboxIpOrNetwork">
+                                <input type="checkbox" data-toggle="toggle" data-size="normal" data-on="network" data-off="ipaddress" data-onstyle="warning" data-offstyle="info">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <%
+
+                if(tableContent !== undefined){
+                    let countTask = Object.keys(tableContent).length;
+                    let disabledStatusChange = (accessRights.status_change[0] === false) ? 'disabled="disabled"' : '';
+                    let disabledDelete = (accessRights.delete[0] === false) ? 'disabled="disabled"' : '';
+                %>
+                    <div class="col-md-12" style="margin-left: 10px;">всего нерассмотренных задач: <strong><%= countTask %></strong></div>
+                    <div class="col-md-12" id="field_table">
+                        <div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead>
+                                <tr>
+                                    <th>№</th>
+                                    <th class="text-left">дата выгрузки файлов</th>
+                                    <th class="text-right">id источника&nbsp;<span class="glyphicon glyphicon-triangle-bottom" name="sortColumns" style="cursor: pointer" data-element-order="2"></span></th>
+                                    <th class="text-left">название источника</th>
+                                    <th class="text-right">файлов выгруженно</th>
+                                    <th class="text-right">объем файлов</th>
+                                    <th class="text-left">пользователь&nbsp;<span class="glyphicon glyphicon-triangle-bottom" name="sortColumns" style="cursor: pointer" data-element-order="6"></span></th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <%
+                                function getStringFileSize (integer) {
+                                    let fileSize = integer + '';
+                                    if(fileSize.length <= 3){
+                                        return fileSize + ' байт';
+                                    } else if(fileSize.length > 3 && 6 >= fileSize.length){
+                                        return (fileSize / 1000).toFixed(2) + ' Кбайт';
+                                    } else if(fileSize.length > 6 && 9 >= fileSize.length){
+                                        return (fileSize / 1000000).toFixed(2) + ' Мбайт';
+                                    } else if(fileSize.length > 9 && 12 >= fileSize.length){
+                                        return (fileSize / 1000000000).toFixed(2) + ' Гбайт';
+                                    } else {
+                                        return fileSize;
+                                    }
+                                }
+
+                                let serialNumber = 1;
+                                for(let taskIndex in tableContent){
+                                    let x = (new Date()).getTimezoneOffset() * 60000;
+                                    let dateTimeStartUploadFiles = (new Date((+tableContent[taskIndex].dateTimeStartUploadFiles - x)).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, ''));
+
+                                    let filterSettings = JSON.parse(tableContent[taskIndex].filterSettings);
+
+                                    let dateTimeStart = (filterSettings.dateTimeStart === null) ? '' : filterSettings.dateTimeStart;
+                                    let dateTimeEnd = (filterSettings.dateTimeEnd === null) ? '' : filterSettings.dateTimeEnd;
+
+                                    let textSettings = 'Временной интервал с ' + dateTimeStart + ' по ' + dateTimeEnd;
+                                    textSettings += (filterSettings.ipaddress === null) ? '' : ', IP-адреса: ' + filterSettings.ipaddress.replace(/,/g, ', ');
+                                    textSettings += (filterSettings.network === null) ? '': ', диапазоны подсетей: ' + filterSettings.network;
+                                %>
+                                <tr id="task_<%= taskIndex %>" data-toggle="tooltip" title="<%= textSettings %>">
+                                    <td style="padding-top: 15px;"><%= serialNumber++ %></td>
+                                    <td class="text-left" style="padding-top: 15px;"><%= dateTimeStartUploadFiles %></td>
+                                    <td class="text-right" style="padding-top: 15px;"><%= tableContent[taskIndex].sourceId %></td>
+                                    <td class="text-left" style="padding-top: 15px;"><%= tableContent[taskIndex].shortName %></td>
+                                    <td class="text-right" style="padding-top: 15px;"><%= tableContent[taskIndex].countFilesLoaded %></td>
+                                    <td class="text-right" style="padding-top: 15px;"><%= getStringFileSize(tableContent[taskIndex].countFoundFilesSize) %></td>
+                                    <td class="text-left" style="padding-top: 15px;"><%= tableContent[taskIndex].userNameStartUploadFiles %></td>
+                                    <td class="text-right" data-task-index="<%= taskIndex %>">
+                                        <!-- полная информация о выгруженных файлах -->
+                                        <button type="button" class="btn btn-default btn-sm" name="buttonAllInformation" title="полная информация о выгруженных файлах">
+                                            <span class="glyphicon glyphicon-info-sign"></span>
+                                        </button>
+                                        <!-- пометить как рассмотренное -->
+                                        <button type="button" class="btn btn-default btn-sm" name="buttonChangeStatus" data-source-id-task-index="<%= tableContent[taskIndex].sourceId %>:<%= taskIndex %>" <%= disabledStatusChange %> title="пометить как рассмотренное">
+                                            <span class="glyphicon glyphicon-ok"></span>
+                                        </button>
+                                        <!-- удаление информации -->
+                                        <button type="button" class="btn btn-default btn-sm" name="buttonDelete" <%= disabledDelete %> title="удаление">
+                                            <span class="glyphicon glyphicon-trash"></span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="col-md-12" style="margin-left: 10px;">всего нерассмотренных задач: <strong>0</strong></div>
+                <div class="col-md-12" id="field_table"></div>
+            <% } %>
+            <div class="col-md-12 text-center" id="field_pagination"></div>
+            <input id="dataAccessRights" type="hidden" data-access-rights="delete=<%= accessRights.delete[0] %>">
+        </section>
+    </section>
+</section>
+</body>
+
+<!-- ***************************************************************************************************************
+     ПОДВАЛ САЙТА
+********************************************************************************************************************-->
+<% include ../footer.ejs %>
+</html>

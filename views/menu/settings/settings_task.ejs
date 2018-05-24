@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<head>
+    <!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include ../../head.ejs %>
+
+    <script src="/dist/settingTask.js"></script>
+
+</head>
+<body>
+<!-- контент страницы -->
+<section id="container" >
+    <!-- ***************************************************************************************************************
+     ОСНОВНОЕ МЕНЮ
+    ********************************************************************************************************************-->
+    <% include ../../header.ejs %>
+
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4 class="text-uppercase" style="margin-left: 10px; margin-right: 10px; padding-top: 10px;">
+                        управление задачами приложения
+                    </h4>
+                </div>
+                <div class="row mtbox">
+                    <div id="boxCountConnection" class="col-md-2 col-sm-2 col-md-offset-1 box0">
+                        <div class="box1">
+                            <span class="li_heart"></span>
+                            <h3><%= shortStatisticInfo.countConnectionSources %>&nbsp;/&nbsp;<%= shortStatisticInfo.countDisconnectionSources %></h3>
+                        </div>
+                        <p>
+                            <%= shortStatisticInfo.countConnectionSources %>&nbsp;/&nbsp;<%= shortStatisticInfo.countDisconnectionSources %>
+                            количество источников в статусе подключен и недоступен
+                        </p>
+                    </div>
+                    <div id="boxCountAllTasks" class="col-md-2 col-sm-2 box0">
+                        <div class="box1">
+                            <span class="li_cloud"></span>
+                            <h3>
+                                <%= shortStatisticInfo.countTaskFiltering %>
+                                &nbsp;/&nbsp;
+                                <%= shortStatisticInfo.countTaskTurnDownloadingFiles %>
+                                &nbsp;/&nbsp;
+                                <%= shortStatisticInfo.countTaskImplementationDownloadingFiles %>
+                            </h3>
+                        </div>
+                        <p>
+                            <%= shortStatisticInfo.countTaskFiltering %>
+                            &nbsp;/&nbsp;
+                            <%= shortStatisticInfo.countTaskTurnDownloadingFiles %>
+                            &nbsp;/&nbsp;
+                            <%= shortStatisticInfo.countTaskImplementationDownloadingFiles %>
+                            выполняемые задачи по фильтрации, выгрузки и очереди на выгрузку сетевого трафика
+                        </p>
+                    </div>
+                    <div class="col-md-2 col-sm-2 box0">
+                        <div class="box1">
+                            <span class="li_stack"></span>
+                            <h3>23</h3>
+                        </div>
+                        <p>невыполненные задачи по фильтрации</p>
+                    </div>
+                    <div class="col-md-2 col-sm-2 box0">
+                        <div class="box1">
+                            <span class="li_news"></span>
+                            <h3>+10</h3>
+                        </div>
+                        <p>невыполненные задачи по загрузке отфильтрованного сетевого трафика</p>
+                    </div>
+                    <div class="col-md-2 col-sm-2 box0">
+                        <div class="box1">
+                            <span class="li_data"></span>
+                            <h3>OK!</h3>
+                        </div>
+                        <p>Your server is working perfectly. Relax & enjoy.</p>
+                    </div>       
+                </div>
+
+                <div id="leftContent" class="col-sm-2 col-md-2 col-lg-2 ds">
+                    <ul style="padding-bottom:20px;">
+                        <%
+                        for(let source in listSources){
+                            let status = (listSources[source].statusConnection) ? 'my_circle_green': 'my_circle_red';
+                        %>
+                            <li style="padding-bottom: 3px;">
+                                <canvas class="<%= status %>"></canvas>&nbsp;&nbsp;<a href="#"><%= source %>&nbsp;<%= listSources[source].shortName %></a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </div>
+                <div class="col-sm-10 col-md-10 col-lg-10"></div>
+            </div>
+        </section>
+    </section>
+
+    <!-- ***************************************************************************************************************
+     ПОДВАЛ САЙТА
+    ********************************************************************************************************************-->
+    <% include ../../footer.ejs %>
+</section>
+</body>
+</html>

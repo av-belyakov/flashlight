@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include head.ejs %>
+
+    <script src="/dist/indexPage.js"></script>
+
+    <script>
+        (function (trigger) {
+            if (trigger === true) $('#modalPassAdmin').modal('show');
+        })(<%= openModalWindow %>);
+     </script>
+</head>
+<body>
+<!-- контент страницы -->
+<section id="container">
+    <!-- Модальное окно с предложением изменить пароль администратора -->
+    <div class="modal fade" id="modalPassAdmin" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-show="data">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Уважаемый пользователь</h4>
+                </div>
+                <form method="POST" action="newPass" accept-charset="UTF-8" class="form-horizontal" role="form" id="changeAdminPassword">
+                    <div class="modal-body">
+                        <div class="center-block">
+                            <p>Для авторизации под учетной записью &#39;administrator&#39; был использован слишком простой пароль,
+                                необходимо сменить пароль на более сложный.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPassword3" class="col-sm-4 control-label">новый пароль</label>
+                            <div class="col-sm-7">
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="inputPasswordOne" placeholder="Пароль" name="newPasswordOne">
+                                    <span id="iconSuccessOne" class="glyphicon form-control-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPassword3" class="col-sm-4 control-label">подтвердить пароль</label>
+                            <div class="col-sm-7">
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="inputPasswordTwo" placeholder="Пароль" name="newPasswordTwo">
+                                    <span id="iconSuccessTwo" class="glyphicon form-control-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ***************************************************************************************************************
+         ОСНОВНОЕ МЕНЮ
+    ********************************************************************************************************************-->
+    <% include header.ejs %>
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+
+                <!-- *******************************************************************************************************
+                     ЛЕВЫЙ ОСНОВНОЙ КОНТЕНТ
+                ************************************************************************************************************ -->
+                <div id="leftContent" class="col-sm-2 col-md-2 col-lg-2">
+                    <!-- ход фильтрации -->
+                    <%
+                    for(let taskIndex in leftContentTaskFilter){
+                        let percent = Math.ceil((leftContentTaskFilter[taskIndex].countFilesProcessed * 100) / leftContentTaskFilter[taskIndex].countFilesFiltering) + '%';
+                    %>
+                        <div id="<%= taskIndex %>" data-source-id="<%= taskIndex %>" style="margin-bottom: 5px; height: 95px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
+                            <div class="col-md-12" style="color: #ccd1d9;">
+                                <div class="text-center">Источник №<%= leftContentTaskFilter[taskIndex].sourceId %></div>
+                                <div class="progress" style="margin-top: 10px;">
+                                    <div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: <%= percent %>"><%= leftContentTaskFilter[taskIndex].countFilesProcessed %>/<%= leftContentTaskFilter[taskIndex].countFilesFiltering %></div>
+                                </div>
+                                <div class="text-center" style="margin-top: -10px;">
+                                     Найдено файлов: <%= leftContentTaskFilter[taskIndex].countFilesFound %>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                    <!-- выполнение загрузки файлов -->
+                    <%
+                    for(let taskIndex in leftContentImplementationTaskDownload){
+                        let percent = leftContentImplementationTaskDownload[taskIndex].fileUploadedPercent + '%';
+                        let countFilesFound = leftContentImplementationTaskDownload[taskIndex].countFilesFound;
+                        let countFilesLoaded = leftContentImplementationTaskDownload[taskIndex].countFilesLoaded;
+                        let countFilesLoadedError = leftContentImplementationTaskDownload[taskIndex].countFilesLoadedError;
+                    %>
+                        <div id="download:<%= taskIndex %>" data-source-id="<%= taskIndex.split(':')[1] %>" style="margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
+                            <div class="col-md-12" style="color: #ccd1d9;">
+                                <div class="text-center">Источник №<%= leftContentImplementationTaskDownload[taskIndex].sourceId %></div>
+                                <div class="text-center"><%= leftContentImplementationTaskDownload[taskIndex].shortName %></div>
+                                <div id="progress:<%= taskIndex %>">
+                                    <div class="progress" style="margin-top: 10px;">
+                                        <div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: <%= percent %>"><%= percent %></div>
+                                    </div>
+                                </div>
+                                <div id="file_information:<%= taskIndex %>" class="text-center" style="margin-top: -10px;">
+                                    <span style="font-size: 16px;" data-toggle="tooltip" data-placement="bottom" title="файлов загружено"><strong><%= countFilesLoaded %></strong></span> /
+                                    <span style="font-size: 16px; color: #C78888;" data-toggle="tooltip" data-placement="bottom" title="файлов загружено с ошибкой"><%= countFilesLoadedError %></span> /
+                                    <span style="font-size: 16px; color: #9FD783;" data-toggle="tooltip" data-placement="bottom" title="всего файлов"><%= countFilesFound %></span>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                    <!-- ожидание загрузки файлов -->
+                    <%
+                    for(let taskIndex in leftContentTurnTaskDownload){
+                    %>
+                        <div id="download:<%= taskIndex %>" data-source-id="<%= taskIndex.split(':')[1] %>" style="margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
+                            <div class="col-md-12" style="color: #ccd1d9;">
+                                <div class="text-center">Источник №<%= leftContentTurnTaskDownload[taskIndex].sourceId %></div>
+                                <div class="text-center"><%= leftContentTurnTaskDownload[taskIndex].shortName %></div>
+                                <div id="progress:<%= taskIndex %>">
+                                    <h4 class="text-center" style="color: #9FD783;">в очереди</h4>
+                                </div>
+                                <div id="file_information:<%= taskIndex %>" class="text-center" style="margin-top: -10px;">
+                                    Найдено файлов: <%= leftContentTurnTaskDownload[taskIndex].countFilesFound %>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- ***************************************************************************************************
+                     ЦЕНТРАЛЬНЫЙ ОСНОВНОЙ КОНТЕНТ
+                ******************************************************************************************************** -->
+                <div class="col-sm-8 col-md-8 col-lg-8 main-chart">
+                    <div class="row mt">
+                        <!-- ИНФОРМАЦИОННЫЕ ПАНЕЛИ ПО ИСТОЧНИКАМ-->
+                        <%
+                        function getColor (number) {
+                            if(0 <= number && number <= 35) return 'color: #83B4D7;';
+                            if(36 <= number && number <= 65) return 'color: #9FD783;';
+                            if(66 <= number && number <= 85) return 'color: #E1E691;';
+                            if(86 <= number) return 'color: #C78888;';
+                        }
+
+                        function getLoadNetwork (nLoad) {
+                            let newString = nLoad.toString();
+                            let interimArray = [];
+                            let countCycles = Math.ceil((newString.length / 3));
+                            let num = 0;
+                            for(let i = 1; i <= countCycles; i++){
+                                interimArray.push(newString.charAt(newString.length - 3 - num) + newString.charAt(newString.length - 2 - num) + newString.charAt(newString.length - 1 - num));
+                                num += 3;
+                            }
+                            interimArray.reverse();
+                            return interimArray.join(' ');
+                        }
+
+                        for(let source in mainContent){
+                        %>
+                        <div class="col-md-4 col-sm-4 mb">
+                            <div class="white-panel pn donut-chart" name="minWidget" data-sourceId="<%= source %>">
+                                <div class="white-header"><h5><%= source %> <%= mainContent[source].name.detailedDescription %></h5></div>
+                                <div class="row">
+                                    <div class="col-sm-12 col-xs-12 goleft" name="<%= source %>">
+                                    <%
+                                    let arrayDiskSpace = mainContent[source].diskSpace;
+
+                                    if(mainContent[source].currentDateTime === null){
+                                    %>
+                                        <div class="text-center"><h4>источник не подключен</h4></div>
+                                    <%
+                                    } else {
+                                        let x = (new Date()).getTimezoneOffset() * 60000;
+                                        let localDateTime = (new Date((+mainContent[source].currentDateTime - x)).toISOString().slice(0,-1).replace(/T/, ' ').replace(/\..+/, ''));
+                                        let dateTimeReceived = (new Date((+mainContent[source].dateTimeReceived - x)).toISOString().slice(0,-1).replace(/T/, ' ').replace(/\..+/, ''));
+                                    %>
+                                        <div class="text-center">
+                                            <div style="margin-top: -10px;"><small>Данные получены в <%= dateTimeReceived.slice(-8) %></small></div>
+                                            <div>Локальное время источника:</div>
+                                            <div style="font-size: 16px;"><strong><%= localDateTime %></strong></div>
+                                        </div>
+                                        <div style="margin-top: 5px;">
+                                            <div class="text-center"><strong>Объём дискового пространства</strong></div>
+                                            <div class="text-center" style="margin-left: 2px; margin-right: 2px;">
+                                            <%
+                                            arrayDiskSpace.forEach(function (item) {
+                                            %>
+                                                <strong style="font-size: 18px; <%= getColor(item.used) %>" data-toggle="tooltip" data-placement="bottom" title="точка монтирования <%= item.mounted %>"> <%= item.used %>% </strong>
+                                            <% }); %>
+                                            </div>
+                                        </div>
+                                        <%
+                                            let memory = JSON.parse(mainContent[source].randomAccessMemory);
+                                            let loadRAM = ((+memory.used * 100) / +memory.total).toFixed(2);
+                                            let loadCPU = +(JSON.parse(mainContent[source].loadCPU)).toFixed(2);
+                                        %>
+                                        <div style="margin-top: 5px;">
+                                            <div class="col-sm-6 col-md-6 text-center">CPU <strong style="<%= getColor(loadCPU) %>"><%= loadCPU %>%</strong></div>
+                                            <div class="col-sm-6 col-md-6 text-center">RAM <strong style="<%= getColor(loadRAM) %>"><%= loadRAM %>%</strong></div>
+                                        </div>
+                                        <div name="loadNetwork" class="text-center">
+                                            <div class="text-center"><strong>Загрузка сетевых интерфейсов</strong></div>
+                                            <div class="col-sm-2 col-md-2"> </div>
+                                            <div class="col-sm-5 col-md-5">TX Кбит/с</div>
+                                            <div class="col-sm-5 col-md-5">RX Кбит/с</div>
+                                                <%
+                                                let loadNetwork = mainContent[source].loadNetwork;
+                                                for(let nInterface in loadNetwork){
+                                                %>
+                                                    <div class="col-sm-2 col-md-2"><%= nInterface %></div>
+                                                    <div class="col-sm-5 col-md-5"><%= getLoadNetwork(loadNetwork[nInterface].TX) %></div>
+                                                    <div class="col-sm-5 col-md-5"><%= getLoadNetwork(loadNetwork[nInterface].RX) %></div>
+                                                <% } %>
+                                        </div>
+                                    <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <%
+                        }
+                        %>
+                    </div>
+                </div>
+
+                <!-- *******************************************************************************************************
+                     ПРАВЫЙ ОСНОВНОЙ КОНТЕНТ
+                ************************************************************************************************************ -->
+
+                <div id="rightContent" class="col-sm-2 col-md-2 col-lg-2 ds">
+                    <h4 class="text-center">ИСТОЧНИКИ</h4>
+                    <div id="listRemoteHostConnection" style="padding-bottom:20px;">
+                    <%
+                    let arrayConnection = [];
+                    let arrayDisconnection = [];
+
+                    for (let sensorId in rightContent) {
+                        if (rightContent[sensorId].statusConnection) {
+                            arrayConnection.push(sensorId);
+                        } else {
+                            arrayDisconnection.push(sensorId);
+                        }
+                    }
+
+                    arrayConnection.sort();
+                    arrayDisconnection.sort();
+
+                    let objListRemoteHost = {
+                        connect: arrayConnection,
+                        disconnect: arrayDisconnection
+                    };
+
+                    for(let name in objListRemoteHost){
+                        let named = (name === 'connect') ? 'подключены' : 'недоступны';
+                        let styleColor = (name === 'connect') ? 'color: #9FD783;' : 'color: #C78888;';
+                    %>
+                        <div style="padding-left: 15px;"><%= named %>
+                            <strong style="<%= styleColor %> font-size: 14px;"> 
+                                <%= objListRemoteHost[name].length %>
+                            </strong>
+                        </div>
+                        <ul>
+                        <%
+                        for(let i = 0; i < objListRemoteHost[name].length; i++){
+                            let remoteHostId = objListRemoteHost[name][i];
+                            let shortName = (typeof rightContent[remoteHostId].shortName === 'undefined') ? '' : rightContent[remoteHostId].shortName;
+                        %>
+                            <li class="sub-menu">
+                                <a href="#" data-source-id="<%= remoteHostId %>"><%= remoteHostId %>&nbsp;<%= shortName %></a>
+                            </li>
+                        <% } %>
+                        </ul>
+                    <% } %>
+                    </div>
+                    <span id="disconnectString" data-source-disconnect="<%= JSON.stringify(objListRemoteHost.disconnect) %>"></span>
+                </div>
+            </div>
+        </section>
+    </section>
+</section>
+</body>
+<!-- ***************************************************************************************************************
+         ПОДВАЛ САЙТА
+    ********************************************************************************************************************-->
+<% include footer.ejs %>
+</html>
+

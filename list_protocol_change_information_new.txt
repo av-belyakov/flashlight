@@ -1,0 +1,203 @@
+            --- PING ---
+_____________________________________
+
+* Moth <- * //flashlight (websocketClient.js)
+    'messageType': 'ping',
+    'info': {
+        'intervalTransmissionInformation': parseInt(obj.intervalTransmissionInformation, 10),
+        'maxCountProcessFiltering': parseInt(obj.maxCountProcessFiltering, 10)
+    }
+*****************
+
+* Flashlight <- * //moth (getResponsePong.js)
+    'messageType' = 'pong';
+    'info': {
+        'ipAddress': ip,
+        'countTransmissionInformation': 0,
+        'intervalTransmissionInformation': 0,
+        'maxCountProcessFiltering': 0
+    }
+*****************
+
+
+
+      --- SOURCE INFORMATION ---
+_____________________________________
+
+* Flashlight <- * //moth (getInformation.js)
+    'messageType': 'information',
+    'info': {
+        'ipAddress': objConfig.externalIpAddress,
+        'currentDateTime': +new Date(),
+        'diskSpace': result.diskSpace,
+        'timeInterval': result.timeInterval,
+        'randomAccessMemory': result.randomAccessMemory,
+        'loadCPU': result.loadCPU,
+        'loadNetwork': result.loadNetwork
+    }
+*****************
+
+
+
+          --- FILTERING ---
+_____________________________________
+
+    !!! таблица task_filtering_all_information:* !!!
+
+//первый запуск фильтрации или возобновление фильтрации
+* Moth <- * //flashlight (processinfFiltering.js)
+    'messageType': 'filtering',
+    'info': {
+        'processing': 'on',
+        'taskIndex': uniqueTaskId, (md5 hex)
+        settings: {
+            dateTimeStart: obj.dateTimeStart, (int)
+            dateTimeEnd: obj.dateTimeEnd, (int)
+            ipaddress: ipaddress, (array(string))
+            network: network, (array(string))
+            
+        //если используются индексы то TRUE
+            useIndexes: true/flase
+        //массив с количеством проиндексированных файлов типа [0, 0]
+        //формируется через получение индексов от стороннего API или остается пустым (без индексации)
+            countIndexesFiles: [0, 3]
+        }
+    }
+*****************
+
+//если useIndexesFiles равен true, то отправляются дополнительные сообщения со списками файлов
+//данные сообщения используются как в начале фильтрации так и при возобновлении
+
+    'messageType': 'filtering',
+    'info': {
+        'processing': 'on',
+        'taskIndex': uniqueTaskId, (md5 hex)
+        //массив с количеством проиндексированных файлов типа [0, 0]
+        //формируется через получение индексов от стороннего API или остается пустым (без индексации)
+        settings: {
+            countIndexesFiles: [1, 3],
+            useIndexes: true/flase,
+            'listFilesFilter': { 
+                'directoryName_1': [] (array files (string))
+                'directoryName_2': [] (array files (string))
+                'directoryName_N': [] (array files (string))
+            }
+        }
+    }
+
+* Flashlight <- * //moth (processingFileFiltering.js)
+    --- готов к началу фильтрации начальное сообщение ---
+    'messageType': 'filtering',
+    'info': {
+        'processing': 'start',
+        'ipAddress': ip, (clientIP(string))
+        'taskIndex': self.taskIndex,
+        'directoryFiltering': 'место расположение для отфильтрованного сет. трафика',
+        'countDirectoryFiltering': obj.countDirectory,
+        'countFullCycle': obj.countFullCycle,
+        'countCycleComplete': 0,
+        'countFilesFiltering': obj.countListFilesFiltering,
+        'countFilesFound': 0,
+        'countFilesProcessed': 0,
+        'countFilesUnprocessed': 0,
+        'countMaxFilesSize': self.maxFilesSize,
+        'countFoundFilesSize': 0
+        'useIndexes': true/flase
+        'numberMessageParts': [0, 3] //информация о том эвляется ли сообщение первым 
+        //[0, 3], если первый ключ 0 - начальное сообщение, больше 0 последующие сообщения содержащие списки файлов,
+        //3 - общее количество сообщений с именами файлов
+        //если используются индексы то TRUE 
+        //и тогда поле listFilesFilter будет пустым иниче оно заполняется 
+        //подходящими по времени файлами
+        'listCountFilesFilter': { 
+            'directoryName_1': 23, //количество найденных в директории файлов
+            'directoryName_2': 32,
+            'directoryName_N': 25
+        }
+    }
+*****************
+
+* Flashlight <- * //moth (processingFileFiltering.js)
+    --- готов к началу фильтрации последующие сообщения содержащие списки имен файлов ---
+'messageType': 'filtering',
+    'info': {
+        'processing': 'start',
+        'ipAddress': ip, (clientIP(string))
+        'taskIndex': self.taskIndex,
+        'numberMessageParts': [0, 3] //информация о том эвляется ли сообщение первым 
+        //[0, 3], если первый ключ 0 - начальное сообщение, больше 0 последующие сообщения содержащие списки файлов,
+        //3 - общее количество сообщений с именами файлов
+        //если используются индексы то TRUE 
+        //и тогда поле listFilesFilter будет пустым иниче оно заполняется 
+        //подходящими по времени файлами
+        'listFilesFilter': { 
+            'directoryName_1': [] (array files (string))
+            'directoryName_2': [] (array files (string))
+            'directoryName_N': [] (array files (string))
+        }
+    }
+
+*****************
+
+следом и на каждую из завершенных частей фильтрации (если файлы найдены и фильтрация выполннена успешно)
+
+* Flashlight <- * //moth (processingFileFiltering.js)
+    --- выполнение фильтрации (как правило выполняется при завершения каждой из частей фильтрации) ---
+    'messageType': 'filtering',
+    'info': {
+        processing: 'executed',
+        taskIndex: '1ae28f0f71a83b5e85baa947972517a2',
+        ipAddress: '127.0.0.1',
+        countCycleComplete: 172,
+        countFilesFound: 0,
+        countFoundFilesSize: 2332,
+        countFilesProcessed: 86,
+        countFilesUnprocessed: 0,
+        infoProcessingFile: { 
+            fileName: '1496734007_2017_06_06____10_26_47_22608.tdp',
+            directoryLocation: '/__CURRENT_DISK_3',
+            statusProcessed: true 
+            } 
+        }
+*****************
+
+завершение фильтрации по причине окончания перебора подходящих файлов
+
+* Flashlight <- * //moth (processingFileFiltering.js)
+    'messageType': 'filtering',
+    'info': {
+        'processing': 'complete',
+        'ipAddress': self.objRequest.clientIp,
+        'taskIndex': self.taskIndex,
+        'countFilesFound': countFilesFound,
+        'countFilesProcessed': countFilesProcessed,
+        'countFilesUnprocessed': countFilesUnprocessed,
+        'countCycleComplete': countFullCyclesComplete,
+        'countFoundFilesSize': countFoundFilesSize,
+    } 
+*****************
+
+запрос на остановку фильтрации
+* Moth <- * //flashlight (processingStopTaskIndex.js)
+    messageType: 'filtering',
+    'info': {
+        processing: 'off',
+        taskIndex: taskIndex,
+        'countCycleComplete': countFullCyclesComplete
+    }
+*****************
+
+подтверждение остановки фильтрации
+* Flashlight <- * //moth (filesFiltering.js)
+    'messageType': 'filtering',
+    'info': {
+        'processing': 'stop',
+        'taskIndex': taskIndex,
+        'ipAddress': ipAddress,
+        'countFilesFound': countFilesFound,
+        'countFilesProcessed': countFilesProcessed,
+        'countFilesUnprocessed': countFilesUnprocessed,
+        'countCycleComplete': countFullCyclesComplete,
+        'countFoundFilesSize': countFoundFilesSize,
+    }
+*****************

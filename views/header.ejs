@@ -1,0 +1,45 @@
+<header class="navbar navbar-inverse navbar-fixed-top bs-docs-nav" role="banner">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a href="./" class="navbar-brand"><b>FLASHLIGHT</b></a>
+            <a href="/uploaded_files_log" class="navbar-brand">
+                <span id="numberUploadedFiles" style="background:red; color:#ffffff; padding-left:2px; padding-right:2px; border-radius:2px 2px;" title="нерассмотренные задачи"><%= header.numberUploadedFiles %></span>
+            </a>
+        </div>
+        <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+            <ul class="nav navbar-nav">
+                <li><a href="/">главная</a></li>
+                <li><a href="/job_log">журнал фильтраций</a></li>
+                <li><a href="/errors_log">журнал ошибок</a></li>
+                <li><a href="/uploaded_files_log">загруженные файлы</a></li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">настройки <b class="caret"></b></a>
+                    <ul id="menu1" class="dropdown-menu">
+                        <% for(var item in header.menuSettings){ %>
+                        <li><a href="<%= item %>"><%= header.menuSettings[item] %></a></li>
+                        <% } %>
+                    </ul>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown ">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#"><%= header.username %> <b class="caret"></b></a>
+                    <ul id="menuExit" class="dropdown-menu">
+                        <li><a href="logout">выход</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <script>
+        //изменение количества загруженных файлов
+        socket.on('change number uploaded files', function (data) {
+            /*if(window.location.pathname === '/uploaded_files_log'){
+                setTimeout(function () {
+                    window.location.reload();
+                }, 5000);
+            }*/
+            document.getElementById('numberUploadedFiles').innerHTML = data.numberUploadedFiles;
+        });
+    </script>
+</header>

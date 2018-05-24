@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html">
+<head>
+    <!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include ../head.ejs %>
+
+    <script src="/dist/jobLog.js"></script>
+  
+</head>
+<body>
+    <!-- контент страницы -->
+    <section id="container" >
+
+    <!-- ***************************************************************************************************************
+         ОСНОВНОЕ МЕНЮ
+    ********************************************************************************************************************-->
+    <% include ../header.ejs %>
+
+    <!-- ***************************************************************************************************************
+         МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ
+    ******************************************************************************************************************** -->
+
+    <% include ../modal_windows/removal_request_delete.ejs %>
+
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4 class="text-uppercase" style="margin-left: 10px; margin-right: 10px; padding-top: 10px;">журнал фильтраций</h4>
+                </div>
+                    <!-- поле поиска -->
+                <div class="col-md-12" style="margin: 10px 10px 10px 10px;">
+                    <div class="col-md-4">
+                        <form class="form-inline">
+                            <div class="form-group">
+                                <!-- время начала -->
+                                <div class="input-group date" id="dateTimeStart" style="width: 200px;">
+                                    <input type="text" class="form-control text-center" name="dateTimeStart" placeholder="начальное время"/>
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                </div>
+                                <!-- время окончания -->
+                                <div class="input-group date" id="dateTimeEnd" style="width: 200px;">
+                                    <input type="text" class="form-control text-center" name="dateTimeEnd" placeholder="конечное время"/>
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-8" id="selectList">
+                        <select data-placeholder="параметры поиска" style="display: none;" class="chosen-select" multiple="" tabindex="-1">
+                            <option value=""></option>
+                            <%
+                            let objName = {
+                                'statusFilter' : 'СТАТУС ЗАДАЧИ',
+                                'statusImport' : 'СТАТУС ИМПОРТА',
+                                'users' : 'ПОЛЬЗОВАТЕЛИ',
+                                'sourceIndex' : 'ИСТОЧНИКИ'
+                            };
+
+                            for(let type in parametersSearch){
+                                %><optgroup label="<%= objName[type] %>"><%
+                                for(let item in parametersSearch[type]){
+                                    if(type === 'sourceIndex'){
+                                        %><option value="<%= type %>:<%= item %>"><%= item %> <%= parametersSearch[type][item] %></option><%
+                                    } else {
+                                        %><option value="<%= type %>:<%= item %>"><%= parametersSearch[type][item] %></option><%
+                                    }
+                                }
+                                %></optgroup><%
+                            }
+                            %>
+                        </select>
+                        <button type="submit" class="btn btn-primary" id="buttonSearch">Поиск</button></div>
+                    </div>
+                </div>
+                <%
+                let disabledRead = (accessRights.read[0] === false) ? 'disabled="disabled"' : '';
+                let disabledImport = (accessRights.import[0] === false) ? 'disabled="disabled"' : '';
+                let disabledDelete = (accessRights.delete[0] === false) ? 'disabled="disabled"' : '';
+
+                function getName (userName) {
+                    if(!(~userName.indexOf(' '))) return userName;
+
+                    let userNameTmp = userName.split(' ');
+                    let newUserName = '';
+                    for(let i = 0; i < userNameTmp.length; i++){
+                        newUserName += (i === 0) ? userNameTmp[i] + ' ' : userNameTmp[i][0] + '.';
+                    }
+                    return newUserName;
+                }
+
+                if(typeof tableContent.informationTaskIndex !== 'undefined'){
+                %>
+                <div class="col-md-12" id="field_table">
+                    <div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
+                        <table class="table table-striped table-hover table-sm">
+                            <thead>
+                            <tr>
+                                <th>№</th>
+                                <th class="text-left">дата формирования задачи</th>
+                                <th class="text-right">id источника</th>
+                                <th class="text-left">пользователь</th>
+                                <th class="text-left">ip-адреса источники</th>
+                                <th class="text-left">импорт файлов</th>
+                                <th class="text-left">статус задачи</th>
+                                <th class="text-right">файлов найдено</th>
+                            </tr>
+                            </thead>
+                            <%
+                            let serialNumber = 1;
+                            let informationTaskIndex = tableContent.informationTaskIndex;
+
+                            let objJobStatus = {
+                                'start' : [ 'выполняется', '#00acee' ],
+                                'expect' : [ 'oжидает', '#ffcc2f' ],
+                                'rejected' : [ 'oтклонена', '#ffcc2f' ],
+                                'execute' : [ 'выполняется', '#00acee' ],
+                                'complete' : [ 'завершена', '#2baf2b' ],
+                                'stop' : [ 'остановлена', '#ef5734' ]
+                            };
+                            let objLoadingStatus = {
+                                'not loaded' : [ 'не выполнялся', '#989898'],
+                                'in line' : [ 'в очереди', '#ffcc2f' ],
+                                'loaded' : [ 'выполняется', '#00acee' ],
+                                'suspended' : [ 'приостановлен', '#ef5734' ],
+                                'expect' : [ 'ожидает', '#ffcc2f' ],
+                                'uploaded' : [ 'выполнен', '#2baf2b' ]
+                            };
+                            %><tbody><%
+
+console.log(informationTaskIndex);
+
+                            for(let taskIndex in informationTaskIndex){
+                                let x = (new Date()).getTimezoneOffset() * 60000;
+                                let dateTimeAddTaskFilter = (new Date((+informationTaskIndex[taskIndex].dateTimeAddTaskFilter - x)).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, ''));
+
+                                let filterSettings = JSON.parse(informationTaskIndex[taskIndex].filterSettings);
+
+                                let dateTimeStart = (filterSettings.dateTimeStart === null) ? '' : filterSettings.dateTimeStart;
+                                let dateTimeEnd = (filterSettings.dateTimeEnd === null) ? '' : filterSettings.dateTimeEnd;
+
+                                let textSettings = 'Временной интервал с ' + dateTimeStart + ' по ' + dateTimeEnd;
+                                textSettings += (filterSettings.ipaddress === null) ? '' : ', IP-адреса: ' + filterSettings.ipaddress.replace(/,/g, ', ');
+                                textSettings += (filterSettings.network === null) ? '': ', диапазоны подсетей: ' + filterSettings.network;
+
+                                let arrayIpNetwork;
+                                if (filterSettings.ipaddress !== null && filterSettings.network !== null){
+                                    let arrayIp = filterSettings.ipaddress.split(',');
+                                    let arrayNetwork = filterSettings.network.split(',');
+                                    arrayIpNetwork = arrayIp.concat(arrayNetwork);
+                                } else if (filterSettings.ipaddress === null && filterSettings.network !== null){
+                                    arrayIpNetwork = filterSettings.network.split(',');
+                                } else if(filterSettings.ipaddress !== null && filterSettings.network === null){
+                                    arrayIpNetwork = filterSettings.ipaddress.split(',');
+                                } else {
+                                    arrayIpNetwork = '';
+                                }
+
+                                let stringIpNetwork = (~typeof arrayIpNetwork === 'string') ? arrayIpNetwork : (function () {
+                                    arrayIpNetwork.sort();
+                                    return arrayIpNetwork.join('<br>');
+                                })();
+                                let countFilesFound = (+informationTaskIndex[taskIndex].countFilesFound === 0) ? informationTaskIndex[taskIndex].countFilesFound : '<strong>' + informationTaskIndex[taskIndex].countFilesFound + '</strong>';
+                            %>
+                                <tr id="task_<%= taskIndex %>" data-toggle="tooltip" title="<%= textSettings %>">
+                                    <td style="padding-top: 15px;"><%= serialNumber++ %></td>
+                                    <td class="text-left" style="padding-top: 15px;"><%= dateTimeAddTaskFilter %></td>
+                                    <td class="text-right" style="padding-top: 15px;"><%= informationTaskIndex[taskIndex].sourceId %></td>
+                                    <td class="text-left" style="padding-top: 15px;"><%= getName(informationTaskIndex[taskIndex].userName) %></td>
+                                    <td class="text-left" style="padding-top: 15px;"><%- stringIpNetwork %></td>
+                                    <td class="text-left" style="padding-top: 15px; color: <%= objLoadingStatus[informationTaskIndex[taskIndex].uploadFiles][1] %> "><%= objLoadingStatus[informationTaskIndex[taskIndex].uploadFiles][0] %></td>
+                                    <td class="text-left" style="padding-top: 15px; color: <%= objJobStatus[informationTaskIndex[taskIndex].jobStatus][1] %>"><%= objJobStatus[informationTaskIndex[taskIndex].jobStatus][0] %></td>
+                                    <td class="text-right" style="padding-top: 15px;"><%- countFilesFound %></td>
+                                    <td class="text-right" data-task-index="<%= taskIndex %>">
+                                        <!-- полная информация о задаче -->
+                                        <button type="button" name="buttonAllInformation" class="btn btn-default btn-sm" <%= disabledRead %> title="полная информация о задаче">
+                                            <span class="glyphicon glyphicon-info-sign"></span>
+                                        </button>
+                                        <%
+                                        let isJobStatusComplete = (informationTaskIndex[taskIndex].jobStatus === 'complete');
+                                        let isUploadFilesNotLoaded = (informationTaskIndex[taskIndex].uploadFiles === 'not loaded');
+                                        let isGreaterZero = (informationTaskIndex[taskIndex].countFilesFound > 0);
+                                        if(isJobStatusComplete && isUploadFilesNotLoaded && isGreaterZero){
+                                        %>
+                                        <!-- загрузка сетевого трафика -->
+                                        <button type="button" name="buttonImport" class="btn btn-default btn-sm btn-file" <%= disabledImport %> title="загрузить сетевой трафик">
+                                            <span class="glyphicon glyphicon-import"></span> импорт
+                                        </button>
+                                        <% } %>
+                                        <!-- удаление информации -->
+                                        <button type="button" name="buttonDelete" class="btn btn-default btn-sm" <%= disabledDelete %> title="удаление задачи">
+                                            <span class="glyphicon glyphicon-trash"></span>
+                                        </button>
+                                        <input type="hidden" data-taskInformation="<%= accessRights.import[0] %>:<%= informationTaskIndex[taskIndex].countFilesFound %>">
+                                    </td>
+                                </tr>
+                            <%
+                            }
+                            %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <% } else { %>
+                    <div class="text-center">
+                        <h4 class="text-uppercase" style="margin-top: 100px; color: #ef5734">нет данных</h4>
+                    </div>
+                <%
+                }
+                if(tableContent.informationTaskIndex !== undefined && tableContent.informationPaginate.countChunks > 1){
+                %>
+                <div class="col-md-1"></div>
+                <div class="col-md-10 text-center" id="field_pagination">
+                    всего заданий: <strong><%= tableContent.informationPaginate.countElements %></strong>
+                    <nav>
+                        <ul class="pagination">
+                            <li class="page-item disabled">
+                                <a class="page-link" data-chunk="previous" href="#" aria-label="Previous">&laquo;</a>
+                            </li>
+                            <%
+                            for(let num = 1; num <= tableContent.informationPaginate.countChunks; num++){
+                                if(tableContent.informationPaginate.chunksNumber == num){
+                                %><li class="page-item active"><a class="page-link" data-chunk="<%= num %>" number-label="" href="#"><%= num %></a></li><%
+                                } else {
+                                %><li class="page-item"><a class="page-link" data-chunk="<%= num %>" number-label="" href="#"><%= num %></a></li><%
+                                }
+                            }
+                            %>
+                            <li class="page-item">
+                                <a class="page-link" data-chunk="next" href="#" aria-label="Next">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="col-md-1"></div>
+                <% } %>
+            </div>
+            <input id="dataAccessRights" type="hidden" data-access-rights="read=<%= accessRights.read[0] %>,import=<%= accessRights.import[0] %>,delete=<%= accessRights.delete[0] %>">
+        </section>
+    </section>
+</section>
+</body>
+
+<!-- ***************************************************************************************************************
+     ПОДВАЛ САЙТА
+********************************************************************************************************************-->
+<% include ../footer.ejs %>
+</html>

@@ -1,0 +1,33 @@
+#!/bin/bash
+
+echo '';
+echo -e '╔══╦╗─╔══╦══╦╗╔╦╗─╔══╦═══╦╗╔╦════╗
+║╔═╣║─║╔╗║╔═╣║║║║─╚╗╔╣╔══╣║║╠═╗╔═╝
+║╚═╣║─║╚╝║╚═╣╚╝║║──║║║║╔═╣╚╝║─║║
+║╔═╣║─║╔╗╠═╗║╔╗║║──║║║║╚╗║╔╗║─║║
+║║─║╚═╣║║╠═╝║║║║╚═╦╝╚╣╚═╝║║║║─║║
+╚╝─╚══╩╝╚╩══╩╝╚╩══╩══╩═══╩╝╚╝─╚╝';
+echo '';
+echo -e "	 \033[0;31m 1. \033[0m \033[0;32mЗапуск\033[0m                      ";
+echo -e "	 \033[0;31m 2. \033[0m \033[1;31mОстанов\033[0m                     ";
+echo -e "	 \033[0;31m 3. \033[0m Список запущенных процессов ";
+echo '';
+
+read NUM;
+
+case $NUM in
+  1) 
+    pm2 start /opt/flashlight/app.js -e /var/log/flashlight_errors.log --name flashlight_application;
+  ;;
+
+  2)
+    pm2 delete flashlight_application;
+  ;;
+
+  3)
+    pm2 list
+  ;;
+  4)
+    pm2 monit
+  ;;
+esac

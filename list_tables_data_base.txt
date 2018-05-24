@@ -1,0 +1,185 @@
+/* 
+ * описание используемых во Flashlight 'таблиц' СУБД Redis 
+ * */
+
+    
+/* списки подключенных и отключенных источников  */
+            --- НЕ АКТУАЛЬНО ---
+remote_host_connect:connection
+    хранит список подключенных источников, 
+    тип - СПИСОК, 
+    например получить весь список redis.lrange('remote_host_connect:connection', [0, -1], (err, arrayList) => {});
+            --- НЕ АКТУАЛЬНО ---
+remote_host_connect:disconnect    
+    хранит список одключенных источников, 
+    тип - СПИСОК, 
+    например получить весь список redis.lrange('remote_host_connect:disconnect', [0, -1], (err, arrayList) => {});
+
+    
+/* списки задач по фильтрации и выгрузки сет. трафика */
+            --- НЕ ПКТУАЛЬНО ---
+task_filtering_index_processing_executed
+    хранит список задач по которым выполняется фильтрация, 
+    тип - СПИСОК, 
+    например получить весь список redis.lrange('task_filtering_index_processing_executed', [0, -1], (err, arrayList) => {});
+
+
+
+
+task_filtering_index_all
+хранит список выполняемых и выполненных задач по фильтрации
+    тип - УПРОЯДОЧНЫЙ по времени СПИСОК
+
+task_uploaded_index_all
+хранит список выполняемых и выполненных задач по загрузке файлов
+    тип - УПРОЯДОЧНЫЙ по времени СПИСОК
+
+task_filter_list_files:<ID source>:<ID task>:<path directory>
+    хранит список файлов по которым выполняется фильтрация,
+    тип - СПИСОК
+
+task_turn_downloading_files
+    хранит список задач ожидающих своей очереди на выгрузку сетевого трафика, 
+    тип - СПИСОК, 
+    например получить весь список redis.lrange('task_turn_downloading_files', [0, -1], (err, arrayList) => {});
+
+task_implementation_downloading_files
+    хранит список задач по которым осуществляется выгрузка сетевого трафика, 
+    тип - СПИСОК, 
+    например получить весь список redis.lrange('task_implementation_downloading_files', [0, -1], (err, arrayList) => {});
+
+task_filtering_all_information:* (где * идентификатор задачи)
+    тип - ХЕШ
+    содержит все информацию по выполняемым задачам в том числе: 
+     - sourceId (идентификатор источника)
+     - userName (имя пользователя добавившего фильтрацию)
+     - userLogin (логин пользователя добавившего фильтрацию)
+     - dateTimeStartFilter (дата начала фильтрации)
+     - dateTimeEndFilter (дата окончания фильтрации)
+     - dateTimeAddTaskFilter (дата добавления задачи на фильтрацию UNIX формат)
+     - countFilesFound (количество найденных файлов)
+     - countFoundFilesSize (размер найденных файлов)
+     - countFilesFiltering (количество отфильтрованных файлов)
+     - countMaxFilesSize (максимальное количество файлов которые необходимо отфильтровать)
+     - countFilesChunk (количество частей)
+     - countFullCycle (количество полных циклов при фильтрации файлов)
+     - countCycleComplete (количество завершенных циклов при фильтрации файлов)
+     - listFilesUnprocessing (список необработанных файлов)
+     - filterSettings (параметры фильтрации JSON формат)
+     - countFilesProcessed (количество обработанных в результате фильтрации файлов)
+     - directoryFiltering (директория в которой на источнике храняться отфильтрованные файлы)
+     - jobStatus (статус задачи фильтрации 
+          start - начало выполнения,
+          expect - ожидает,
+          rejected - отклонена,
+          execute - выполняется,
+          complete - завершена,
+          stop - остановлена )
+
+     - userLoginImport (логин пользователя инициировавшего загрузку)
+     - userNameStartUploadFiles (имя пользователя инициирующего загрузку файлов)
+     - dateTimeEndUploadFiles (дата завершения загрузки файлов)
+     - userNameStopUploadFiles (имя пользователя остановившего загрузку файлов)
+     - userNameContinueUploadFiles (имя пользователя возобновившего загрузку файлов)
+     - dateTimeStartUploadFiles (дата начала загрузки файлов)
+     - dateTimeStopUploadFiles (дата остановки загрузки файлов)
+     - dateTimeContinueUploadFiles (дата возобновления загрузки файлов)
+     - countFilesLoadedError (количество файлов загруженных с ошибкой)
+     - userNameLookedThisTask (имя пользователя рассмотревшего задачу)
+     - countDirectoryFiltering (количество директорий для фильтрации)
+     - countFilesLoaded (количетво загруженных файлов)
+     - uploadDirectoryFiles (путь до директории содержащей загруженные файлы)
+     - uploadFiles (статус задачи по загрузке файлов 
+          not loaded - не загружалась, 
+          expect - ожидает, 
+          in line - в очереди,
+          suspended - приостановлена,
+          uploaded - файлы загружены,
+          loaded - выполняется )
+
+     - dateTimeLookedThisTask (дата когда данная задача была рассмотрена)
+
+
+/* настройки источников */
+remote_host:settings:* (где * идентификатор источника)
+    тип - ХЕШ
+    хранит настройки источника:
+     - shortName (краткое название источника)
+     - detailedDescription (полное название источника)
+     - ipaddress (ip адрес)
+     - port (сетевой порт)
+     - dateCreate (дата добавления информации об источнике)
+     - dateChanges (дата изменения информации об источнике)
+     - dateLastConnected (дата последнего соединения с источником)
+     - numberConnectionAttempts (количество попыток соединения)
+     - token (идентификационный токен)
+     - maxCountProcessFiltering (максимальное количество одновременно запущенных процессов фильтрации)
+     - intervalTransmissionInformation (интервал, в секундах, с которым будет передаватся информация)
+     - isAuthorization (успешная авторизация на источнике bool)
+
+
+/* информация получаемая с источника с заданным интервалом времени */
+remote_host:information:* (где * идентификатор источника)
+    тип - ХЕШ
+    хранит информацию с источника:
+    - diskSpace
+    - timeInterval
+    - currentDateTime
+    - randomAccessMemory
+    - loadCPU
+    - loadNetwork
+
+/* настройки пользователей и групп пользователей */
+user_authntication:* (где * идентификатор пользователя, например user_authntication:userid_administrator)
+    тип - ХЕШ 
+    хранит учетные данные пользователя:
+     - date_register, дата регистрации пользователя
+     - date_change, дата изменения информации о пользователе
+     - login, логин
+     - password, пароль
+     - group, группа
+     - user_name, полное имя пользователя
+     - settings, настройки пользователя такие как перечень дачьбордов источников на главной странице
+    
+    например, установить значение поля 'password' redis.hset('user_authntication:userid_administrator', 'password', newPassword, function (err) {});
+
+user_group:* (где * идентификатор группы)
+    тип - ХЕШ
+    хранит информацию о группе такую как:
+     - menu, информация по пунктам меню
+     - management_users, раздел управления пользователями
+     - management_groups, раздел управления группами 
+     - management_sources, раздел управления источниками
+     - management_tasks_filter, раздел управления задачами по фильтрации
+     - management_tasks_import, раздел управления задачами по выгрузке файлов
+     - management_uploaded_files, раздел управления задачами по загрузке файлов
+     - management_dashboard, раздел управления информационными панелями
+     - management_admin, раздел управления приложением
+
+
+/* перечень существующих источников */
+remote_hosts_exist:id 
+    тип - СПИСОК
+
+
+/* хранит информацию о нерасмотренных задачах сет. трафик по каторым был выгружен */
+task_filtering_upload_not_considered
+    тип - УПОРЯДОЧНОЕ МНОЖЕСТВО
+    хранит информацию в виде строки 118:48712eb649a1c2bf41beaccab113dce8, где
+    118 идентификатор источника, 48712eb649a1c2bf41beaccab113dce8 хеш задачи
+    например, получить всю информацию по выбранному источнику redis.zrange('task_filtering_upload_not_considered', [0, -1], (err, result) => {})
+
+
+/* информация об ошибках получаемых с источника */
+remote_host:errors:* (где * идентификатор источника)
+    тип - УПОРЯДОЧНОЕ МНОЖЕСТВО
+    хранит информацию в JSON формате в виде
+    '{\"ip\":\"213.24.76.13\",\"dateTime\":1486057708266,\"errorCode\":\"409\",\"errorMessage\":\"Coincidence processId\"}'
+    например, получить всю информацию по выбранному источнику redis.zrange('remote_host:errors:118', [0, -1], (err, result) => {})
+
+
+/* хранения индекса по подсетям источникам */
+index_filter_settings_networks 
+    тип - УПОРЯДОЧНОЕ МНОЖЕСТВО
+    хранит информацию в виде '2063611984:787d5cab42262de5c781ec9d057f3819 2063611984:506d3bca000420e48162d217badfb575',
+    где 2063611984 ip адрес в десятичном виде, а 787d5cab42262de5c781ec9d057f3819 хеш задачи   

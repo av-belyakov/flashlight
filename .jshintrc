@@ -1,0 +1,10 @@
+{
+    "browser": true,
+    "mocha": true,
+    "esversion": 6,
+    "eqeqeq": true,
+    "strict": true,
+    "node": true,
+    "jquery": true,
+    "globals": true
+}

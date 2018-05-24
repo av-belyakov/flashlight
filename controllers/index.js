@@ -1,0 +1,1 @@
+module.exports.connectRedis = require('./connectRedisDb')();

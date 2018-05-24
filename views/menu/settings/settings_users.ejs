@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
+<head>
+    <!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include ../../head.ejs %>
+    
+    <script src="/dist/settingUsersPage.js"></script>
+
+</head>
+<body>
+<!-- контент страницы -->
+<section id="container" >
+    <!-- ***************************************************************************************************************
+         ОСНОВНОЕ МЕНЮ
+    ********************************************************************************************************************-->
+    <% include ../../header.ejs %>
+
+    <!-- ***************************************************************************************************************
+         МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ИЛИ РЕДАКТИРОВАНИЯ ПОЛЬЗОВАТЕЛЯ
+    ******************************************************************************************************************** -->
+
+    <div class="modal fade" id="modalAddEditUser" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-show="data">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- заголовок -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel"></h4>
+                </div>
+                  <!-- Основная часть модального окна, содержащая форму для регистрации -->
+                <div class="modal-body">
+                    <!-- основной контент -->
+                    <form role="form" class="form-horizontal">
+                        <!-- логин -->
+                        <div class="form-group has-feedback">
+                            <label for="login" class="control-label col-xs-4">Логин:</label>
+                            <div class="col-xs-5">
+                                <div class="input-group">
+                                    <input type="text" class="form-control input-xs" name="login">
+                                </div>
+                                <span class="glyphicon form-control-feedback"></span>
+                            </div>
+                        </div>
+                        <!-- пароль -->
+                        <div class="form-group has-feedback">
+                            <label for="passwordOne" class="control-label col-xs-4">Пароль:</label>
+                            <div class="col-xs-5">
+                                <div class="input-group">
+                                    <input type="password" class="form-control input-xs" id="passwordOne">
+                                </div>
+                                <span class="glyphicon form-control-feedback"></span>
+                            </div>
+                        </div>
+                        <!-- повторный пароль -->
+                        <div class="form-group has-feedback">
+                            <label for="passwordTwo" class="control-label col-xs-4">Повторный пароль:</label>
+                            <div class="col-xs-5">
+                                <div class="input-group">
+                                    <input type="password" class="form-control input-xs" id="passwordTwo">
+                                </div>
+                                <span class="glyphicon form-control-feedback"></span>
+                            </div>
+                        </div>
+                        <!-- имя пользователя -->
+                        <div class="form-group has-feedback">
+                            <label for="userName" class="control-label col-xs-4">Имя пользователя:</label>
+                            <div class="col-xs-5">
+                                <div class="input-group">
+                                    <input type="text" class="form-control input-xs" name="userName">
+                                </div>
+                                <span class="glyphicon form-control-feedback"></span>
+                            </div>
+                        </div>
+                        <div class="form-group has-feedback">
+                            <label for="userName" class="control-label col-xs-4">Группа:</label>
+                            <div class="col-xs-5">
+                                <select class="form-control input-sm" name="itemGroups">
+                                <%
+                                getItemGroups.sort();
+                                getItemGroups.forEach(function (item) {
+                                %>
+                                    <option value="<%= item %>"><%= item %></option>
+                                <%
+                                });
+                                %>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <!--подвал с кнопками  -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ***************************************************************************************************************
+         МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ПОЛЬЗОВАТЕЛЯ
+    ******************************************************************************************************************** -->
+    <% include ../../modal_windows/removal_request_delete.ejs %>
+
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
+                        <table class="table table-striped table-hover table-sm">
+                            <caption class="h4 text-uppercase">управление пользователями</caption>
+                            <thead>
+                            <tr>
+                                <th>Логин</th>
+                                <th>Имя пользователя</th>
+                                <th>Группа</th>
+                                <th>Дата создания</th>
+                                <th>Дата изменения</th>
+                                <th class="text-right">
+                                    <%
+                                    let disabledCreate = (accessRights.create[0] === false) ? 'disabled="disabled"' : '';
+                                    let disabledEdit = (accessRights.edit[0] === false) ? 'disabled="disabled"' : '';
+                                    let disabledDelete = (accessRights.delete[0] === false) ? 'disabled="disabled"' : '';
+                                    %>
+                                    <button type="button" class="btn btn-default btn-sm" id="addUserButton" <%= disabledCreate %>>
+                                        <span class="glyphicon glyphicon-plus">
+                                        </span> добавить
+                                    </button>
+                                </th>
+                            </tr>
+                            </thead>
+                            <%
+                            let objKeyDate = {
+                                login : false,
+                                user_name : false,
+                                group : false,
+                                date_register : true,
+                                date_change : true
+                            };
+                            %>
+                            <tbody>
+                            <tr>
+                                <%
+                                for(let key in objKeyDate){
+                                    let value = (objKeyDate[key] === false) ? mainContent.administrator[key]: (new Date(+mainContent.administrator[key])).toISOString().slice(0,-1).replace(/T/, ' ').replace(/\..+/, '');
+                                %>
+                                    <td style="padding-top: 15px;"><%= value %></td>
+                                <% } %>
+                                <td class="text-right">
+                                    <button type="button" class="btn btn-default btn-sm" name="editUserButton" data-user-information="<%= mainContent.administrator.login %>|<%= mainContent.administrator.group %>|<%= mainContent.administrator.user_name %>" <%= disabledEdit %>>
+                                        <span class="glyphicon glyphicon-floppy-saved"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <%
+                            for(let user in mainContent){
+                                if(user === 'administrator') continue;
+                            %>
+                                <tr>
+                                <%
+                                for(let key in objKeyDate){
+                                    let x = (new Date()).getTimezoneOffset() * 60000;
+                                    let value = (objKeyDate[key] === false) ? mainContent[user][key]: (new Date((+mainContent[user][key]) - x)).toISOString().slice(0,-1).replace(/T/, ' ').replace(/\..+/, '');
+                                %>
+                                    <td><%= value %></td>
+                                <% } %>
+                                    <td class="text-right">
+                                        <button type="button" class="btn btn-default btn-sm" name="delUserButton" data-user-information="<%= mainContent[user].login %>" <%= disabledDelete %>>
+                                            <span class="glyphicon glyphicon-trash"></span>
+                                        </button>
+                                        <button type="button" class="btn btn-default btn-sm" name="editUserButton" data-user-information="<%= mainContent[user].login %>|<%= mainContent[user].group %>|<%= mainContent[user].user_name %>" <%= disabledEdit %>>
+                                            <span class="glyphicon glyphicon-floppy-saved"></span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- ***************************************************************************************************************
+         ПОДВАЛ САЙТА
+    ********************************************************************************************************************-->
+    <% include ../../footer.ejs %>
+</section>
+</body>
+</html>

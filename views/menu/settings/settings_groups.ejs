@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
+<head>
+    <!-- подключаем дополнительные библиотеки, скрипты, таблицы стилей CSS и расширения -->
+    <% include ../../head.ejs %>
+
+    <script src="/dist/settingGroupsPage.js"></script>
+
+</head>
+<body>
+<!-- контент страницы -->
+<section id="container" >
+    <!-- ***************************************************************************************************************
+         ОСНОВНОЕ МЕНЮ
+    ******************************************************************************************************************** -->
+    <% include ../../header.ejs %>
+
+    <!-- ***************************************************************************************************************
+         МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ГРУППЫ
+    ******************************************************************************************************************** -->
+
+    <div class="modal fade" id="modalAddGroup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-show="data">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <!-- заголовок -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Добавить группу</h4>
+                </div>
+                <!-- основной контент -->
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table class="table table-striped table-hover table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th class="text-center">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control input-sm" id="newGroupName" placeholder="новая группа">
+                                                <span id="iconSuccess" class="glyphicon form-control-feedback"></span>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <%
+                                    let administratorObjModal = mainContentAdministrator.administrator;
+                                    for(let key in administratorObjModal){
+                                        let keyObj = JSON.parse(administratorObjModal[key]);
+                                    %>
+                                    <tr>
+                                        <!-- Описание пунктов управления группами (левая сторона таблицы) -->
+                                        <td style="width: 70%"><strong><%= keyObj.name %></strong>
+                                            <ul>
+                                            <%
+                                            let dataObj = keyObj.data;
+                                            for(let i in dataObj){
+                                            %>
+                                                <li class="sub-menu"><%= dataObj[i][1] %></li>
+                                            <% } %>
+                                            </ul>
+                                        </td>
+                                        <!-- корректируемые пункты -->
+                                        <td class="text-center"><br>
+                                            <ul>
+                                            <%
+                                            for(let i in dataObj){
+                                                let inputValueHidden = key + ':' + i;
+                                            %>
+                                                <li class="sub-menu">
+                                                    <input type="checkbox" name="checkbox_newGroupUniqueId" data-key-element-name="<%= inputValueHidden %>" value="false">
+                                                </li>
+                                            <% } %>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--подвал с кнопками  -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ***************************************************************************************************************
+         МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ГРУППЫ
+    ******************************************************************************************************************** -->
+    <% include ../../modal_windows/removal_request_delete.ejs %>
+
+    <!-- ***************************************************************************************************************
+         ГЛАВНЫЙ КОНТЕНТ
+    ******************************************************************************************************************** -->
+
+    <!--начало основного контента-->
+    <section id="main-content">
+        <section class="wrapper">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
+                        <table class="table table-striped table-hover table-sm">
+                            <caption class="h4 text-uppercase">управление группами</caption>
+                            <thead>
+                            <tr>
+                                <th class="text-right" style="width: 20%">
+                                    <% let disabledCreate = (accessRights.create[0] === false) ? 'disabled="disabled"' : ''; %>
+                                    <button type="button" class="btn btn-default btn-sm" id="buttonAddGroup" <%= disabledCreate %>>
+                                        <span class="glyphicon glyphicon-plus">
+                                        </span> добавить
+                                    </button>
+                                </th>
+                                <%
+                                for(let groupName in mainContentAdministrator){
+                                    let disabledEdit = (accessRights.edit[0] === false) ? 'disabled="disabled"' : '';
+                                    let disabledDelete = (accessRights.delete[0] === false) ? 'disabled="disabled"' : '';
+                                %>
+                                <th class="text-left" data-group-name="<%= groupName %>">
+                                    <%= groupName %>
+                                    <% if(groupName.toLowerCase() !== 'administrator'){ %>
+                                    <button type="button" class="btn btn-default btn-sm" name="buttonDelGroup" <%= disabledDelete %>>
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                    </button>
+                                    <button type="button" class="btn btn-default btn-sm" name="buttonEditGroup"<%= disabledEdit %>>
+                                        <span class="glyphicon glyphicon-floppy-saved"></span>
+                                    </button>
+                                    <% } else { %>
+                                    <button type="button" class="btn btn-default btn-sm" style="visibility: hidden">
+                                        <span class="glyphicon glyphicon-floppy-saved"></span>
+                                    </button>
+                                    <% } %>
+                                </th>
+                                <% } %>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <%
+                            let administratorObj = mainContentAdministrator.administrator;
+                            for(let key in administratorObj){
+                                let keyObj = JSON.parse(administratorObj[key]);
+                            %>
+                            <tr>
+                                <!-- Описание пунктов управления группами (левая сторона таблицы) -->
+                                <td><strong><%= keyObj.name %></strong>
+                                    <ul>
+                                    <%
+                                    let dataObj = keyObj.data;
+                                    for(let i in dataObj){
+                                    %><li class="sub-menu"><%= dataObj[i][1] %></li><% } %>
+                                    </ul>
+                                </td>
+                                <%
+                                for(let groupName in mainContentAdministrator){
+                                    keyObj = JSON.parse(mainContentAdministrator[groupName][key]);
+                                    let disabled = (groupName.toLowerCase() === 'administrator') ? 'disabled="disabled"' : '';
+                                %>
+                                <!-- корректируемые пункты -->
+                                <td class="text-left"><br>
+                                    <ul>
+                                    <%
+                                    let dataObj = keyObj.data;
+
+                                    for(let i in dataObj){
+                                        let checked = (dataObj[i][0]) ? 'checked': '';
+                                        let inputValueHidden = key + ':' + i;
+                                    %>
+                                        <li class="sub-menu">
+                                            <input type="checkbox" name="checkbox_<%= groupName %>" data-key-element-name="<%= inputValueHidden %>" value="<%= dataObj[i][0] %>" <%= checked %> <%= disabled %>>
+                                        </li>
+                                    <% } %>
+                                    </ul>
+                                </td>
+                                <% } %>
+                            </tr>
+                            <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- ***************************************************************************************************************
+     ПОДВАЛ САЙТА
+    ********************************************************************************************************************-->
+    <% include ../../footer.ejs %>
+</section>
+</body>
+</html>
