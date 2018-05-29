@@ -214,7 +214,6 @@ let startFiltering = function(redis, obj, socketIo) {
                 return callback(null, uniqueTaskId);
             }
 
-
             //если есть индексы то получить список файлов сформированный в результате обработки индексов
             processingListFilesForFiltering.getList(obj.sourceId, uniqueTaskId, redis)
                 .then((listFilesIndexes) => {
