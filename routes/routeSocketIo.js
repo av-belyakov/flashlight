@@ -35,9 +35,10 @@ const processingUser = require('./processingSocketIo/processingUser');
 const processingGroup = require('./processingSocketIo/processingGroup');
 const processingSource = require('./processingSocketIo/processingSource');
 const processingFiltering = require('./processingSocketIo/processingFiltering');
-const processingFilesUpload = require('./processingSocketIo/processingFilesUpload');
 const processingDashboard = require('./processingSocketIo/processingDashboard');
+const processingFilesUpload = require('./processingSocketIo/processingFilesUpload');
 const processingStopTaskIndex = require('./processingSocketIo/processingStopTaskIndex');
+const processingResumeTaskIndex = require('./processingSocketIo/processingResumeTaskIndex');
 const processingChangeTaskStatus = require('./processingSocketIo/processingChangeTaskStatus');
 const processingExecuteFiltering = require('./processingSocketIo/processingExecuteFiltering');
 const processingInformationTaskIndex = require('./processingSocketIo/processingInformationTaskIndex');
@@ -682,9 +683,14 @@ module.exports.eventHandling = function(socketIo) {
         });
     });
 
-    //остановить выполняемую задачу по фильтрации
+    /* остановить выполняемую задачу по фильтрации */
     socketIo.on('request to stop the task filter', function(data) {
         processingStopTaskIndex(socketIo, redis, data.taskIndex);
+    });
+
+    /* возодновить выполняемую задачу по фильтрации */
+    socketIo.on('request to resume the task filter', (data) => {
+        processingResumeTaskIndex(socketIo, redis, data.taskIndex);
     });
 
     /* поиск задачи по заданным параметра */

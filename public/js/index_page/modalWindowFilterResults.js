@@ -1,5 +1,5 @@
 /*
- * Модуль создания модального окна вывода информации по выбранному заданию фильтрациии
+ * Модуль для создания модального окна вывода информации по выбранному заданию фильтрациии
  *
  * Версия 1.0, релиз 10.11.2017
  * */
@@ -31,9 +31,16 @@ export default {
         socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
     },
 
-    //запрос на отмену задачи фильтрации
+    //запрос на останов задачи фильтрации
     stopFilterTask(taskIndex) {
         socket.emit('request to stop the task filter', { processingType: 'stopTaskFilter', taskIndex: taskIndex });
+        //закрыть модальное окно
+        $('#modalWindowTaskFilter').modal('hide');
+    },
+
+    //запрос на возобновление выполнения задачи по фильтрации
+    resumeFilterTask(taskIndex) {
+        socket.emit('request to resume the task filter', { processingType: 'resumeTaskFilter', taskIndex: taskIndex });
         //закрыть модальное окно
         $('#modalWindowTaskFilter').modal('hide');
     },

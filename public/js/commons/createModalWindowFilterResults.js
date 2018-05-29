@@ -21,8 +21,12 @@ export default function createModalWindowFilterResults(obj) {
     $('#modalWindowTaskFilter').modal('show');
 
     //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
-    let buttonSubmitStop = document.querySelector('.btn-danger[data-filter="stop"]');
-    if (buttonSubmitStop !== null) buttonSubmitStop.addEventListener('click', modalWindowFilterResults.stopFilterTask.bind(null, objInformation.taskIndex));
+    let buttonSubmitFilterStop = document.querySelector('.btn-danger[data-filter="filterStop"]');
+    if (buttonSubmitFilterStop !== null) buttonSubmitFilterStop.addEventListener('click', modalWindowFilterResults.stopFilterTask.bind(null, objInformation.taskIndex));
+
+    //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
+    let buttonSubmitFilterResume = document.querySelector('.btn-danger[data-filter="filterResume"]');
+    if (buttonSubmitFilterResume !== null) buttonSubmitFilterResume.addEventListener('click', modalWindowFilterResults.resumeFilterTask.bind(null, objInformation.taskIndex));
 
     //добавляем обработчик на кнопку 'остановить' для остановки ЗАГРУЗКИ ФАЙЛОВ
     let buttonSubmitDownloadStop = document.querySelector('.btn-danger[data-download="loaded"]');
@@ -206,10 +210,15 @@ export default function createModalWindowFilterResults(obj) {
 
                 let stringTargetDirectory = `<div class="col-sm-12 col-md-12 col-lg-12 text-center" style="margin-top: 15px">директория для хранения найденных файлов на источнике<br><strong>${obj.directoryFiltering}</strong></div>`;
 
-                let disabledButtonStop = (obj.userIsFilter === false) ? 'disabled="disabled"' : '';
-                let buttonStop = (obj.jobStatus === 'execute') ? `<button type="submit" data-filter="stop" class="btn btn-danger" ${disabledButtonStop}>Остановить</button>` : '';
+                let disabledButton = (obj.userIsFilter === false) ? 'disabled="disabled"' : '';
+                let buttonFilterAction = '';
+                if (obj.jobStatus === 'execute') {
+                    buttonFilterAction = `<button type="submit" data-filter="filterStop" class="btn btn-danger" ${disabledButton}>Остановить</button>`;
+                } else if (obj.jobStatus === 'stop') {
+                    buttonFilterAction = `<button type="submit" data-filter="filterResume" class="btn btn-danger" ${disabledButton}>Возобновить</button>`;
+                }
 
-                let button = `<div class="col-sm-12 col-md-12 col-lg-12 text-right" style="margin-top: 10px;">${buttonStop}</div>`;
+                let button = `<div class="col-sm-12 col-md-12 col-lg-12 text-right" style="margin-top: 10px;">${buttonFilterAction}</div>`;
 
                 bodyElement.innerHTML = '<div class="col-sm-12 col-md-12 col-lg-12">' + stringNameSource + stringUserNameTimeStartAndEnd + stringFilterSettings + stringProgressBar + stringFileInformation + stringTargetDirectory + modalBodyInformationDownloadFiles() + button + '</div>';
             }

@@ -159,8 +159,12 @@ function createModalWindowFilterResults(obj) {
     $('#modalWindowTaskFilter').modal('show');
 
     //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
-    let buttonSubmitStop = document.querySelector('.btn-danger[data-filter="stop"]');
-    if (buttonSubmitStop !== null) buttonSubmitStop.addEventListener('click', __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__["a" /* default */].stopFilterTask.bind(null, objInformation.taskIndex));
+    let buttonSubmitFilterStop = document.querySelector('.btn-danger[data-filter="filterStop"]');
+    if (buttonSubmitFilterStop !== null) buttonSubmitFilterStop.addEventListener('click', __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__["a" /* default */].stopFilterTask.bind(null, objInformation.taskIndex));
+
+    //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
+    let buttonSubmitFilterResume = document.querySelector('.btn-danger[data-filter="filterResume"]');
+    if (buttonSubmitFilterResume !== null) buttonSubmitFilterResume.addEventListener('click', __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__["a" /* default */].resumeFilterTask.bind(null, objInformation.taskIndex));
 
     //добавляем обработчик на кнопку 'остановить' для остановки ЗАГРУЗКИ ФАЙЛОВ
     let buttonSubmitDownloadStop = document.querySelector('.btn-danger[data-download="loaded"]');
@@ -344,10 +348,15 @@ function createModalWindowFilterResults(obj) {
 
                 let stringTargetDirectory = `<div class="col-sm-12 col-md-12 col-lg-12 text-center" style="margin-top: 15px">директория для хранения найденных файлов на источнике<br><strong>${obj.directoryFiltering}</strong></div>`;
 
-                let disabledButtonStop = obj.userIsFilter === false ? 'disabled="disabled"' : '';
-                let buttonStop = obj.jobStatus === 'execute' ? `<button type="submit" data-filter="stop" class="btn btn-danger" ${disabledButtonStop}>Остановить</button>` : '';
+                let disabledButton = obj.userIsFilter === false ? 'disabled="disabled"' : '';
+                let buttonFilterAction = '';
+                if (obj.jobStatus === 'execute') {
+                    buttonFilterAction = `<button type="submit" data-filter="filterStop" class="btn btn-danger" ${disabledButton}>Остановить</button>`;
+                } else if (obj.jobStatus === 'stop') {
+                    buttonFilterAction = `<button type="submit" data-filter="filterResume" class="btn btn-danger" ${disabledButton}>Возобновить</button>`;
+                }
 
-                let button = `<div class="col-sm-12 col-md-12 col-lg-12 text-right" style="margin-top: 10px;">${buttonStop}</div>`;
+                let button = `<div class="col-sm-12 col-md-12 col-lg-12 text-right" style="margin-top: 10px;">${buttonFilterAction}</div>`;
 
                 bodyElement.innerHTML = '<div class="col-sm-12 col-md-12 col-lg-12">' + stringNameSource + stringUserNameTimeStartAndEnd + stringFilterSettings + stringProgressBar + stringFileInformation + stringTargetDirectory + modalBodyInformationDownloadFiles() + button + '</div>';
             }
@@ -1625,7 +1634,7 @@ function IPv4_BinaryDotQuad(binaryString) {
 
 "use strict";
 /*
- * Модуль создания модального окна вывода информации по выбранному заданию фильтрациии
+ * Модуль для создания модального окна вывода информации по выбранному заданию фильтрациии
  *
  * Версия 1.0, релиз 10.11.2017
  * */
@@ -1657,9 +1666,16 @@ function IPv4_BinaryDotQuad(binaryString) {
         socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
     },
 
-    //запрос на отмену задачи фильтрации
+    //запрос на останов задачи фильтрации
     stopFilterTask(taskIndex) {
         socket.emit('request to stop the task filter', { processingType: 'stopTaskFilter', taskIndex: taskIndex });
+        //закрыть модальное окно
+        $('#modalWindowTaskFilter').modal('hide');
+    },
+
+    //запрос на возобновление выполнения задачи по фильтрации
+    resumeFilterTask(taskIndex) {
+        socket.emit('request to resume the task filter', { processingType: 'resumeTaskFilter', taskIndex: taskIndex });
         //закрыть модальное окно
         $('#modalWindowTaskFilter').modal('hide');
     },

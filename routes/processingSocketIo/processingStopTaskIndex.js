@@ -30,15 +30,13 @@ module.exports = function(socketIo, redis, taskIndex) {
         //получаем идентификатор пользователя
         function(callback) {
             getUserId.userId(redis, socketIo, (err, userId) => {
-                if (err) {
+                if (err) return callback(new errorsType.receivedIncorrectData('Ошибка: невозможно выполнить задачу, получены некорректные данные'));
+
+                try {
+                    let user = userId.split('_')[1];
+                    callback(null, user);
+                } catch (err) {
                     callback(new errorsType.receivedIncorrectData('Ошибка: невозможно выполнить задачу, получены некорректные данные'));
-                } else {
-                    try {
-                        let user = userId.split('_')[1];
-                        callback(null, user);
-                    } catch (err) {
-                        callback(new errorsType.receivedIncorrectData('Ошибка: невозможно выполнить задачу, получены некорректные данные'));
-                    }
                 }
             });
         },

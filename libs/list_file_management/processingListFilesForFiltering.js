@@ -11,6 +11,8 @@
 
 'use strict';
 
+const process = require('process');
+
 module.exports = {
     createList,
     deleteList,
@@ -65,8 +67,8 @@ function createList(objectForCreate, redis, callback) {
 /**
  * удаляет списки файлов используемых для фильтрации
  * 
- * @param sourceId
- * @param taskIndex
+ * @param sourceId - идентификатор источника
+ * @param taskIndex - идентификатор задачи
  */
 function deleteList(sourceId, taskIndex, redis, callback) {
     return new Promise((resolve, reject) => {
@@ -111,11 +113,9 @@ function modifyList(objectForModify, redis, callback) {
                 else reject(err);
             } else {
                 let result = (isTrue !== 0) ? objectForModify.fileName : null;
-                if (callback) {
-                    callback(null, result);
-                } else {
-                    resolve(result);
-                }
+
+                if (callback) callback(null, result);
+                else resolve(result);
             }
         });
     });
@@ -124,19 +124,21 @@ function modifyList(objectForModify, redis, callback) {
 /**
  * возвращает объект содержащий списки файлов, пример ( <директория>: <массив файлов> )
  * 
- * @param sourceId
- * @param taskIndex
+ * @param sourceId - идентификатор источника
+ * @param taskIndex - идентификатор задачи
  */
 function getList(sourceId, taskIndex, redis, callback) {
     let objFinaly = {};
 
     return new Promise((resolve, reject) => {
         redis.keys(`task_filter_list_files:${sourceId}:${taskIndex}:*`, (err, list) => {
-            if (err) reject(err);
-            else resolve(list);
+            if (err) return reject(err);
+            if (list.length === 0) return reject(new Error('the specified filter task ID was not found'));
+
+            resolve(list);
         });
     }).then((list) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             let promises = list.map(key => {
 
                 redis.lrange(key, [0, -1], (err, list) => {
@@ -146,15 +148,19 @@ function getList(sourceId, taskIndex, redis, callback) {
             });
             return Promise.all(promises);
         });
-    }).then((files, err) => {
-        return new Promise((resolve, reject) => {
-            if (err) {
-                if (callback) callback(err);
-                else reject(err);
-            } else {
+    }).then(() => {
+        return new Promise((resolve) => {
+            process.nextTick(() => {
                 if (callback) callback(null, objFinaly);
                 else resolve(objFinaly);
-            }
+            });
         });
+    }).catch((err) => {
+        return new Promise((resolve, reject) => {
+            process.nextTick(() => {
+                if (callback) callback(err);
+                else reject(err);
+            });
+        })
     });
 }
