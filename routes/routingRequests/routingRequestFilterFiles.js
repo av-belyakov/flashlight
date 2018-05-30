@@ -7,6 +7,7 @@
 
 'use strict';
 
+const debug = require('debug')('routingRequestFilterFiles');
 const objWebsocket = require('../../configure/objWebsocket');
 const globalObject = require('../../configure/globalObject');
 
@@ -16,53 +17,101 @@ const globalObject = require('../../configure/globalObject');
  * @param {*} data - передаваемые данные
  * @param {*} callback
  */
-module.exports = function(sourceId, listFiles, callback) {
+module.exports = function({ sourceId, taskIndex, listFilterFiles: listFiles }, callback) {
+    let { countChunk, listFilesIndexes: arrayListFilesIndexes } = transformListIndexFiles(10, listFiles);
 
-    console.log(listFiles);
-    let [countChunk, arrayListFilesIndex] = transformListIndexFiles(30, listFiles);
+    let wsConnection = objWebsocket['remote_host:' + sourceId];
+    const messagePattern = {
+        messageType: 'filtering',
+        info: {
+            processing: 'on',
+            taskIndex: taskIndex,
+            settings: {}
+        }
+    };
 
-    console.log('countChunk:' + countChunk);
-    console.log('arrayListFiles');
-    console.log(arrayListFilesIndex);
+    let countFiles = {};
+    arrayListFilesIndexes.forEach(element => {
+        for (let index in element) {
+            if (index in countFiles) {
+                countFiles[index] += element[index].length;
+            } else {
+                countFiles[index] = element[index].length;
+            }
+        }
+    });
+
+    messagePattern.info.settings = {
+        countPartsIndexFiles: [0, countChunk],
+        useIndexes: true,
+        listFilesFilter: countFiles
+    };
+
+    //первое сообщение с информацией об общем количестве сегментов
+    wsConnection.sendUTF(JSON.stringify(messagePattern));
+
+    //последующие сообщения с сегментами сообщения
+    for (let i = 0; i < arrayListFilesIndexes.length; i++) {
+        messagePattern.info.settings = {
+            countPartsIndexFiles: [(i + 1), countChunk],
+            useIndexes: true,
+            listFilesFilter: arrayListFilesIndexes[i]
+        };
+
+        wsConnection.sendUTF(JSON.stringify(messagePattern));
+    }
+
+    //добавляем информацию о задаче в глобальный объект
+    globalObject.setData('processingTasks', taskIndex, {
+        'taskType': 'filtering',
+        'sourceId': sourceId,
+        'status': 'execute',
+        'timestampStart': +new Date(),
+        'timestampModify': +new Date()
+    });
 
     callback(null);
 };
 
 //делим списки файлов на фрагменты и считаем их количество
-function transformListIndexFiles(sizeChunk, listFilesIndexes) {
+function transformListIndexFiles(sizeChunk, listFiles) {
     let maxSegmentSize = 0;
-    let listFiles = [];
+    let listFilesIndexes = [];
     let obj = {};
 
-    for (let key in listFilesIndexes) {
+    let getObjectListFiles = () => {
+        let newObj = {};
+
+        for (let index in obj) {
+            newObj[obj[index]] = listFiles[index].splice(0, sizeChunk);
+        }
+
+        return newObj;
+    };
+
+    for (let key in listFiles) {
         if (!~key.indexOf(':')) continue;
 
         let tmp = key.split(':');
 
         if (tmp.length < 4) continue;
 
-        if (maxSegmentSize < listFilesIndexes[key].length) maxSegmentSize = listFilesIndexes[key].length;
+        if (maxSegmentSize < listFiles[key].length) maxSegmentSize = listFiles[key].length;
         obj[key] = tmp[3];
     }
-
-    console.log(obj);
 
     let countChunk = Math.floor(maxSegmentSize / sizeChunk);
     let y = maxSegmentSize / sizeChunk;
 
-    if ((y - countChunk) === 0) countChunk++;
+    if ((y - countChunk) !== 0) countChunk++;
 
-    for (let i = 0; i < countChunk; i++) {
-
-        console.log('num: ' + i);
-
-        let newObj = {};
-        for (let index in obj) {
-            console.log(index);
-            newObj[obj[index]] = listFilesIndexes[index].splice(0, (sizeChunk + 1));
+    if (countChunk === 0) {
+        listFilesIndexes.push(getObjectListFiles());
+    } else {
+        for (let i = 0; i < countChunk; i++) {
+            listFilesIndexes.push(getObjectListFiles());
         }
-        listFiles.push(newObj);
     }
 
-    return { countChunk, listFiles };
+    return { countChunk, listFilesIndexes };
 }

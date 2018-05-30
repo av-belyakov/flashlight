@@ -44,17 +44,12 @@ module.exports = function(socketIo, redis, taskIndex) {
                     throw new errorsType.receivedIncorrectData('Ошибка: невозможно выполнить задачу, получены некорректные данные');
                 }
 
-                //добавляем информацию о задаче в глобальный объект
-                globalObject.setData('processingTasks', taskIndex, {
-                    'taskType': 'filtering',
-                    'sourceId': sourceId,
-                    'status': 'execute',
-                    'timestampStart': +new Date(),
-                    'timestampModify': +new Date()
-                });
-
                 //отправляем список файлов по которым нужно возобновить фильтрацию
-                routingRequestFilterFiles(sourceId, listFilterFiles, (err) => {
+                routingRequestFilterFiles({
+                    'sourceId': sourceId,
+                    'taskIndex': taskIndex,
+                    'listFilterFiles': listFilterFiles
+                }, (err) => {
                     if (err) throw err;
                 });
             }).catch((err) => {
