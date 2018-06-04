@@ -10,7 +10,7 @@ const errorsType = require('../../errors/errorsType');
 const showNotify = require('../../libs/showNotify');
 const globalObject = require('../../configure/globalObject');
 const writeLogFile = require('../../libs/writeLogFile');
-const routingRequestFilterFiles = require('../routingRequests/routingRequestFilterFiles');
+const routingRequestFilterFiles = require('../routing_requests/routingRequestFilterFiles');
 const processingListFilesForFiltering = require('../../libs/list_file_management/processingListFilesForFiltering');
 
 /**
@@ -22,10 +22,13 @@ const processingListFilesForFiltering = require('../../libs/list_file_management
 module.exports = function(socketIo, redis, taskIndex) {
     new Promise((resolve, reject) => {
         //получаем идентификатор источника
-        redis.hmget('task_filtering_all_information:' + taskIndex, 'sourceId', 'filterSettings', (err, objectParameters) => {
-            if (err) reject(err);
-            else resolve({ sourceId: objectParameters[0], filterSettings: objectParameters[1] });
-        });
+        redis.hmget(`task_filtering_all_information:${taskIndex}`,
+            'sourceId',
+            'filterSettings',
+            (err, result) => {
+                if (err) reject(err);
+                else resolve({ sourceId: result[0], filterSettings: result[1] });
+            });
     }).then((objectParameters) => {
         //проверяем есть ли соединение с источником
         let connectionStatus = globalObject.getData('sources', objectParameters.sourceId, 'connectionStatus');

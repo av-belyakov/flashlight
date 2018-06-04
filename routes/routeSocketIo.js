@@ -17,7 +17,6 @@ const getListSources = require('../libs/helpers/getListSources');
 const checkAccessRights = require('../libs/users_management/checkAccessRights');
 const listParametersSearch = require('../libs/listParametersSearch');
 const importSetupHostFileXml = require('../libs/importSetupHostFileXml');
-//const informationForMainPage = require('../libs/informationForMainPage');
 const getListsTaskProcessing = require('../libs/getListsTaskProcessing');
 const informationForTaskIndex = require('../libs/informationForTaskIndex');
 const checkFileUploadSettings = require('../libs/checkFileUploadSettings');
@@ -25,25 +24,24 @@ const getTaskStatusForJobLogPage = require('../libs/getTaskStatusForJobLogPage')
 const informationForChoiseSource = require('../libs/management_choise_source/informationForChoiseSource');
 const informationForPageLogError = require('../libs/management_log_error/informationForPageLogError');
 const informationForPageLogFilter = require('../libs/management_log_filter/informationForPageLogFilter');
-const routingRequestDownloadFiles = require('./routingRequests/routingRequestsDownloadFiles');
+const routingRequestDownloadFiles = require('./routing_requests/routingRequestsDownloadFiles');
 const informationForPageUploadedFiles = require('../libs/management_uploaded_files/informationForPageUploadedFiles');
-const preparingVisualizationDownloadFiles = require('./processingSocketIo/preparingVisualizationDownloadFiles');
+const preparingVisualizationDownloadFiles = require('./processing_socketio/preparingVisualizationDownloadFiles');
 const checkAccessRightsUsersMakeChangesTask = require('../libs/users_management/checkAccessRightsUsersMakeChangesTask');
 
 
-const processingUser = require('./processingSocketIo/processingUser');
-const processingGroup = require('./processingSocketIo/processingGroup');
-const processingSource = require('./processingSocketIo/processingSource');
-const processingFiltering = require('./processingSocketIo/processingFiltering');
-const processingDashboard = require('./processingSocketIo/processingDashboard');
-const processingFilesUpload = require('./processingSocketIo/processingFilesUpload');
-const processingStopTaskIndex = require('./processingSocketIo/processingStopTaskIndex');
-const processingResumeTaskIndex = require('./processingSocketIo/processingResumeTaskIndex');
-const processingChangeTaskStatus = require('./processingSocketIo/processingChangeTaskStatus');
-const processingExecuteFiltering = require('./processingSocketIo/processingExecuteFiltering');
-const processingInformationTaskIndex = require('./processingSocketIo/processingInformationTaskIndex');
-const processingDeleteTaskInformation = require('./processingSocketIo/processingDeleteTaskInformation');
-//const processingListFilesForFiltering = require('../libs/list_file_management/processingListFilesForFiltering');
+const processingUser = require('./processing_socketio/processingUser');
+const processingGroup = require('./processing_socketio/processingGroup');
+const processingSource = require('./processing_socketio/processingSource');
+const processingDashboard = require('./processing_socketio/processingDashboard');
+const processingFilesUpload = require('./processing_socketio/processingFilesUpload');
+const processingChangeTaskStatus = require('./processing_socketio/processingChangeTaskStatus');
+const processingExecuteFiltering = require('./processing_socketio/processingExecuteFiltering');
+const processingStopTaskFiltering = require('./processing_socketio/processingStopTaskFiltering');
+const processingStartTaskFiltering = require('./processing_socketio/processingStartTaskFiltering');
+const processingResumeTaskFiltering = require('./processing_socketio/processingResumeTaskFiltering');
+const processingInformationTaskIndex = require('./processing_socketio/processingInformationTaskIndex');
+const processingDeleteTaskInformation = require('./processing_socketio/processingDeleteTaskInformation');
 
 const redis = controllers.connectRedis();
 
@@ -653,7 +651,7 @@ module.exports.eventHandling = function(socketIo) {
      * */
     /* добавить задание на фильтрацию */
     socketIo.on('add start filter', function(data) {
-        processingFiltering.startFiltering(redis, data.filterTask, socketIo);
+        processingStartTaskFiltering(redis, data.filterTask, socketIo);
     });
 
 
@@ -685,12 +683,12 @@ module.exports.eventHandling = function(socketIo) {
 
     /* остановить выполняемую задачу по фильтрации */
     socketIo.on('request to stop the task filter', function(data) {
-        processingStopTaskIndex(socketIo, redis, data.taskIndex);
+        processingStopTaskFiltering(socketIo, redis, data.taskIndex);
     });
 
     /* возодновить выполняемую задачу по фильтрации */
     socketIo.on('request to resume the task filter', (data) => {
-        processingResumeTaskIndex(socketIo, redis, data.taskIndex);
+        processingResumeTaskFiltering(socketIo, redis, data.taskIndex);
     });
 
     /* поиск задачи по заданным параметра */

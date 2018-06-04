@@ -44,27 +44,29 @@ _____________________________________
 
     !!! таблица task_filtering_all_information:* !!!
 
-//первый запуск фильтрации или возобновление фильтрации
+//первый сегмент при запуске или возобновления фильтрации.
+//если поле useIndexes: true, то следом идут следующие запросы содержащие 
+//перечень файлов подлежащих фильтрации
+
 * Moth <- * //flashlight (processinfFiltering.js)
     'messageType': 'filtering',
     'info': {
         'processing': 'on',
         'taskIndex': uniqueTaskId, (md5 hex)
-        settings: {
-            dateTimeStart: obj.dateTimeStart, (int)
-            dateTimeEnd: obj.dateTimeEnd, (int)
-            ipaddress: ipaddress, (array(string))
-            network: network, (array(string))
+        'settings': {
+            'dateTimeStart': obj.dateTimeStart, (int)
+            'dateTimeEnd': obj.dateTimeEnd, (int)
+            'ipaddress': ipaddress, (array(string))
+            'network': network, (array(string))
             
-            //если используются индексы то TRUE
-            useIndexes: true/flase
-            //массив с количеством проиндексированных файлов типа [0, 0]
+            'useIndexes': true/flase //если используются индексы то TRUE
+            'totalNumberFilesFilter': 1929
+            'countPartsIndexFiles': [0, 3], //массив с количеством проиндексированных файлов типа [0, 0]
             //формируется через получение индексов от стороннего API или остается пустым (без индексации)
-            countPartsIndexFiles: [0, 3],
             'listFilesFilter': {
-                'directoryName_1': [33]
-                'directoryName_2': [34]
-                'directoryName_N': [33] (количество файлов
+                'directoryName_1': []
+                'directoryName_2': []
+                'directoryName_N': [] (количество файлов
             }
         }
     }
@@ -73,15 +75,14 @@ _____________________________________
 //если useIndexesFiles равен true, то отправляются дополнительные сообщения со списками файлов
 //данные сообщения используются как в начале фильтрации так и при возобновлении
 
+* Moth <- * //flashlight (processinfFiltering.js)
     'messageType': 'filtering',
     'info': {
         'processing': 'on',
         'taskIndex': uniqueTaskId, (md5 hex)
-        //массив с количеством проиндексированных файлов типа [0, 0]
-        //формируется через получение индексов от стороннего API или остается пустым (без индексации)
-        settings: {
-            countPartsIndexFiles: [1, 3],
-            useIndexes: true/flase,
+        'settings': {
+            'countPartsIndexFiles': [1, 3],
+            'useIndexes': true/flase,
             'listFilesFilter': { 
                 'directoryName_1': [] (array files (string))
                 'directoryName_2': [] (array files (string))

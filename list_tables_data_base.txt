@@ -2,28 +2,6 @@
  * описание используемых во Flashlight 'таблиц' СУБД Redis 
  * */
 
-    
-/* списки подключенных и отключенных источников  */
-            --- НЕ АКТУАЛЬНО ---
-remote_host_connect:connection
-    хранит список подключенных источников, 
-    тип - СПИСОК, 
-    например получить весь список redis.lrange('remote_host_connect:connection', [0, -1], (err, arrayList) => {});
-            --- НЕ АКТУАЛЬНО ---
-remote_host_connect:disconnect    
-    хранит список одключенных источников, 
-    тип - СПИСОК, 
-    например получить весь список redis.lrange('remote_host_connect:disconnect', [0, -1], (err, arrayList) => {});
-
-    
-/* списки задач по фильтрации и выгрузки сет. трафика */
-            --- НЕ ПКТУАЛЬНО ---
-task_filtering_index_processing_executed
-    хранит список задач по которым выполняется фильтрация, 
-    тип - СПИСОК, 
-    например получить весь список redis.lrange('task_filtering_index_processing_executed', [0, -1], (err, arrayList) => {});
-
-
 
 
 task_filtering_index_all
@@ -36,6 +14,8 @@ task_uploaded_index_all
 
 task_filter_list_files:<ID source>:<ID task>:<path directory>
     хранит список файлов по которым выполняется фильтрация,
+    формируется от стороннего API если найденны соответствующие индексы,
+    или от Moth при начале фильтрации
     тип - СПИСОК
 
 task_turn_downloading_files

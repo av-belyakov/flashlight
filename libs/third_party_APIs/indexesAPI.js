@@ -24,7 +24,9 @@ module.exports = function(objParametr, taskIndex, func) {
      * Здесь надо будет реализовать:
      * 1. доступ к сторониему API
      * 2. формирование запроса, получение данных
-     * 3. если по заданному запросу был возвращен список файлов сохранить его в таблицу БД 
+     * 3. если по заданному запросу был возвращен список файлов 
+     * который будет необходимо сохранить в таблицу 
+     * task_filter_list_files:<ID source>:<ID task>:<path directory> БД 
      * */
 
     console.log('+++ module indexAPI, read parametrs objParametr +++');

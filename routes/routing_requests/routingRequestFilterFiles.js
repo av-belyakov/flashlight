@@ -14,13 +14,15 @@ const globalObject = require('../../configure/globalObject');
 /**
  * 
  * @param {*} sourceId - идентификатор источника
- * @param {*} data - передаваемые данные
- * @param {*} callback
+ * @param {*} taskIndex - идентификатор задачи
+ * @param {*} filterSettings - параметры фильтрации (могут быть как объект так и строка в формате JSON)
+ * @param {*} listFiles - список файлов
+ * @param {*} callback - функция обратного вызова
  */
 module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles: listFiles }, callback) {
     let { countChunk, listFilesIndexes: arrayListFilesIndexes } = transformListIndexFiles(10, listFiles);
 
-    let wsConnection = objWebsocket['remote_host:' + sourceId];
+    let wsConnection = objWebsocket[`remote_host:${sourceId}`];
     const messagePattern = {
         messageType: 'filtering',
         info: {
@@ -30,30 +32,18 @@ module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles
         }
     };
 
-    let countFiles = {};
+    let countFiles = 0;
+    let folders = {};
     arrayListFilesIndexes.forEach(element => {
         for (let index in element) {
-            if (index in countFiles) {
-                countFiles[index] += element[index].length;
-            } else {
-                countFiles[index] = element[index].length;
-            }
+            folders[index] = [];
+            countFiles += element[index].length;
         }
     });
 
-    /**
-     * 
-     * РЕШИТЬ ПРОБЛЕММУ!!!!
-     * 'listFilesFilter': {
-                    'directoryName_1': [33]
-                    'directoryName_2': [34]
-                    'directoryName_N': [33] (количество файлов
-                }
-                ЧИСЛО ФАЙЛОВ ОТПРАВЛЯЕТСЯ КАК ЧИСЛО (Moth ЖДЕТ СТРОКУ)
-     * 
-     */
-
-    filterSettings = JSON.parse(filterSettings);
+    if (typeof filterSettings.dateTimeStart === 'undefined') {
+        filterSettings = JSON.parse(filterSettings);
+    }
 
     let dtStart = filterSettings.dateTimeStart.split(/\.|\s|:/);
     let dtEnd = filterSettings.dateTimeEnd.split(/\.|\s|:/);
@@ -63,12 +53,13 @@ module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles
         dateTimeEnd: ((+new Date(dtEnd[2], (dtEnd[1] - 1), dtEnd[0], dtEnd[3], dtEnd[4], 0)) / 1000),
         ipaddress: convertStringToArray(filterSettings.ipaddress),
         network: convertStringToArray(filterSettings.network),
-        countPartsIndexFiles: [0, countChunk],
         useIndexes: true,
-        listFilesFilter: countFiles
+        totalNumberFilesFilter: countFiles,
+        countPartsIndexFiles: [0, countChunk],
+        listFilesFilter: folders
     };
 
-    debug(messagePattern.info.settings.listFilesFilter);
+    debug(messagePattern.info.settings);
 
     //первое сообщение с информацией об общем количестве сегментов
     wsConnection.sendUTF(JSON.stringify(messagePattern));
@@ -82,6 +73,10 @@ module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles
         };
 
         debug(messagePattern.info.settings.countPartsIndexFiles);
+        for (let dir in messagePattern.info.settings.listFilesFilter) {
+            debug('---------- ' + dir + ' ------------');
+            debug(messagePattern.info.settings.listFilesFilter[dir].length);
+        }
 
         wsConnection.sendUTF(JSON.stringify(messagePattern));
     }
@@ -143,5 +138,7 @@ function transformListIndexFiles(sizeChunk, listFiles) {
 
 //делим строку на элементы массива
 function convertStringToArray(reqString) {
+    if (reqString === null) return [];
+
     return (!(~reqString.indexOf(','))) ? [reqString] : reqString.split(',');
 }

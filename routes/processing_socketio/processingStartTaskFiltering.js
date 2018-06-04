@@ -20,14 +20,16 @@ const crypto = require('crypto');
 const getUserId = require('../../libs/users_management/getUserId');
 const showNotify = require('../../libs/showNotify');
 const errorsType = require('../../errors/errorsType');
-const indexesAPI = require('../../libs/thirdPartyAPIs/indexesAPI');
+const indexesAPI = require('../../libs/third_party_APIs/indexesAPI');
 const writeLogFile = require('../../libs/writeLogFile');
 const objWebsocket = require('../../configure/objWebsocket');
 const globalObject = require('../../configure/globalObject');
 const checkUserData = require('../../libs/helpers/checkUserData');
-const transformListIndexFiles = require('../../libs/helpers/transformListIndexFiles.js');
+//const transformListIndexFiles = require('../../libs/helpers/transformListIndexFiles.js');
 const createTableIndexSettings = require('../../libs/management_index/createTableIndexSettings');
+const routingRequestFilterFiles = require('../../routes/routing_requests/routingRequestFilterFiles');
 const processingListFilesForFiltering = require('../../libs/list_file_management/processingListFilesForFiltering');
+
 
 /**
  * 
@@ -36,7 +38,7 @@ const processingListFilesForFiltering = require('../../libs/list_file_management
  * @param {*} socketIo - дескриптор соединения socketio
  */
 module.exports = function(redis, obj, socketIo) {
-    let uniqueTaskId = getUniqueId(obj.sourceId);
+    let taskIndex = getUniqueId(obj.sourceId);
 
     async.waterfall([
         //проверяем данные отправленные пользователем
@@ -79,13 +81,13 @@ module.exports = function(redis, obj, socketIo) {
         },
         //добавляется информация в task_filtering_index_all (УПОРЯДОЧНЫЕ МНОЖЕСТВА)
         function(object, callback) {
-            redis.zadd('task_filtering_index_all', [+new Date(), uniqueTaskId], (err) => {
+            redis.zadd('task_filtering_index_all', [+new Date(), taskIndex], (err) => {
                 if (err) return callback(new errorsType.undefinedServerError('Ошибка: внутренняя ошибка сервера, невозможно запустить задачу', err.toString()));
-                else callback(null, object, uniqueTaskId);
+                else callback(null, object);
             });
         },
         //обрабатываем пользовательские данные
-        function(object, uniqueTaskId, callback) {
+        function(object, callback) {
             let arrayIPOrNetwork = obj.ipOrNetwork.split(',');
 
             let arrayIPAddress = [];
@@ -108,19 +110,18 @@ module.exports = function(redis, obj, socketIo) {
                     callback(null, object, {
                         arrayIPAddress,
                         arrayNetwork
-                    }, uniqueTaskId);
+                    });
                 }
                 num++;
             });
         },
         //модуль обращения к стороннему API для получения индексов
-        function(object, arrayIPAndNetwork, uniqueTaskId, callback) {
-            indexesAPI(object, uniqueTaskId, (err, indexIsExist, taskIndex) => {
+        function(object, arrayIPAndNetwork, callback) {
+            indexesAPI(object, taskIndex, (err, indexIsExist, taskIndex) => {
                 callback(null, object, arrayIPAndNetwork, indexIsExist);
             });
         },
-
-        //получаем ip-адреса и подсети
+        //добавляется информация в task_filtering_all_information (ХЕШ ТАБЛИЦА)
         function(object, arrayIPAndNetwork, indexIsExist, callback) {
             let objFilterSettings = {
                 'dateTimeStart': object.dateTimeStart,
@@ -129,13 +130,7 @@ module.exports = function(redis, obj, socketIo) {
                 'network': object.network
             };
 
-            callback(null, object, objFilterSettings, arrayIPAndNetwork, indexIsExist);
-        },
-        //добавляется информация в task_filtering_all_information (ХЕШ ТАБЛИЦА)
-        function(object, objFilterSettings, arrayIPAndNetwork, indexIsExist, callback) {
-            let filterSettingsJSON = JSON.stringify(objFilterSettings);
-
-            redis.hmset('task_filtering_all_information:' + uniqueTaskId, {
+            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
                 'userName': object.userName,
                 'userLogin': object.userLogin,
                 'userLoginImport': 'null',
@@ -143,7 +138,7 @@ module.exports = function(redis, obj, socketIo) {
                 'dateTimeStartFilter': 'null',
                 'dateTimeEndFilter': 'null',
                 'sourceId': obj.sourceId,
-                'filterSettings': filterSettingsJSON,
+                'filterSettings': JSON.stringify(objFilterSettings),
                 'filterUseIndex': indexIsExist,
                 'jobStatus': 'expect',
                 'directoryFiltering': 'null',
@@ -179,34 +174,6 @@ module.exports = function(redis, obj, socketIo) {
         //отправка данных источнику
         function(objFilterSettings, arrayIPAndNetwork, indexIsExist, callback) {
 
-            debug(arrayIPAndNetwork);
-
-            objFilterSettings.ipaddress = arrayIPAndNetwork.arrayIPAddress;
-            objFilterSettings.network = arrayIPAndNetwork.arrayNetwork;
-
-            let dtStart = objFilterSettings.dateTimeStart.split(/\.|\s|:/);
-            let dtEnd = objFilterSettings.dateTimeEnd.split(/\.|\s|:/);
-
-            objFilterSettings.dateTimeStart = (+new Date(dtStart[2], (dtStart[1] - 1), dtStart[0], dtStart[3], dtStart[4], 0)) / 1000;
-            objFilterSettings.dateTimeEnd = (+new Date(dtEnd[2], (dtEnd[1] - 1), dtEnd[0], dtEnd[3], dtEnd[4], 0)) / 1000;
-
-            let objTaskFilter = {
-                'messageType': 'filtering',
-                'info': {
-                    'processing': 'on',
-                    'taskIndex': uniqueTaskId,
-                    'settings': objFilterSettings,
-                    'useIndexes': indexIsExist,
-                    'totalNumberFilesFilter': 0,
-                    'countIndexesFiles': [0, 0]
-                }
-            };
-
-            let wsConnection = objWebsocket['remote_host:' + obj.sourceId];
-
-            debug('--------- parameters to filtering ---------');
-            debug(objFilterSettings);
-
             /**
              * { dateTimeStart: 1459603200,
               processingFiltering   dateTimeEnd: 1461417600,
@@ -216,16 +183,57 @@ module.exports = function(redis, obj, socketIo) {
 
             //если индексы не найденны
             if (!indexIsExist) {
+                let wsConnection = objWebsocket[`remote_host:${obj.sourceId}`];
+
+                objFilterSettings.ipaddress = arrayIPAndNetwork.arrayIPAddress;
+                objFilterSettings.network = arrayIPAndNetwork.arrayNetwork;
+
+                let dtStart = objFilterSettings.dateTimeStart.split(/\.|\s|:/);
+                let dtEnd = objFilterSettings.dateTimeEnd.split(/\.|\s|:/);
+                objFilterSettings.dateTimeStart = (+new Date(dtStart[2], (dtStart[1] - 1), dtStart[0], dtStart[3], dtStart[4], 0)) / 1000;
+                objFilterSettings.dateTimeEnd = (+new Date(dtEnd[2], (dtEnd[1] - 1), dtEnd[0], dtEnd[3], dtEnd[4], 0)) / 1000;
+
+                let objTaskFilter = {
+                    'messageType': 'filtering',
+                    'info': {
+                        'processing': 'on',
+                        'taskIndex': taskIndex,
+                        'settings': objFilterSettings,
+                        'useIndexes': indexIsExist,
+                        'totalNumberFilesFilter': 0,
+                        'countIndexesFiles': [0, 0]
+                    }
+                };
 
                 debug(objTaskFilter);
 
                 wsConnection.sendUTF(JSON.stringify(objTaskFilter));
 
-                return callback(null, uniqueTaskId);
+                return callback(null, taskIndex);
+            } else {
+                processingListFilesForFiltering.getList(obj.sourceId, taskIndex, redis)
+                    .then((listFilterFiles) => {
+                        if (Object.keys(listFilterFiles) === 0) {
+                            throw new errorsType.receivedIncorrectData('Ошибка: невозможно выполнить задачу, получены некорректные данные');
+                        }
+
+                        //отправляем список файлов по которым нужно возобновить фильтрацию
+                        routingRequestFilterFiles({
+                            'sourceId': obj.sourceId,
+                            'taskIndex': taskIndex,
+                            'filterSettings': objFilterSettings,
+                            'listFilterFiles': listFilterFiles
+                        }, (err) => {
+                            if (err) throw err;
+                            else callback(null);
+                        });
+                    }).catch((err) => {
+                        callback(err);
+                    });
             }
 
             //если есть индексы то получить список файлов сформированный в результате обработки индексов
-            processingListFilesForFiltering.getList(obj.sourceId, uniqueTaskId, redis)
+            /*processingListFilesForFiltering.getList(obj.sourceId, uniqueTaskId, redis)
                 .then((listFilesIndexes) => {
                     //делим списки файлов на фрагменты и считаем их количество
                     let [countChunk, arrayListFilesIndex] = transformListIndexFiles(listFilesIndexes);
@@ -273,9 +281,9 @@ module.exports = function(redis, obj, socketIo) {
                 })
                 .catch((err) => {
                     callback(err);
-                });
+                });*/
         }
-    ], function(err, taskIndex) {
+    ], function(err) {
         if (err) {
             if (err.name === 'SourceIsNotConnection') showNotify(socketIo, 'warning', err.message);
             else if (err.name === 'ReceivedIncorrectData') showNotify(socketIo, 'danger', err.message);
