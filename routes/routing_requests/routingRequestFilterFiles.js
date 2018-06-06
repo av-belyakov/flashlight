@@ -20,7 +20,7 @@ const globalObject = require('../../configure/globalObject');
  * @param {*} callback - функция обратного вызова
  */
 module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles: listFiles }, callback) {
-    let { countChunk, listFilesIndexes: arrayListFilesIndexes } = transformListIndexFiles(10, listFiles);
+    let { countChunk, listFilesIndexes: arrayListFilesIndexes } = transformListIndexFiles(30, listFiles);
 
     let wsConnection = objWebsocket[`remote_host:${sourceId}`];
     const messagePattern = {

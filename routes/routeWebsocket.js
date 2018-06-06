@@ -214,7 +214,14 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 
     if (self.info.processing === 'start') {
 
-        debug('START FILTERING');
+        debug('START FILTERING Moth_go -> Flashlight');
+        debug(self);
+
+        for (let directory in self.info.listFilesFilter) {
+            if (Array.isArray(self.info.listFilesFilter[directory])) {
+                debug(self.info.listFilesFilter[directory].length);
+            }
+        }
 
         //если фрагмент сообщения первый
         if (self.info.numberMessageParts[0] === 0) {
@@ -257,6 +264,8 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 else callback(null);
             });
         } else {
+            if (self.info.useIndexes) return callback(null);
+
             //создание списков task_filter_list_files:<ID source>:<ID task>:<path directory> содержащих файлы по которым будет вполнятся фильтрация
             processingListFilesForFiltering.createList({
                 sourceId: remoteHostId,
@@ -278,7 +287,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 
     if (self.info.processing === 'execute') {
 
-        debug('START EXECUTE');
+        //debug('START EXECUTE');
 
         if (typeof self.info.infoProcessingFile.statusProcessed === 'undefined') {
             callback(new errorsType.receivedIncorrectData('received incorrect data'));
@@ -329,11 +338,11 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 });
             },
             (callback) => {
+                //редактирование списков task_filter_list_files:<ID source>:<ID task>:<path directory> содержащих файлы по которым будет вполнятся фильтрация
                 processingListFilesForFiltering.modifyList({
                     sourceId: remoteHostId,
                     taskIndex: self.info.taskIndex,
-                    directoryName: self.info.infoProcessingFile,
-                    fileName: self.info.infoProcessingFile.fileName
+                    infoProcessingFile: self.info.infoProcessingFile
                 }, redis, (err) => {
                     if (err) callback(err);
                     else callback(null);

@@ -107,8 +107,9 @@ function deleteList(sourceId, taskIndex, redis, callback) {
  */
 function modifyList(objectForModify, redis, callback) {
     return new Promise((resolve, reject) => {
-        redis.lrem(`task_filter_list_files:${objectForModify.sourceId}:${objectForModify.taskIndex}:${objectForModify.directoryName}`, [0, objectForModify.fileName], (err, isTrue) => {
+        redis.lrem(`task_filter_list_files:${objectForModify.sourceId}:${objectForModify.taskIndex}:${objectForModify.infoProcessingFile.directoryLocation}`, [0, objectForModify.infoProcessingFile.fileName], (err, isTrue) => {
             if (err) {
+
                 if (callback) callback(err);
                 else reject(err);
             } else {
@@ -161,6 +162,6 @@ function getList(sourceId, taskIndex, redis, callback) {
                 if (callback) callback(err);
                 else reject(err);
             });
-        })
+        });
     });
 }

@@ -103,8 +103,8 @@ let helpers = {
     checkInputValidation(elem) {
         let objSettings = {
             'hostId': new RegExp('^[0-9]{1,7}$'),
-            'shortNameHost': new RegExp('^[a-zA-Z0-9_\\-\\s]{3,15}$'),
-            'fullNameHost': new RegExp('^[a-zA-Zа-яА-Яё0-9_\\-\\s\\.,]{5,}$'),
+            'shortNameHost': new RegExp('^[a-zA-Z0-9_№"\\-\\s]{3,15}$'),
+            'fullNameHost': new RegExp('^[a-zA-Zа-яА-Яё0-9_№"\\-\\s\\.,]{5,}$'),
             'ipaddress': new RegExp('^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)[.]){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$'),
             'port': new RegExp('^[0-9]{1,5}$'),
             'countProcess': new RegExp('^[0-9]{1}$'),
@@ -480,6 +480,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 (function () {
     let timerId = null;
 
+    let objectTimers = {};
+
     //вывод информационного сообщения
     function showNotify(arrOne, arrTwo, type, message) {
         if (type === 'danger' || type === 'success' || type === 'warning') {
@@ -572,17 +574,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //информация о ходе фильтрации
         socket.on('filtering stop', function (data) {
-            setTimeout(__WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__["a" /* default */].bind(null, data.information.taskIndex), 30000);
+            objectTimers[data.information.taskIndex] = setTimeout(__WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__["a" /* default */].bind(null, data.information.taskIndex), 30000);
         });
 
         //вывод информационного сообщения
         socket.on('notify information', function (data) {
-            var obj = JSON.parse(data.notify);
+            let obj = JSON.parse(data.notify);
             showNotify([], [], obj.type, obj.message);
         });
 
         //вывод подробной информации о задаче на фильтрацию
         socket.on('all information for task index', function (data) {
+            if (data.information.taskIndex in objectTimers) {
+                delete objectTimers[data.information.taskIndex];
+            }
+
             Object(__WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__["a" /* default */])(data);
         });
 

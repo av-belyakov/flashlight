@@ -130,8 +130,8 @@ let helpers = {
     checkInputValidation(elem) {
         let objSettings = {
             'hostId': new RegExp('^[0-9]{1,7}$'),
-            'shortNameHost': new RegExp('^[a-zA-Z0-9_\\-\\s]{3,15}$'),
-            'fullNameHost': new RegExp('^[a-zA-Zа-яА-Яё0-9_\\-\\s\\.,]{5,}$'),
+            'shortNameHost': new RegExp('^[a-zA-Z0-9_№"\\-\\s]{3,15}$'),
+            'fullNameHost': new RegExp('^[a-zA-Zа-яА-Яё0-9_№"\\-\\s\\.,]{5,}$'),
             'ipaddress': new RegExp('^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)[.]){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$'),
             'port': new RegExp('^[0-9]{1,5}$'),
             'countProcess': new RegExp('^[0-9]{1}$'),

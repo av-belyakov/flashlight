@@ -200,9 +200,9 @@ exports.addEditSoutce = function(socketIo, obj) {
         };
         let objRegexpPattern = {
             int: new RegExp('^[0-9]{1,7}$'),
-            stringEnInt: new RegExp('^[a-zA-Z0-9_\\-\\s]{3,15}$'),
+            stringEnInt: new RegExp('^[a-zA-Z0-9_№"\\-\\s]{3,15}$'),
             stringToken: new RegExp('^[a-zA-Z0-9\\s]+$'),
-            stringRuEnInt: new RegExp('^[a-zA-Zа-яА-Яё0-9_\\-\\s\\.,]+$'),
+            stringRuEnInt: new RegExp('^[a-zA-Zа-яА-Яё0-9_№"\\-\\s\\.,]+$'),
             ipaddressString: new RegExp('^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)[.]){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$')
         };
 

@@ -16,6 +16,8 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 (function() {
     let timerId = null;
 
+    let objectTimers = {};
+
     //вывод информационного сообщения
     function showNotify(arrOne, arrTwo, type, message) {
         if (type === 'danger' || type === 'success' || type === 'warning') {
@@ -113,17 +115,21 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //информация о ходе фильтрации
         socket.on('filtering stop', function(data) {
-            setTimeout(deleteElementInformationFiltering.bind(null, data.information.taskIndex), 30000);
+            objectTimers[data.information.taskIndex] = setTimeout(deleteElementInformationFiltering.bind(null, data.information.taskIndex), 30000);
         });
 
         //вывод информационного сообщения
         socket.on('notify information', function(data) {
-            var obj = JSON.parse(data.notify);
+            let obj = JSON.parse(data.notify);
             showNotify([], [], obj.type, obj.message);
         });
 
         //вывод подробной информации о задаче на фильтрацию
         socket.on('all information for task index', function(data) {
+            if (data.information.taskIndex in objectTimers) {
+                delete objectTimers[data.information.taskIndex];
+            }
+
             createModalWindowFilterResults(data);
         });
 

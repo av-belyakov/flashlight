@@ -686,7 +686,7 @@ module.exports.eventHandling = function(socketIo) {
         processingStopTaskFiltering(socketIo, redis, data.taskIndex);
     });
 
-    /* возодновить выполняемую задачу по фильтрации */
+    /* возобновить выполняемую задачу по фильтрации */
     socketIo.on('request to resume the task filter', (data) => {
         processingResumeTaskFiltering(socketIo, redis, data.taskIndex);
     });
