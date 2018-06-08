@@ -78,8 +78,12 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                 debug(`Начало фильтрации на источнике №<strong>${remoteHostId}</strong>`);
 
-                processingExecuteFiltering.execute(socketIoS, stringMessage.info.taskIndex, (err, data) => {
-                    if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль фильтрации сетевого трафика не возможен`);
+                processingExecuteFiltering.execute(stringMessage.info.taskIndex, (err, data) => {
+                    if (err) {
+                        writeLogFile.writeLog('\tError: ' + err.toString());
+                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль фильтрации сетевого трафика не возможен`);
+                        return;
+                    }
 
                     socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
 
@@ -113,15 +117,19 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             }
 
             if (stringMessage.info.processing === 'execute') {
-                processingExecuteFiltering.execute(socketIoS, stringMessage.info.taskIndex, function(err, data) {
+                processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
                     if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                     else socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
                 });
             }
 
             if (stringMessage.info.processing === 'complete') {
-                processingExecuteFiltering.execute(socketIoS, stringMessage.info.taskIndex, function(err, data) {
-                    if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль фильтрации сетевого трафика не возможен`);
+                processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
+                    if (err) {
+                        writeLogFile.writeLog('\tError: ' + err.toString());
+                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль фильтрации сетевого трафика не возможен`);
+                        return;
+                    }
 
                     showNotify(socketIoS, 'success', `Завершение фильтрации на источнике №<strong>${remoteHostId}</strong>`);
                     socketIoS.emit('filtering stop', { processingType: 'showInformationFilter', information: data });
@@ -165,8 +173,12 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             }
 
             if (stringMessage.info.processing === 'stop') {
-                processingExecuteFiltering.execute(socketIoS, stringMessage.info.taskIndex, function(err, data) {
-                    if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль фильтрации сетевого трафика не возможен`);
+                processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
+                    if (err) {
+                        writeLogFile.writeLog('\tError: ' + err.toString());
+                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль фильтрации сетевого трафика не возможен`);
+                        return;
+                    }
 
                     showNotify(socketIoS, 'success', `Фильтрация на источнике №<strong>${remoteHostId}</strong> успешно остановлена`);
                     socketIoS.emit('filtering stop', { processingType: 'showInformationFilter', information: data });

@@ -59,6 +59,7 @@ module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles
         listFilesFilter: folders
     };
 
+    debug(`task ID: ${messagePattern.info.taskIndex}`);
     debug(messagePattern.info.settings);
 
     //первое сообщение с информацией об общем количестве сегментов

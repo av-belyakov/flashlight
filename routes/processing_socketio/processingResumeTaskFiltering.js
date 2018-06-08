@@ -20,6 +20,8 @@ const processingListFilesForFiltering = require('../../libs/list_file_management
  * @param {*} taskIndex - уникальный идентификатор задачи
  */
 module.exports = function(socketIo, redis, taskIndex) {
+    console.log('RESUME FILTERING start....');
+
     new Promise((resolve, reject) => {
         //получаем идентификатор источника
         redis.hmget(`task_filtering_all_information:${taskIndex}`,

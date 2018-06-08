@@ -205,12 +205,17 @@ module.exports = function(redis, obj, socketIo) {
                     }
                 };
 
+                debug('START ++++++');
                 debug(objTaskFilter);
 
                 wsConnection.sendUTF(JSON.stringify(objTaskFilter));
 
                 return callback(null, taskIndex);
             } else {
+
+                debug('---------------------------------------');
+                debug('RESUME FILTERING, get list files');
+
                 processingListFilesForFiltering.getList(obj.sourceId, taskIndex, redis)
                     .then((listFilterFiles) => {
                         if (Object.keys(listFilterFiles) === 0) {

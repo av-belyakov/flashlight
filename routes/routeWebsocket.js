@@ -33,7 +33,7 @@ module.exports.route = function(objData, remoteHostId, callback) {
         'download files': messageTypeUpload
     };
 
-    debug(`++++++|||||||| responsed type message: ${objData.messageType} ||||||||||||++++++++`);
+    //    debug(`++++++|||||||| responsed type message: ${objData.messageType} ||||||||||||++++++++`);
 
     if (typeof objRoutes[objData.messageType] === 'undefined') callback();
     else objRoutes[objData.messageType].call(objData, redis, remoteHostId, callback);
@@ -206,7 +206,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
     let triggerCheckUserData = checkUserData(self.info);
     let triggerCheckCountUserData = checkCountUserData(self.info.processing, self);
 
-    debug(`triggerCheckUserData = ${triggerCheckUserData}, triggerCheckCountUserData = ${triggerCheckCountUserData}`);
+    //    debug(`triggerCheckUserData = ${triggerCheckUserData}, triggerCheckCountUserData = ${triggerCheckCountUserData}`);
 
     if (!triggerCheckUserData || !triggerCheckCountUserData) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));
@@ -225,43 +225,41 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 
         //если фрагмент сообщения первый
         if (self.info.numberMessageParts[0] === 0) {
-            async.parallel([
-                //запись в таблицу task_filtering_all_information:* основной информации
-                (callback) => {
-                    redis.hmset('task_filtering_all_information:' + self.info.taskIndex, {
-                        'dateTimeStartFilter': +new Date(),
-                        'jobStatus': self.info.processing,
-                        'directoryFiltering': self.info.directoryFiltering,
-                        'countDirectoryFiltering': self.info.countDirectoryFiltering,
-                        'countFullCycle': self.info.countFullCycle,
-                        'countCycleComplete': self.info.countCycleComplete,
-                        'countFilesFiltering': self.info.countFilesFiltering,
-                        'countFilesFound': self.info.countFilesFound,
-                        'countFilesProcessed': self.info.countFilesProcessed,
-                        'countFilesUnprocessed': self.info.countFilesUnprocessed,
-                        'countMaxFilesSize': self.info.countMaxFilesSize,
-                        'countFoundFilesSize': self.info.countFoundFilesSize,
-                        'filterUseIndex': self.info.useIndexes
-                    }, (err) => {
-                        if (err) callback(err);
-                        else callback(null);
-                    });
-                },
-                //добавление в объект globalObject информации по задаче
-                (callback) => {
-                    globalObject.setData('processingTasks', self.info.taskIndex, {
-                        'taskType': 'filtering',
-                        'sourceId': remoteHostId,
-                        'status': 'execute',
-                        'timestampStart': +new Date(),
-                        'timestampModify': +new Date()
-                    });
+            new Promise((resolve, reject) => {
+                let objectData = {
+                    'dateTimeStartFilter': +new Date(),
+                    'jobStatus': self.info.processing,
+                    'directoryFiltering': self.info.directoryFiltering,
+                    'countDirectoryFiltering': self.info.countDirectoryFiltering,
+                    'countFullCycle': self.info.countFullCycle,
+                    'countCycleComplete': self.info.countCycleComplete,
+                    'countFilesFound': self.info.countFilesFound,
+                    'countFilesUnprocessed': self.info.countFilesUnprocessed,
+                    'countMaxFilesSize': self.info.countMaxFilesSize,
+                    'countFoundFilesSize': self.info.countFoundFilesSize,
+                    'filterUseIndex': self.info.useIndexes
+                };
+                if (!self.info.useIndexes) {
+                    objectData.countFilesFiltering = self.info.countFilesFiltering;
+                    objectData.countFilesProcessed = self.info.countFilesProcessed;
+                }
 
-                    callback(null);
-                },
-            ], (err) => {
-                if (err) callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
-                else callback(null);
+                redis.hmset('task_filtering_all_information:' + self.info.taskIndex, objectData, (err) => {
+                    if (err) reject(err);
+                    else resolve(null);
+                });
+            }).then(() => {
+                globalObject.setData('processingTasks', self.info.taskIndex, {
+                    'taskType': 'filtering',
+                    'sourceId': remoteHostId,
+                    'status': 'execute',
+                    'timestampStart': +new Date(),
+                    'timestampModify': +new Date()
+                });
+
+                callback(null);
+            }).catch((err) => {
+                callback(err);
             });
         } else {
             if (self.info.useIndexes) return callback(null);
@@ -288,6 +286,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
     if (self.info.processing === 'execute') {
 
         //debug('START EXECUTE');
+        //debug(self.info);
 
         if (typeof self.info.infoProcessingFile.statusProcessed === 'undefined') {
             callback(new errorsType.receivedIncorrectData('received incorrect data'));
@@ -325,14 +324,30 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 callback(null);
             },
             (callback) => {
-                redis.hmset('task_filtering_all_information:' + self.info.taskIndex, {
-                    'jobStatus': self.info.processing,
-                    'countFilesFound': self.info.countFilesFound,
-                    'countFilesProcessed': self.info.countFilesProcessed,
-                    'countFilesUnprocessed': self.info.countFilesUnprocessed,
-                    'countCycleComplete': self.info.countCycleComplete,
-                    'countFoundFilesSize': self.info.countFoundFilesSize
-                }, (err) => {
+                new Promise((resolve, reject) => {
+                    redis.hmget(`task_filtering_all_information:${self.info.taskIndex}`,
+                        'countFilesFound',
+                        'countFoundFilesSize', (err, result) => {
+                            if (err) reject(err);
+                            else resolve({ 'countFilesFound': result[0], 'countFoundFilesSize': result[1] });
+                        });
+                }).then((objectData) => {
+                    redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
+                        'jobStatus': self.info.processing,
+                        'countFilesUnprocessed': self.info.countFilesUnprocessed,
+                        'countCycleComplete': self.info.countCycleComplete,
+                        'countFilesFound': (Number(objectData.countFilesFound) + Number(self.info.countFilesFound)),
+                        'countFoundFilesSize': (Number(objectData.countFoundFilesSize) + Number(self.info.countFoundFilesSize))
+                    }, (err) => {
+                        if (err) throw (err);
+                        else callback(null);
+                    });
+                }).catch((err) => {
+                    callback(err);
+                });
+            },
+            (callback) => {
+                redis.hincrby(`task_filtering_all_information:${self.info.taskIndex}`, 'countFilesProcessed', 1, (err) => {
                     if (err) callback(err);
                     else callback(null);
                 });
@@ -354,7 +369,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
             if (self.info.infoProcessingFile.statusProcessed) return callback(null);
 
             new Promise((resolve, reject) => {
-                redis.hget('task_filtering_all_information:' + self.info.taskIndex, 'listFilesUnprocessing', (err, listFilesUnprocessing) => {
+                redis.hget(`task_filtering_all_information:${self.info.taskIndex}`, 'listFilesUnprocessing', (err, listFilesUnprocessing) => {
                     if (err) reject(err);
                     else resolve(listFilesUnprocessing);
                 });
@@ -388,13 +403,15 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
     }
 
     if (self.info.processing === 'complete') {
-        console.log(self.info);
+
+        debug('moth -> flashlight, message COMPLETE');
+        debug(self.info);
 
         async.parallel([
             (callback) => {
                 console.log('--- routeWebsocket (message COMPLETE): 111');
 
-                redis.hmset('task_filtering_all_information:' + self.info.taskIndex, {
+                redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                     'jobStatus': self.info.processing,
                     'dateTimeEndFilter': +new Date(),
                     'countFilesFound': self.info.countFilesFound,
@@ -437,7 +454,16 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
     }
 
     if (self.info.processing === 'stop') {
-        redis.hmset('task_filtering_all_information:' + self.info.taskIndex, {
+
+        debug('moth -> flashlight, message STOP');
+        debug(self.info);
+
+        /**
+         * ПРИ ОСТАНОВ ЗАДАЧИ ПОЧЕМУ ТО НЕ ИЗМЕНЯЕТ СТАТУС ЗАДАЧИ НА STOP
+         * 
+         */
+
+        redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
             'jobStatus': self.info.processing,
             'dateTimeEndFilter': +new Date(),
             'countFilesFound': self.info.countFilesFound,
@@ -446,9 +472,20 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
             'countCycleComplete': self.info.countCycleComplete,
             'countFoundFilesSize': self.info.countFoundFilesSize
         }, (err) => {
-            if (err) return callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
+            if (err) {
+                debug(err);
+
+
+                return callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
+            }
 
             globalObject.deleteData('processingTasks', self.info.taskIndex);
+
+            //ВРЕМЕННЫЙ для проверки
+            redis.hget(`task_filtering_all_information:${self.info.taskIndex}`, 'jobStatus', (err, js) => {
+                if (err) debug(err);
+                else debug(js);
+            });
 
             callback(null);
             /*redis.lrem('task_filtering_index_processing_executed', [0, self.info.taskIndex], function(err) {
