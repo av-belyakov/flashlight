@@ -39,8 +39,14 @@ export default {
     },
 
     //запрос на возобновление выполнения задачи по фильтрации
-    resumeFilterTask(taskIndex) {
+    resumeFilterTask(taskIndex, objectTimers) {
         socket.emit('request to resume the task filter', { processingType: 'resumeTaskFilter', taskIndex: taskIndex });
+
+        if (objectTimers && (taskIndex in objectTimers)) {
+            clearTimeout(objectTimers[taskIndex]);
+            delete(objectTimers[taskIndex]);
+        }
+
         //закрыть модальное окно
         $('#modalWindowTaskFilter').modal('hide');
     },

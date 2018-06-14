@@ -64,7 +64,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
         },
         'information': function() {
 
-            debug(`remoute host ${remoteHostId}`);
+            //debug(`remoute host ${remoteHostId}`);
 
             socketIoS.emit('new information message', { sourceId: remoteHostId });
         },
@@ -95,7 +95,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                         });
                     }).then((objTaskStatus) => {
                         return new Promise((resolve, reject) => {
-                            getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
+                            getListsTaskProcessing((err, objListsTaskProcessing) => {
                                 if (err) reject(err);
                                 else resolve({
                                     status: objTaskStatus,
@@ -148,7 +148,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                         return new Promise((resolve, reject) => {
                             debug('FILTERING COMPLETE 333');
-                            getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
+                            getListsTaskProcessing((err, objListsTaskProcessing) => {
                                 if (err) reject(err);
                                 else resolve({
                                     status: objTaskStatus,
@@ -191,7 +191,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                         });
                     }).then((objTaskStatus) => {
                         return new Promise((resolve, reject) => {
-                            getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
+                            getListsTaskProcessing((err, objListsTaskProcessing) => {
                                 if (err) reject(err);
                                 else resolve({
                                     status: objTaskStatus,
@@ -438,7 +438,7 @@ module.exports.eventHandling = function(socketIo) {
                                 });
                             }).then((objTaskStatus) => {
                                 return new Promise((resolve, reject) => {
-                                    getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
+                                    getListsTaskProcessing((err, objListsTaskProcessing) => {
                                         if (err) reject(err);
                                         else resolve({
                                             status: objTaskStatus,
@@ -495,7 +495,7 @@ module.exports.eventHandling = function(socketIo) {
                     });
                 }).then((objTaskStatus) => {
                     return new Promise((resolve, reject) => {
-                        getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
+                        getListsTaskProcessing((err, objListsTaskProcessing) => {
                             if (err) reject(err);
                             else resolve({
                                 status: objTaskStatus,
@@ -550,7 +550,7 @@ module.exports.eventHandling = function(socketIo) {
                     });
                 }).then((objTaskStatus) => {
                     return new Promise((resolve, reject) => {
-                        getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
+                        getListsTaskProcessing((err, objListsTaskProcessing) => {
                             if (err) reject(err);
                             else resolve({
                                 status: objTaskStatus,
@@ -605,7 +605,7 @@ module.exports.eventHandling = function(socketIo) {
                     });
                 }).then((objTaskStatus) => {
                     return new Promise((resolve, reject) => {
-                        getListsTaskProcessing(redis, (err, objListsTaskProcessing) => {
+                        getListsTaskProcessing((err, objListsTaskProcessing) => {
                             if (err) reject(err);
                             else resolve({
                                 status: objTaskStatus,
@@ -663,6 +663,9 @@ module.exports.eventHandling = function(socketIo) {
      * */
     /* добавить задание на фильтрацию */
     socketIo.on('add start filter', function(data) {
+
+        debug('************** START the task filter');
+
         processingStartTaskFiltering(redis, data.filterTask, socketIo);
     });
 
@@ -678,6 +681,9 @@ module.exports.eventHandling = function(socketIo) {
 
                     obj.taskIndex = data.taskIndex;
                     Object.assign(obj, objAccessRights);
+
+                    //                    debug('INFORMATION FOR TASKFILTERING WODAL WINDOW');
+                    //                    debug(obj);
 
                     socketIo.emit('all information for task index', { processingType: 'showInformationSource', information: obj });
                 });
@@ -700,6 +706,9 @@ module.exports.eventHandling = function(socketIo) {
 
     /* возобновить выполняемую задачу по фильтрации */
     socketIo.on('request to resume the task filter', (data) => {
+
+        debug('************** RESUME the task filter');
+
         processingResumeTaskFiltering(socketIo, redis, data.taskIndex);
     });
 

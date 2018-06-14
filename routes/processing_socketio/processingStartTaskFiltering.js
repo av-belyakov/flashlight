@@ -185,27 +185,33 @@ module.exports = function(redis, obj, socketIo) {
             if (!indexIsExist) {
                 let wsConnection = objWebsocket[`remote_host:${obj.sourceId}`];
 
-                objFilterSettings.ipaddress = arrayIPAndNetwork.arrayIPAddress;
-                objFilterSettings.network = arrayIPAndNetwork.arrayNetwork;
+                //                objFilterSettings.ipaddress = arrayIPAndNetwork.arrayIPAddress;
+                //                objFilterSettings.network = arrayIPAndNetwork.arrayNetwork;
 
                 let dtStart = objFilterSettings.dateTimeStart.split(/\.|\s|:/);
                 let dtEnd = objFilterSettings.dateTimeEnd.split(/\.|\s|:/);
-                objFilterSettings.dateTimeStart = (+new Date(dtStart[2], (dtStart[1] - 1), dtStart[0], dtStart[3], dtStart[4], 0)) / 1000;
-                objFilterSettings.dateTimeEnd = (+new Date(dtEnd[2], (dtEnd[1] - 1), dtEnd[0], dtEnd[3], dtEnd[4], 0)) / 1000;
+                //                objFilterSettings.dateTimeStart = (+new Date(dtStart[2], (dtStart[1] - 1), dtStart[0], dtStart[3], dtStart[4], 0)) / 1000;
+                //                objFilterSettings.dateTimeEnd = (+new Date(dtEnd[2], (dtEnd[1] - 1), dtEnd[0], dtEnd[3], dtEnd[4], 0)) / 1000;
 
                 let objTaskFilter = {
                     'messageType': 'filtering',
                     'info': {
                         'processing': 'on',
                         'taskIndex': taskIndex,
-                        'settings': objFilterSettings,
-                        'useIndexes': indexIsExist,
-                        'totalNumberFilesFilter': 0,
-                        'countIndexesFiles': [0, 0]
+                        'settings': {
+                            'dateTimeStart': ((+new Date(dtStart[2], (dtStart[1] - 1), dtStart[0], dtStart[3], dtStart[4], 0)) / 1000),
+                            'dateTimeEnd': ((+new Date(dtEnd[2], (dtEnd[1] - 1), dtEnd[0], dtEnd[3], dtEnd[4], 0)) / 1000),
+                            'ipaddress': arrayIPAndNetwork.arrayIPAddress,
+                            'network': arrayIPAndNetwork.arrayNetwork,
+                            'useIndexes': indexIsExist,
+                            'totalNumberFilesFilter': 0,
+                            'countIndexesFiles': [0, 0]
+                        }
                     }
                 };
 
-                debug('START ++++++');
+                debug('START Filtering NOT INDEX ++++++');
+                debug('Flashlight -> Moth');
                 debug(objTaskFilter);
 
                 wsConnection.sendUTF(JSON.stringify(objTaskFilter));
@@ -236,57 +242,6 @@ module.exports = function(redis, obj, socketIo) {
                         callback(err);
                     });
             }
-
-            //если есть индексы то получить список файлов сформированный в результате обработки индексов
-            /*processingListFilesForFiltering.getList(obj.sourceId, uniqueTaskId, redis)
-                .then((listFilesIndexes) => {
-                    //делим списки файлов на фрагменты и считаем их количество
-                    let [countChunk, arrayListFilesIndex] = transformListIndexFiles(listFilesIndexes);
-
-                    debug(countChunk);
-                    debug(arrayListFilesIndex);
-
-                    let patternObj = {
-                        'messageType': 'filtering',
-                        'info': {
-                            'processing': 'on',
-                            'taskIndex': uniqueTaskId,
-                            'useIndexes': true,
-                            'settings': {
-                                'countIndexesFiles': '',
-                                'listFilesFilter': ''
-                            }
-                        }
-                    };
-
-                    new Promise((resolve, reject) => {
-                        let num = 0;
-                        let promises = arrayListFilesIndex.map(key => {
-                            num++;
-                            (function() {
-                                try {
-                                    patternObj.info.settings.countIndexesFiles = [num, countChunk];
-                                    patternObj.info.settings.listFilesFilter = key;
-
-                                    wsConnection.sendUTF(JSON.stringify(patternObj));
-                                } catch (err) {
-                                    reject(err);
-                                }
-                            })();
-                        });
-
-                        return Promise.all(promises);
-                    }).then(() => {
-                        callback(null, uniqueTaskId);
-                    }).catch((err) => {
-                        callback(err);
-                    });
-
-                    //wsConnection.sendUTF(JSON.stringify(objTaskFilter));
-                })
-                .catch((err) => {
-                    callback(err);
-                });*/
         }
     ], function(err) {
         if (err) {

@@ -54,6 +54,7 @@ module.exports = function(socketIo) {
                         'ipaddress': objSetup.ipaddress,
                         'port': objSetup.port,
                         'dateLastConnected': objSetup.dateLastConnected,
+                        'wasThereConnectionBreak': false,
                         'numberConnectionAttempts': objSetup.numberConnectionAttempts,
                         'token': objSetup.token,
                         'maxCountProcessFiltering': objSetup.maxCountProcessFiltering
@@ -153,6 +154,9 @@ function createWebsocketConnect(redis, socketIo, hostId) {
         //устанавливаем дату последнего удачного соединения
         redis.hset('remote_host:settings:' + hostId, 'dateLastConnected', successConnectDate);
         globalObject.setData('sources', hostId, 'dateLastConnected', successConnectDate);
+
+        //устанавливаем значение сообщающее о том что соединение с источником ранее было разорванно
+        globalObject.setData('sources', hostId, 'wasThereConnectionBreak', true);
 
         writeLogFile.writeLog('\tInfo: connection with the remote host ' + hostId + ' established');
     });
@@ -254,8 +258,10 @@ function addHandlerConnection(objSetup) {
         if (message.type === 'utf8') {
             let stringMessage = getParseStringJSON(message);
 
-            //debug('MESSAGE is ...\n');
-            //debug(stringMessage);
+            if (stringMessage.messageType === 'filtering') {
+                debug('STATUS TASK IS');
+                debug(`processing: ${stringMessage.info.processing}, task ID ${stringMessage.info.taskIndex}`);
+            }
 
             routeWebsocket.route(stringMessage, objSetup.hostId, (err, notifyMessage) => {
                 if (err) {
@@ -268,6 +274,11 @@ function addHandlerConnection(objSetup) {
                     else if (err.name === 'ErrorRedisDataBase') writeLogFile.writeLog(`\tError Redis: ${err.message.toString()}`);
                     else if (err.message !== 'undefined') writeLogFile.writeLog(`\t${err.message.toString()}`);
                     else writeLogFile.writeLog(`\t${err.toString()}`);
+
+                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, {
+                        'messageType': 'error',
+                        'errorCode': 500
+                    });
                 } else {
 
                     /*if (stringMessage.messageType !== 'information') {

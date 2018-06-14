@@ -126,11 +126,7 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод подробной информации о задаче на фильтрацию
         socket.on('all information for task index', function(data) {
-            if (data.information.taskIndex in objectTimers) {
-                delete objectTimers[data.information.taskIndex];
-            }
-
-            createModalWindowFilterResults(data);
+            createModalWindowFilterResults(data, objectTimers);
         });
 
         //обработка сообщения о поступлении новой информации об источнике

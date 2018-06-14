@@ -9,7 +9,7 @@
 
 const globalObject = require('../configure/globalObject');
 
-module.exports = function(redis, func) {
+module.exports = function(callback) {
     /**
      * @param processingTasks - выполняемые задачи, как по фильтрации, так и по загрузки файлов
      * @param downloadFilesTmp - информация по загружаемому файлу
@@ -36,5 +36,5 @@ module.exports = function(redis, func) {
         } else continue;
     }
 
-    func(null, objResultTaskList);
+    callback(null, objResultTaskList);
 };

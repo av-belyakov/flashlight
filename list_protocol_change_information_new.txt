@@ -81,8 +81,8 @@ _____________________________________
         'processing': 'on',
         'taskIndex': uniqueTaskId, (md5 hex)
         'settings': {
-            'countPartsIndexFiles': [1, 3],
             'useIndexes': true/flase,
+            'countPartsIndexFiles': [1, 3],
             'listFilesFilter': { 
                 'directoryName_1': [] (array files (string))
                 'directoryName_2': [] (array files (string))

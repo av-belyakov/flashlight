@@ -9,7 +9,7 @@
 import { helpers } from '../common_helpers/helpers';
 import modalWindowFilterResults from '../index_page/modalWindowFilterResults';
 
-export default function createModalWindowFilterResults(obj) {
+export default function createModalWindowFilterResults(obj, objectTimers) {
     let objInformation = obj.information;
 
     //формируем модальное окно
@@ -20,15 +20,15 @@ export default function createModalWindowFilterResults(obj) {
 
     $('#modalWindowTaskFilter').modal('show');
 
-    //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
+    //добавляем обработчик на кнопку 'остановить' для ОСТАНОВКИ ФИЛЬТРАЦИИ
     let buttonSubmitFilterStop = document.querySelector('.btn-danger[data-filter="filterStop"]');
     if (buttonSubmitFilterStop !== null) buttonSubmitFilterStop.addEventListener('click', modalWindowFilterResults.stopFilterTask.bind(null, objInformation.taskIndex));
 
-    //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
+    //добавляем обработчик на кнопку 'возобновить' для ВОЗОБНАВЛЕНИЯ ФИЛЬТРАЦИИ
     let buttonSubmitFilterResume = document.querySelector('.btn-danger[data-filter="filterResume"]');
-    if (buttonSubmitFilterResume !== null) buttonSubmitFilterResume.addEventListener('click', modalWindowFilterResults.resumeFilterTask.bind(null, objInformation.taskIndex));
+    if (buttonSubmitFilterResume !== null) buttonSubmitFilterResume.addEventListener('click', modalWindowFilterResults.resumeFilterTask.bind(null, objInformation.taskIndex, objectTimers));
 
-    //добавляем обработчик на кнопку 'остановить' для остановки ЗАГРУЗКИ ФАЙЛОВ
+    //добавляем обработчик на кнопку 'остановить' для ОСТАНОВКИ ЗАГРУЗКИ ФАЙЛОВ
     let buttonSubmitDownloadStop = document.querySelector('.btn-danger[data-download="loaded"]');
     if (buttonSubmitDownloadStop !== null) buttonSubmitDownloadStop.addEventListener('click', modalWindowFilterResults.stopDownloadFiles.bind(null, objInformation.taskIndex));
     //добавляем обработчик на кнопку 'возобновить' для ВОЗОБНАВЛЕНИЯ ЗАГРУЗКИ ФАЙЛОВ

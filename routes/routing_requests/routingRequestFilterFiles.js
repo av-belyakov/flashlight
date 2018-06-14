@@ -59,6 +59,7 @@ module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles
         listFilesFilter: folders
     };
 
+    debug('Flashlight -> Moth_go');
     debug(`task ID: ${messagePattern.info.taskIndex}`);
     debug(messagePattern.info.settings);
 

@@ -147,7 +147,7 @@ let helpers = {
 
 
 
-function createModalWindowFilterResults(obj) {
+function createModalWindowFilterResults(obj, objectTimers) {
     let objInformation = obj.information;
 
     //формируем модальное окно
@@ -158,15 +158,15 @@ function createModalWindowFilterResults(obj) {
 
     $('#modalWindowTaskFilter').modal('show');
 
-    //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
+    //добавляем обработчик на кнопку 'остановить' для ОСТАНОВКИ ФИЛЬТРАЦИИ
     let buttonSubmitFilterStop = document.querySelector('.btn-danger[data-filter="filterStop"]');
     if (buttonSubmitFilterStop !== null) buttonSubmitFilterStop.addEventListener('click', __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__["a" /* default */].stopFilterTask.bind(null, objInformation.taskIndex));
 
-    //добавляем обработчик на кнопку 'остановить' для остановки ФИЛЬТРАЦИИ
+    //добавляем обработчик на кнопку 'возобновить' для ВОЗОБНАВЛЕНИЯ ФИЛЬТРАЦИИ
     let buttonSubmitFilterResume = document.querySelector('.btn-danger[data-filter="filterResume"]');
-    if (buttonSubmitFilterResume !== null) buttonSubmitFilterResume.addEventListener('click', __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__["a" /* default */].resumeFilterTask.bind(null, objInformation.taskIndex));
+    if (buttonSubmitFilterResume !== null) buttonSubmitFilterResume.addEventListener('click', __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__["a" /* default */].resumeFilterTask.bind(null, objInformation.taskIndex, objectTimers));
 
-    //добавляем обработчик на кнопку 'остановить' для остановки ЗАГРУЗКИ ФАЙЛОВ
+    //добавляем обработчик на кнопку 'остановить' для ОСТАНОВКИ ЗАГРУЗКИ ФАЙЛОВ
     let buttonSubmitDownloadStop = document.querySelector('.btn-danger[data-download="loaded"]');
     if (buttonSubmitDownloadStop !== null) buttonSubmitDownloadStop.addEventListener('click', __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__["a" /* default */].stopDownloadFiles.bind(null, objInformation.taskIndex));
     //добавляем обработчик на кнопку 'возобновить' для ВОЗОБНАВЛЕНИЯ ЗАГРУЗКИ ФАЙЛОВ
@@ -585,11 +585,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод подробной информации о задаче на фильтрацию
         socket.on('all information for task index', function (data) {
-            if (data.information.taskIndex in objectTimers) {
-                delete objectTimers[data.information.taskIndex];
-            }
-
-            Object(__WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__["a" /* default */])(data);
+            Object(__WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__["a" /* default */])(data, objectTimers);
         });
 
         //обработка сообщения о поступлении новой информации об источнике
@@ -1680,8 +1676,14 @@ function IPv4_BinaryDotQuad(binaryString) {
     },
 
     //запрос на возобновление выполнения задачи по фильтрации
-    resumeFilterTask(taskIndex) {
+    resumeFilterTask(taskIndex, objectTimers) {
         socket.emit('request to resume the task filter', { processingType: 'resumeTaskFilter', taskIndex: taskIndex });
+
+        if (objectTimers && taskIndex in objectTimers) {
+            clearTimeout(objectTimers[taskIndex]);
+            delete objectTimers[taskIndex];
+        }
+
         //закрыть модальное окно
         $('#modalWindowTaskFilter').modal('hide');
     },

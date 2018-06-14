@@ -12,6 +12,7 @@
  *     'ipaddress': <адрес>
  *     'port': <порт>
  *     'dateLastConnected': <дата последнего соединения>
+ *     'wasThereConnectionBreak': <был ли разрыв соединения>
  *     'numberConnectionAttempts': <количество попыток соединения>
  *     'token': <идентификационный токен>
  *     'maxCountProcessFiltering': <максимальное количество одновременно запузщенных задач фильтрации> 
@@ -75,7 +76,7 @@ class GlobalObject {
         return objResult;
     }
 
-
+    //получить данные по выбранному типу, ID группы и ключу
     getData(type, group = null, key = null) {
         if (this._checkKeys(type)) return null;
         if (group === null) return this.obj[type];
@@ -85,14 +86,17 @@ class GlobalObject {
         return this.obj[type][group][key];
     }
 
+    //получить все выполняемые задачи по фильтрации 
     getDataTaskFilter() {
         return this._getDataTask('filtering');
     }
 
+    //получить все выполняемые задачи по выгрузки файлов
     getDataTaskDownloadFiles() {
         return this._getDataTask('upload');
     }
 
+    //дабавить данные по выбранному типу, ID группы и ключу
     setData(type, group, key = null, value = null) {
         if (this._checkKeys(type)) return false;
         if (typeof group === 'undefined') return false;
@@ -107,6 +111,7 @@ class GlobalObject {
         return true;
     }
 
+    //удалить данные по выбранному типу и ID группы
     deleteData(type, group) {
         if (this._checkKeys(type)) return false;
 
