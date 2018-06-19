@@ -44,7 +44,7 @@ module.exports = function(req, res, socketIo) {
             callback(null, {});
         },
         listSources: function(callback) {
-            getListSources(redis, (err, obj) => {
+            getListSources((err, obj) => {
                 if (err) callback(err);
                 else callback(null, obj);
             });

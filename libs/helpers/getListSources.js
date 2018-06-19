@@ -14,7 +14,7 @@
 
 const globalObject = require('../../configure/globalObject');
 
-module.exports = function(redis, func) {
+module.exports = function(callback) {
     let objResult = {};
     let sources = globalObject.getData('sources');
 
@@ -23,9 +23,10 @@ module.exports = function(redis, func) {
 
         objResult[hostId] = {
             'statusConnection': statusConnection,
-            'shortName': sources[hostId].shortName
+            'shortName': sources[hostId].shortName,
+            'detailedDescription': sources[hostId].detailedDescription
         };
     }
 
-    func(null, objResult);
+    callback(null, objResult);
 };

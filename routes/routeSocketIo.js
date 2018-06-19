@@ -57,7 +57,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
     let obj = {
         'pong': function() {
             //для главной странице
-            getListSources(redis, (err, objListSources) => {
+            getListSources((err, objListSources) => {
                 if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                 else socketIoS.emit('status list sources', { statusListSources: objListSources });
             });
@@ -245,7 +245,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
         },
         'close': function() {
             //для главной странице
-            getListSources(redis, (err, objListSources) => {
+            getListSources((err, objListSources) => {
                 if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                 else socketIoS.emit('status list sources', { statusListSources: objListSources });
             });

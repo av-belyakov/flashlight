@@ -169,7 +169,7 @@ _____________________________________
 *****************
 
 завершение фильтрации по причине окончания перебора подходящих файлов
-
+(первая часть)
 * Flashlight <- * //moth (processingFileFiltering.js)
     'messageType': 'filtering',
     'info': {
@@ -181,7 +181,23 @@ _____________________________________
         'countFilesUnprocessed': countFilesUnprocessed,
         'countCycleComplete': countFullCyclesComplete,
         'countFoundFilesSize': countFoundFilesSize,
+        'numberMessageParts': [0, 3]
     } 
+
+(последующие части содержащие список найденных файлов)
+'messageType': 'filtering',
+    'info': {
+        'processing': 'complete',
+        'ipAddress': self.objRequest.clientIp,
+        'taskIndex': self.taskIndex,
+        'countFilesFound': countFilesFound,
+        'countFilesProcessed': countFilesProcessed,
+        'countFilesUnprocessed': countFilesUnprocessed,
+        'countCycleComplete': countFullCyclesComplete,
+        'countFoundFilesSize': countFoundFilesSize,
+        'numberMessageParts': [1, 3]
+        'listFilesFoundDuringFiltering': []
+    }     
 *****************
 
 запрос на остановку фильтрации

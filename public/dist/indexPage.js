@@ -129,6 +129,44 @@ let helpers = {
 
 /***/ }),
 
+/***/ 103:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/*
+ * Модуль очистки виджета в котором содержитсякраткая информация о сенсоре.
+ * срабатывает при отключении источника
+ * 
+ * Версия 0.1, дата релиза 18.06.2018
+ * */
+
+
+
+/* harmony default export */ __webpack_exports__["a"] = (function (listSources) {
+    let listWidgets = document.querySelectorAll('[name=minWidget]');
+
+    for (let source in listSources.statusListSources) {
+        listWidgets.forEach(element => {
+            if (element.dataset.sourceid === null) return;
+
+            if (source === element.dataset.sourceid) {
+                if (!listSources.statusListSources[source].statusConnection) {
+                    element.innerHTML = `<div class="white-panel pn donut-chart" name="minWidget" data-sourceId="${source}">
+                        <div class="white-header"><h5>${source} ${listSources.statusListSources[source].detailedDescription}</h5></div>
+                            <div class="row">
+                                <div class="col-sm-12 col-xs-12 goleft" name="${source}">
+                                    <div class="text-center"><h4>источник не подключен</h4></div>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+            }
+        });
+    }
+});
+
+/***/ }),
+
 /***/ 12:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -459,9 +497,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__index_page_createWidgetVisualizationFiltration__ = __webpack_require__(47);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__ = __webpack_require__(48);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__index_page_changeWidget__ = __webpack_require__(49);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__index_page_changeInfoMinWidget__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__index_page_modalWindowSourceControl__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowFilterResults__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__ = __webpack_require__(103);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__index_page_changeInfoMinWidget__ = __webpack_require__(50);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__index_page_modalWindowFilterResults__ = __webpack_require__(6);
+
 
 
 
@@ -519,7 +559,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     //обработчики событий
     (function () {
         //пользователь не авторизован
-        socket.on('error authentication user', function (data) {
+        socket.on('error authentication user', function () {
             window.location.reload();
         });
 
@@ -565,6 +605,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
             let div = document.getElementById('listRemoteHostConnection');
             div.innerHTML = list;
+
+            Object(__WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__["a" /* default */])(data);
         });
 
         //информация о ходе фильтрации
@@ -612,12 +654,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод подробной информации об источнике и добавление задачи на фильтрацию
         socket.on('all information for source id', function (data) {
-            __WEBPACK_IMPORTED_MODULE_9__index_page_modalWindowSourceControl__["a" /* default */].showModalWindowSourceControl(data);
+            __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__["a" /* default */].showModalWindowSourceControl(data);
         });
 
         //вывод информации для виджета
         socket.on('information widgets', function (data) {
-            Object(__WEBPACK_IMPORTED_MODULE_8__index_page_changeInfoMinWidget__["a" /* default */])(data);
+            Object(__WEBPACK_IMPORTED_MODULE_9__index_page_changeInfoMinWidget__["a" /* default */])(data);
         });
 
         //вывод информации о добавлении новой задачи для выгрузки файлов
@@ -713,13 +755,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         //добавляем вызов модального окна для вывода информации по источникам
         (function () {
             let div = document.getElementById('listRemoteHostConnection');
-            div.addEventListener('click', __WEBPACK_IMPORTED_MODULE_9__index_page_modalWindowSourceControl__["a" /* default */].getAllInformationForSourceControl);
+            div.addEventListener('click', __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__["a" /* default */].getAllInformationForSourceControl);
         })();
 
         //добавляем вызов модального окна для вывода задачи фильтрации
         (function () {
             let divLeftContent = document.getElementById('leftContent');
-            divLeftContent.addEventListener('click', __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowFilterResults__["a" /* default */].getAllInformationForTaskFilterIndexPage);
+            divLeftContent.addEventListener('click', __WEBPACK_IMPORTED_MODULE_11__index_page_modalWindowFilterResults__["a" /* default */].getAllInformationForTaskFilterIndexPage);
         })();
 
         //настраиваем минимальную высоту правого контента (со списком источников)

@@ -64,7 +64,7 @@ module.exports = function(req, res, socketIo) {
             });
         },
         rightContent: function(callback) {
-            getListSources(redis, (err, objListSources) => {
+            getListSources((err, objListSources) => {
                 callback(null, objListSources);
             });
         }

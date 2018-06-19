@@ -9,6 +9,7 @@ import createWidgetVisualizationFiltration from './index_page/createWidgetVisual
 import createWidgetVisualizationDownloadFiles from './index_page/createWidgetVisualizationDownloadFiles';
 
 import changeWidget from './index_page/changeWidget';
+import clearMinWidget from './index_page/clearMinWidget';
 import changeInfoMinWidget from './index_page/changeInfoMinWidget';
 import modalWindowSourceControl from './index_page/modalWindowSourceControl';
 import modalWindowFilterResults from './index_page/modalWindowFilterResults';
@@ -59,7 +60,7 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
     //обработчики событий
     (function() {
         //пользователь не авторизован
-        socket.on('error authentication user', function(data) {
+        socket.on('error authentication user', function() {
             window.location.reload();
         });
 
@@ -106,6 +107,8 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
             let div = document.getElementById('listRemoteHostConnection');
             div.innerHTML = list;
+
+            clearMinWidget(data);
         });
 
         //информация о ходе фильтрации
