@@ -300,6 +300,17 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
         debug(`count found files size: ${self.info.countFoundFilesSize}`);
         debug('***********************************');
 
+        /**
+         * 
+         * НЕКОРРЕКТНО ОТРАБАТЫВАЕТСЯ череда событий
+         * 
+         * разрыв -> востонавление
+         * останов -> возобнавление
+         * разрыв -> востонавление
+         * 
+         * при выполнении фильтрации (количество обработанных файлов превышает количество ОБРАБАТЫВАЕМЫХ файлов)
+         */
+
         if (typeof self.info.infoProcessingFile.statusProcessed === 'undefined') {
             callback(new errorsType.receivedIncorrectData('received incorrect data'));
         }
@@ -480,27 +491,21 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                     debug('--- routeWebsocket (message COMPLETE): 111');
 
                     new Promise((resolve, reject) => {
-                        redis.hmget(`task_filtering_all_information:${self.info.taskIndex}`,
-                            'countFilesFound',
-                            'countFoundFilesSize',
+                        redis.hget(`task_filtering_all_information:${self.info.taskIndex}`,
                             'countFilesFiltering',
-                            (err, result) => {
+                            (err, countFilesFiltering) => {
                                 if (err) reject(err);
-                                else resolve({
-                                    'countFilesFound': result[0],
-                                    'countFoundFilesSize': result[1],
-                                    'countFilesFiltering': result[2]
-                                });
+                                else resolve(countFilesFiltering);
                             });
-                    }).then((objectData) => {
+                    }).then((countFilesFiltering) => {
                         redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                             'jobStatus': self.info.processing,
                             'dateTimeEndFilter': +new Date(),
-                            'countFilesProcessed': objectData.countFilesFiltering,
+                            'countFilesProcessed': countFilesFiltering,
                             'countFilesUnprocessed': self.info.countFilesUnprocessed,
                             'countCycleComplete': self.info.countCycleComplete,
-                            'countFilesFound': (Number(objectData.countFilesFound) + Number(self.info.countFilesFound)),
-                            'countFoundFilesSize': (Number(objectData.countFoundFilesSize) + Number(self.info.countFoundFilesSize))
+                            'countFilesFound': self.info.countFilesFound,
+                            'countFoundFilesSize': self.info.countFoundFilesSize
                         }, (err) => {
                             if (err) throw (err);
 
@@ -551,9 +556,28 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 'sourceId': remoteHostId,
                 'taskIndex': self.info.taskIndex,
                 'filesList': self.info.listFilesFoundDuringFiltering
-            }, redis, (err) => {
-                if (err) func(err);
-                else func(null);
+            }, redis).then(() => {
+
+                debug('////////////////vvvvvv');
+
+                if (self.info.numberMessageParts[0] === self.info.numberMessageParts[1]) {
+                    debug('aaaaaaaaaaaaaa');
+                    redis.hlen(`task_list_files_found_during_filtering:${remoteHostId}:${self.info.taskIndex}`, (err, listLength) => {
+                        if (err) throw (err);
+
+                        redis.hset(`task_filtering_all_information:${self.info.taskIndex}`, 'countFilesFound', listLength, (err) => {
+                            if (err) throw (err);
+                            else func(null);
+                        });
+                    });
+                } else {
+                    func(null);
+                }
+            }).catch((err) => {
+
+                debug(err);
+
+                func(err);
             });
         };
 
@@ -564,6 +588,9 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
         //первая часть сообщения
         if (self.info.numberMessageParts[0] === 0) {
             processingFirstPart((err) => {
+
+                debug('FILTERING COMPLETE 1');
+
                 if (err) callback(err);
                 else callback(null);
             });
@@ -571,27 +598,6 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
             //последующие части
             processingSecondPart((err) => {
                 if (err) callback(err);
-                else callback(null);
-            });
-        }
-
-        if (self.info.numberMessageParts[0] === self.info.numberMessageParts[1]) {
-            new Promise((resolve, reject) => {
-                redis.llen(`task_list_files_found_during_filtering:${remoteHostId}:${self.info.taskIndex}`, (err, listLength) => {
-                    if (err) reject(err);
-                    else resolve(listLength);
-                });
-            }).then((listLength) => {
-                new Promise((resolve, reject) => {
-                    redis.hset(`task_filtering_all_information:${self.info.taskIndex}`, 'countFilesFound', listLength, (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-            }).then(() => {
-                callback(null);
-            }).catch((err) => {
-                callback(err);
             });
         }
     }

@@ -29,32 +29,23 @@ module.exports = {
  * - filesList (массив файлов)
  */
 function createList(objectForCreate, redis, callback) {
-    /*async.forEachOf(objectForCreate.info.listFilesFoundDuringFiltering, (file, callbackForEachOf) => {
-        redis.lpush(`task_list_files_found_during_filtering:${objectForCreate.sourceId}:${objectForCreate.taskIndex}`, file, (err) => {
-            if (err) callbackForEachOf(err);
-            else callbackForEachOf(null);
-        });
-    }, (err) => {
-        if (err) callback(err);
-        else callback(null);
-    });*/
-
-    new Promise((resolve, reject) => {
-        if (!Array.isArray(objectForCreate.filesList)) {
-            return Promise.resolve();
-        }
-
-        let promises = objectForCreate.filesList.map(file => {
-            redis.lpush(`task_list_files_found_during_filtering:${objectForCreate.sourceId}:${objectForCreate.taskIndex}`, file);
-        });
-        return Promise.all(promises);
-    }).then((result, err) => {
-        return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
+        async.forEachOf(objectForCreate.filesList, (object, key, callbackForEachOf) => {
+            redis.hmset(`task_list_files_found_during_filtering:${objectForCreate.sourceId}:${objectForCreate.taskIndex}`, {
+                [object.fileName]: JSON.stringify({
+                    'fileSize': object.fileSize,
+                    'fileDownloaded': false
+                })
+            }, (err) => {
+                if (err) callbackForEachOf(err);
+                else callbackForEachOf(null);
+            });
+        }, (err) => {
             if (err) {
                 if (callback) callback(err);
                 else reject(err);
             } else {
-                if (callback) callback();
+                if (callback) callback(null);
                 else resolve();
             }
         });

@@ -131,6 +131,10 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                         return;
                     }
 
+                    socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
+
+                    debug(data);
+
                     showNotify(socketIoS, 'success', `Завершение фильтрации на источнике №<strong>${remoteHostId}</strong>`);
                     socketIoS.emit('filtering stop', { processingType: 'showInformationFilter', information: data });
 
