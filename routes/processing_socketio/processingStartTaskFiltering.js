@@ -204,6 +204,7 @@ module.exports = function(redis, obj, socketIo) {
                             'ipaddress': arrayIPAndNetwork.arrayIPAddress,
                             'network': arrayIPAndNetwork.arrayNetwork,
                             'useIndexes': indexIsExist,
+                            'countFilesFiltering': 0,
                             'totalNumberFilesFilter': 0,
                             'countIndexesFiles': [0, 0]
                         }

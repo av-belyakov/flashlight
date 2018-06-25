@@ -300,17 +300,6 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
         debug(`count found files size: ${self.info.countFoundFilesSize}`);
         debug('***********************************');
 
-        /**
-         * 
-         * НЕКОРРЕКТНО ОТРАБАТЫВАЕТСЯ череда событий
-         * 
-         * разрыв -> востонавление
-         * останов -> возобнавление
-         * разрыв -> востонавление
-         * 
-         * при выполнении фильтрации (количество обработанных файлов превышает количество ОБРАБАТЫВАЕМЫХ файлов)
-         */
-
         if (typeof self.info.infoProcessingFile.statusProcessed === 'undefined') {
             callback(new errorsType.receivedIncorrectData('received incorrect data'));
         }
@@ -348,7 +337,19 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
             },
             //запись количества обработаннных файлов
             (callback) => {
-                new Promise((resolve, reject) => {
+                //запись значения
+                redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
+                    'countFilesProcessed': self.info.countFilesProcessed,
+                    'countFilesUnprocessed': self.info.countFilesUnprocessed,
+                    'countCycleComplete': self.info.countCycleComplete,
+                    'countFilesFound': self.info.countFilesFound,
+                    'countFoundFilesSize': self.info.countFoundFilesSize
+                }, (err) => {
+                    if (err) callback(err);
+                    else callback(null);
+                });
+
+                /*new Promise((resolve, reject) => {
                     redis.hmget(`task_filtering_all_information:${self.info.taskIndex}`,
                         'countFilesProcessed',
                         'countFilesFound',
@@ -365,9 +366,14 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                             });
                         });
                 }).then((countsFiles) => {
-                    if (self.info.countFilesProcessed < countsFiles.countFilesProcessed) {
+                    if (self.info.countFilesProcessed <= countsFiles.countFilesProcessed) {
                         new Promise((resolve, reject) => {
                             if (globalObject.getData('sources', remoteHostId, 'wasThereConnectionBreak')) {
+                                debug('222222222222222222 SUM');
+
+                                //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
+                                globalObject.setData('sources', remoteHostId, 'wasThereConnectionBreak', false);
+
                                 redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                                     'countFilesProcessed': (Number(self.info.countFilesProcessed) + Number(countsFiles.countFilesProcessed)),
                                     'countFilesUnprocessed': (Number(countsFiles.countFilesUnprocessed) + Number(self.info.countFilesUnprocessed)),
@@ -384,22 +390,12 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                                 });
                             }
                         }).then(() => {
-                            let cff = self.info.countFilesFound;
-                            let cffs = self.info.countFoundFilesSize;
-                            if ((self.info.countFilesFound < countsFiles.countFilesFound) || (globalObject.getData('sources', remoteHostId, 'wasThereConnectionBreak'))) {
-                                cff = (Number(cff) + Number(countsFiles.countFilesFound));
-                                cffs = (Number(cffs) + Number(countsFiles.countFoundFilesSize));
-                            }
-
-                            debug('|||||||||||||| ----- wasThereConnectionBreak = ' + globalObject.getData('sources', remoteHostId, 'wasThereConnectionBreak'));
-
-                            //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
-                            globalObject.setData('sources', remoteHostId, 'wasThereConnectionBreak', false);
+                            
 
                             new Promise((resolve, reject) => {
                                 redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
-                                    'countFilesFound': cff,
-                                    'countFoundFilesSize': cffs
+                                    'countFilesFound': self.info.countFilesFound,
+                                    'countFoundFilesSize': self.info.countFoundFilesSize
                                 }, (err) => {
                                     if (err) reject(err);
                                     else resolve(null);
@@ -411,6 +407,11 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                             callback(err);
                         });
                     } else {
+                        debug('3333333333333333 ATACHE');
+
+                        //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
+                        globalObject.setData('sources', remoteHostId, 'wasThereConnectionBreak', false);
+
                         //запись значения
                         redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                             'countFilesProcessed': self.info.countFilesProcessed,
@@ -425,7 +426,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                     }
                 }).catch((err) => {
                     callback(err);
-                });
+                });*/
             },
             (callback) => {
                 //редактирование списков task_filter_list_files:<ID source>:<ID task>:<path directory> содержащих файлы по которым будет вполнятся фильтрация

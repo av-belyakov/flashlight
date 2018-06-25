@@ -19,7 +19,13 @@ const globalObject = require('../../configure/globalObject');
  * @param {*} listFiles - список файлов
  * @param {*} callback - функция обратного вызова
  */
-module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles: listFiles }, callback) {
+module.exports = function({
+    sourceId,
+    taskIndex,
+    countFilesFiltering,
+    filterSettings,
+    listFilterFiles: listFiles
+}, callback) {
     let { countChunk, listFilesIndexes: arrayListFilesIndexes } = transformListIndexFiles(30, listFiles);
 
     let wsConnection = objWebsocket[`remote_host:${sourceId}`];
@@ -54,6 +60,7 @@ module.exports = function({ sourceId, taskIndex, filterSettings, listFilterFiles
         ipaddress: convertStringToArray(filterSettings.ipaddress),
         network: convertStringToArray(filterSettings.network),
         useIndexes: true,
+        countFilesFiltering: Number(countFilesFiltering),
         totalNumberFilesFilter: countFiles,
         countPartsIndexFiles: [0, countChunk],
         listFilesFilter: folders
