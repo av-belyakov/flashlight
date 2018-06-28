@@ -224,3 +224,22 @@ _____________________________________
         'countFoundFilesSize': countFoundFilesSize,
     }
 *****************
+
+          --- DOWNLOAD ---
+_____________________________________
+
+запрос на скачивание файлов
+* Flashlight -> * Moth
+    'messageType': 'download files',
+    'info': {
+        'processing': 'start',
+        'taskIndex': <ID задачи>,
+        'ipAddress': <ip>,
+        'downloadDirectoryFiles': <путь до директории в которой находятся отфильтрованные файлы>,
+        'downloadSelectedFiles': <скачивание выбранных файлов true/false>,
+        если 'downloadSelectedFiles' = true, то Moth будет смотреть следующие заголовки
+        
+        'countDownloadSelectedFiles': <количество скачиваемых файлов>
+        'numberMessageParts': [0, 3] (какая часть из общего числа частей)
+        'listDownloadSelectedFiles': [] (массив со списком имен скачиваемых файлов)
+    }

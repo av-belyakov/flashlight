@@ -643,7 +643,8 @@ function createTableTaskResultFilter(objData) {
 
     //загрузка отфильтрованного сетевого трафика
     function importFiles(taskIndex) {
-        socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
+        //socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
+        socket.emit('get list all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
     }
 
     (function () {
@@ -1142,7 +1143,7 @@ __webpack_require__(5);
         }
     });
 
-    //побработка запроса следующей страницы
+    //обработка запроса следующей страницы
     socket.on('show new page upload', function (data) {
         Object(__WEBPACK_IMPORTED_MODULE_7__upload_files_log_createTableTaskUploadedFiles__["a" /* default */])(data.informationTasks);
     });

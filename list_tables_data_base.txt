@@ -20,7 +20,7 @@ task_filter_list_files:<ID source>:<ID task>:<path directory>
 
 task_list_files_found_during_filtering:<ID source>:<ID task>
     хранит список файлов найденных в результате фильтрации
-    тип - СПИСОК 
+    тип - ХЕШ 
 
 task_turn_downloading_files
     хранит список задач ожидающих своей очереди на выгрузку сетевого трафика, 

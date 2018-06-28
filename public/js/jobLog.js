@@ -12,15 +12,17 @@ import openModalWindowDelete from './job_log/openModalWindowDelete';
 import createTableTaskResultFilter from './job_log/createTableTaskResultFilter';
 import getBodyJournalOfFiltrations from './commons/getBodyJournalOfFiltrations';
 import createModalWindowFilterResults from './commons/createModalWindowFilterResults';
+import createModalWindowListDownloadFiles from './job_log/createModalWindowListDownloadFiles';
 
 (function() {
     //загрузка отфильтрованного сетевого трафика
     function importFiles(taskIndex) {
-        socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
+        //socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
+        socket.emit('get list all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
     }
 
     //пользователь не авторизован
-    socket.on('error authentication user', function(data) {
+    socket.on('error authentication user', function() {
         window.location.reload();
     });
 
@@ -36,6 +38,11 @@ import createModalWindowFilterResults from './commons/createModalWindowFilterRes
     //вывод подробной информации о задаче на фильтрацию
     socket.on('all information for task index', function(data) {
         createModalWindowFilterResults(data);
+    });
+
+    //вывод списка найденных файлов
+    socket.on('list all files obtained result filtering', function(data) {
+        createModalWindowListDownloadFiles(data);
     });
 
     socket.on('found all tasks Index', function(data) {

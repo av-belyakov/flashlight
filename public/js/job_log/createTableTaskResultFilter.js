@@ -140,7 +140,8 @@ export default function createTableTaskResultFilter(objData) {
 
     //загрузка отфильтрованного сетевого трафика
     function importFiles(taskIndex) {
-        socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
+        //socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
+        socket.emit('get list all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
     }
 
     (function() {

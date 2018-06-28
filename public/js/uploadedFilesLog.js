@@ -60,7 +60,7 @@ import createModalWindowFilterResults from './commons/createModalWindowFilterRes
         }
     });
 
-    //побработка запроса следующей страницы
+    //обработка запроса следующей страницы
     socket.on('show new page upload', function(data) {
         createTableTaskUploadedFiles(data.informationTasks);
     });

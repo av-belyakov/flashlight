@@ -47,6 +47,8 @@ module.exports = function(redis, data, callback) {
 
                     obj.fileSize = objTmp.fileSize;
                     obj.fileDownloaded = objTmp.fileDownloaded;
+
+                    objResult[fn] = obj;
                 } catch (err) {
                     obj.fileSize = '';
                     obj.fileDownloaded = '';
@@ -54,7 +56,6 @@ module.exports = function(redis, data, callback) {
             }
 
             i++;
-            objResult[fn] = obj;
         }
 
         return new Promise((resolve, reject) => {

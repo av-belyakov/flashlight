@@ -42,6 +42,7 @@ const processingStartTaskFiltering = require('./processing_socketio/processingSt
 const processingResumeTaskFiltering = require('./processing_socketio/processingResumeTaskFiltering');
 const processingInformationTaskIndex = require('./processing_socketio/processingInformationTaskIndex');
 const processingDeleteTaskInformation = require('./processing_socketio/processingDeleteTaskInformation');
+const processingGetListFilesResultFiltering = require('./processing_socketio/processingGetListFilesResultFiltering');
 
 const redis = controllers.connectRedis();
 
@@ -75,8 +76,6 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 if (stringMessage.info.numberMessageParts[0] !== stringMessage.info.numberMessageParts[1]) return;
 
                 showNotify(socketIoS, 'success', `Начало фильтрации на источнике №<strong>${remoteHostId}</strong>`);
-
-                debug(`Начало фильтрации на источнике №<strong>${remoteHostId}</strong>`);
 
                 processingExecuteFiltering.execute(stringMessage.info.taskIndex, (err, data) => {
                     if (err) {
@@ -133,25 +132,17 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                     socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
 
-                    debug(data);
-
                     showNotify(socketIoS, 'success', `Завершение фильтрации на источнике №<strong>${remoteHostId}</strong>`);
                     socketIoS.emit('filtering stop', { processingType: 'showInformationFilter', information: data });
 
                     //сообщения об изменении статуса задач
                     new Promise((resolve, reject) => {
-                        debug('FILTERING COMPLETE 111');
-
                         getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', function(err, objTaskStatus) {
                             if (err) reject(err);
                             else resolve(objTaskStatus);
                         });
                     }).then((objTaskStatus) => {
-                        debug(objTaskStatus);
-                        debug('FILTERING COMPLETE 222');
-
                         return new Promise((resolve, reject) => {
-                            debug('FILTERING COMPLETE 333');
                             getListsTaskProcessing((err, objListsTaskProcessing) => {
                                 if (err) reject(err);
                                 else resolve({
@@ -161,9 +152,6 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                             });
                         });
                     }).then((obj) => {
-                        debug(obj);
-                        debug('FILTERING COMPLETE 444');
-
                         socketIoS.emit('change object status', {
                             processingType: 'showChangeObject',
                             informationPageJobLog: obj.status,
@@ -401,9 +389,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* пллучить информацию для виджета */
     socketIo.on('get information for source id', (data) => {
-        debug('=====================GET INFORMATION FOR WIDGET-----------------');
-        debug(data);
-
         informationForChoiseSource.getAllInformationSource(redis, data.sourceId, function(obj) {
             socketIo.emit('information widgets', { processingType: 'showInformationSource', information: obj });
         });
@@ -414,6 +399,18 @@ module.exports.eventHandling = function(socketIo) {
     /*
      * УПРАВЛЕНИЕ ЗАДАЧАМИ ПО ЗАГРУЗКЕ НАЙДЕННЫХ ФАЙЛОВ
      * */
+
+    //получить список всех файлов найденных врезультате фильтрации 
+    socketIo.on('get list all files obtained result filtering', (data) => {
+        processingGetListFilesResultFiltering(redis, data, (err, resultObj) => {
+            if (err) {
+                writeLogFile.writeLog('\tError: ' + err.toString());
+            } else {
+                socketIo.emit('list all files obtained result filtering', resultObj);
+            }
+        });
+    });
+
     /* получить все найденные в результате выполнения задачи файлы */
     socketIo.on('import all files obtained result filtering', function(data) {
         checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
@@ -667,9 +664,6 @@ module.exports.eventHandling = function(socketIo) {
      * */
     /* добавить задание на фильтрацию */
     socketIo.on('add start filter', function(data) {
-
-        debug('************** START the task filter');
-
         processingStartTaskFiltering(redis, data.filterTask, socketIo);
     });
 
@@ -685,9 +679,6 @@ module.exports.eventHandling = function(socketIo) {
 
                     obj.taskIndex = data.taskIndex;
                     Object.assign(obj, objAccessRights);
-
-                    //                    debug('INFORMATION FOR TASKFILTERING WODAL WINDOW');
-                    //                    debug(obj);
 
                     socketIo.emit('all information for task index', { processingType: 'showInformationSource', information: obj });
                 });
@@ -710,9 +701,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* возобновить выполняемую задачу по фильтрации */
     socketIo.on('request to resume the task filter', (data) => {
-
-        debug('************** RESUME the task filter');
-
         processingResumeTaskFiltering(socketIo, redis, data.taskIndex);
     });
 

@@ -110,8 +110,6 @@ let messageTypeError = function(redis, remoteHostId, callback) {
 //обработка messageType - pong, сравнение с настройками хоста хранящимися в БД
 let messagePong = function(redis, remoteHostId, func) {
     let self = this;
-    debug('PROCESSING MESSAGE - PONG');
-    //let arrItemSetupRemoteHost = ['maxCountProcessFiltering', 'intervalTransmissionInformation'];
 
     if (typeof self.info === 'undefined') {
         return func(new errorsType.receivedIncorrectData('the \'info\' field is missing in the json object'));
@@ -132,22 +130,6 @@ let messagePong = function(redis, remoteHostId, func) {
                         callback(null);
                     }
                 });
-
-
-            /*async.forEachOf(arrItemSetupRemoteHost, function(value, key, feedback) {
-                redis.hget('remote_host:settings:' + remoteHostId, value, function(err, keyElem) {
-                    if (err) return feedback(err);
-
-                    if (keyElem !== self.info[value]) {
-                        feedback(new errorsType.errorRemoteHost('some parameters for remote host ' + remoteHostId + ' is not installed'));
-                    } else {
-                        feedback(null, 'successfully');
-                    }
-                });
-            }, function(err) {
-                if (err) func(err);
-                else func(null, 'successfully');
-            });*/
         },
         (callback) => {
             redis.hset('remote_host:settings:' + remoteHostId, 'isAuthorization', true, function(err) {
@@ -211,8 +193,6 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
     let triggerCheckUserData = checkUserData(self.info);
     let triggerCheckCountUserData = checkCountUserData(self.info.processing, self);
 
-    debug(`triggerCheckUserData = ${triggerCheckUserData}, triggerCheckCountUserData = ${triggerCheckCountUserData}`);
-
     if (!triggerCheckUserData || !triggerCheckCountUserData) {
         return callback(new errorsType.receivedIncorrectData('Error: received incorrect data'));
     }
@@ -225,12 +205,6 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
         //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
         globalObject.setData('sources', remoteHostId, 'wasThereConnectionBreak', false);
 
-        for (let directory in self.info.listFilesFilter) {
-            if (Array.isArray(self.info.listFilesFilter[directory])) {
-                debug(self.info.listFilesFilter[directory].length);
-            }
-        }
-
         //если фрагмент сообщения первый
         if (self.info.numberMessageParts[0] === 0) {
             new Promise((resolve, reject) => {
@@ -240,16 +214,11 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                     'directoryFiltering': self.info.directoryFiltering,
                     'countDirectoryFiltering': self.info.countDirectoryFiltering,
                     'countFullCycle': self.info.countFullCycle,
-                    //'countCycleComplete': self.info.countCycleComplete,
-                    //'countFilesFound': self.info.countFilesFound,
-                    //'countFilesUnprocessed': self.info.countFilesUnprocessed,
                     'countMaxFilesSize': self.info.countMaxFilesSize,
-                    //'countFoundFilesSize': self.info.countFoundFilesSize,
                     'filterUseIndex': self.info.useIndexes
                 };
                 if (!self.info.useIndexes) {
                     objectData.countFilesFiltering = self.info.countFilesFiltering;
-                    //objectData.countFilesProcessed = self.info.countFilesProcessed;
                 }
 
                 redis.hmset('task_filtering_all_information:' + self.info.taskIndex, objectData, (err) => {
@@ -348,85 +317,6 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                     if (err) callback(err);
                     else callback(null);
                 });
-
-                /*new Promise((resolve, reject) => {
-                    redis.hmget(`task_filtering_all_information:${self.info.taskIndex}`,
-                        'countFilesProcessed',
-                        'countFilesFound',
-                        'countFoundFilesSize',
-                        'countFilesUnprocessed',
-                        'countCycleComplete', (err, counts) => {
-                            if (err) reject(err);
-                            resolve({
-                                'countFilesProcessed': counts[0],
-                                'countFilesFound': counts[1],
-                                'countFoundFilesSize': counts[2],
-                                'countFilesUnprocessed': counts[3],
-                                'countCycleComplete': counts[4]
-                            });
-                        });
-                }).then((countsFiles) => {
-                    if (self.info.countFilesProcessed <= countsFiles.countFilesProcessed) {
-                        new Promise((resolve, reject) => {
-                            if (globalObject.getData('sources', remoteHostId, 'wasThereConnectionBreak')) {
-                                debug('222222222222222222 SUM');
-
-                                //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
-                                globalObject.setData('sources', remoteHostId, 'wasThereConnectionBreak', false);
-
-                                redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
-                                    'countFilesProcessed': (Number(self.info.countFilesProcessed) + Number(countsFiles.countFilesProcessed)),
-                                    'countFilesUnprocessed': (Number(countsFiles.countFilesUnprocessed) + Number(self.info.countFilesUnprocessed)),
-                                    'countCycleComplete': (Number(countsFiles.countCycleComplete) + Number(self.info.countCycleComplete))
-                                }, (err) => {
-                                    if (err) reject(err);
-                                    else resolve(null);
-                                });
-                            } else {
-                                //инкремент количества обработанных файлов
-                                redis.hincrby(`task_filtering_all_information:${self.info.taskIndex}`, 'countFilesProcessed', 1, (err) => {
-                                    if (err) reject(err);
-                                    else resolve(null);
-                                });
-                            }
-                        }).then(() => {
-                            
-
-                            new Promise((resolve, reject) => {
-                                redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
-                                    'countFilesFound': self.info.countFilesFound,
-                                    'countFoundFilesSize': self.info.countFoundFilesSize
-                                }, (err) => {
-                                    if (err) reject(err);
-                                    else resolve(null);
-                                });
-                            });
-                        }).then(() => {
-                            callback(null);
-                        }).catch((err) => {
-                            callback(err);
-                        });
-                    } else {
-                        debug('3333333333333333 ATACHE');
-
-                        //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
-                        globalObject.setData('sources', remoteHostId, 'wasThereConnectionBreak', false);
-
-                        //запись значения
-                        redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
-                            'countFilesProcessed': self.info.countFilesProcessed,
-                            'countFilesUnprocessed': self.info.countFilesUnprocessed,
-                            'countCycleComplete': self.info.countCycleComplete,
-                            'countFilesFound': self.info.countFilesFound,
-                            'countFoundFilesSize': self.info.countFoundFilesSize
-                        }, (err) => {
-                            if (err) callback(err);
-                            else callback(null);
-                        });
-                    }
-                }).catch((err) => {
-                    callback(err);
-                });*/
             },
             (callback) => {
                 //редактирование списков task_filter_list_files:<ID source>:<ID task>:<path directory> содержащих файлы по которым будет вполнятся фильтрация
@@ -558,11 +448,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 'taskIndex': self.info.taskIndex,
                 'filesList': self.info.listFilesFoundDuringFiltering
             }, redis).then(() => {
-
-                debug('////////////////vvvvvv');
-
                 if (self.info.numberMessageParts[0] === self.info.numberMessageParts[1]) {
-                    debug('aaaaaaaaaaaaaa');
                     redis.hlen(`task_list_files_found_during_filtering:${remoteHostId}:${self.info.taskIndex}`, (err, listLength) => {
                         if (err) throw (err);
 
@@ -589,9 +475,6 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
         //первая часть сообщения
         if (self.info.numberMessageParts[0] === 0) {
             processingFirstPart((err) => {
-
-                debug('FILTERING COMPLETE 1');
-
                 if (err) callback(err);
                 else callback(null);
             });
@@ -604,40 +487,19 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
     }
 
     if (self.info.processing === 'stop') {
-
-        debug('moth -> flashlight, message STOP');
-        debug(self.info);
-
-        /**
-         * ПРИ ОСТАНОВ ЗАДАЧИ ПОЧЕМУ ТО НЕ ИЗМЕНЯЕТ СТАТУС ЗАДАЧИ НА STOP
-         * 
-         */
-
         new Promise((resolve, reject) => {
             redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                 'jobStatus': self.info.processing,
                 'dateTimeEndFilter': +new Date()
-            }, (err, result) => {
+            }, (err) => {
                 if (err) reject(err);
-                else resolve(result);
+                else resolve();
             });
-        }).then((result) => {
-
-            debug(result);
-
+        }).then(() => {
             globalObject.deleteData('processingTasks', self.info.taskIndex);
-
-            //ВРЕМЕННЫЙ для проверки
-            redis.hget(`task_filtering_all_information:${self.info.taskIndex}`, 'jobStatus', (err, js) => {
-                if (err) debug(err);
-                else debug(`TASK STATUS --- ${js} ---`);
-            });
 
             callback(null);
         }).catch((err) => {
-
-            debug(err);
-
             callback(err);
         });
     }
