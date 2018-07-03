@@ -18,6 +18,10 @@ export default function createModalWindow(objData) {
 
     document.getElementById('field_table').innerHTML = createTable(objData.information);
 
+    let elementModalLabelListDownloadFiles = document.getElementById('modalLabelListDownloadFiles');
+    elementModalLabelListDownloadFiles.dataset.taskIndex = objData.taskIndex;
+    elementModalLabelListDownloadFiles.dataset.sourceId = objData.sourceId;
+
     //обработчик на кнопки сортировки
     (function() {
         let elementsByName = document.getElementsByName('sortColumns');
@@ -55,7 +59,7 @@ function createTable(data) {
             fd = objFileDownload['true'];
         } else {
             fd = objFileDownload['false'];
-            isChecked = `<input type="checkbox" name="checkbox_setFileDownload" data-file-name="${fn}" value="false">`;
+            isChecked = `<input type="checkbox" name="checkbox_setFileDownload" data-file-name="${fn}">`;
         }
 
         table += `<tr data-toggle="tooltip">

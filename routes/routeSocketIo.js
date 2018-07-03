@@ -25,10 +25,10 @@ const informationForChoiseSource = require('../libs/management_choise_source/inf
 const informationForPageLogError = require('../libs/management_log_error/informationForPageLogError');
 const informationForPageLogFilter = require('../libs/management_log_filter/informationForPageLogFilter');
 const routingRequestDownloadFiles = require('./routing_requests/routingRequestsDownloadFiles');
+const preparingFileDownloadRequest = require('./processing_socketio/preparingFileDownloadRequest');
 const informationForPageUploadedFiles = require('../libs/management_uploaded_files/informationForPageUploadedFiles');
 const preparingVisualizationDownloadFiles = require('./processing_socketio/preparingVisualizationDownloadFiles');
 const checkAccessRightsUsersMakeChangesTask = require('../libs/users_management/checkAccessRightsUsersMakeChangesTask');
-
 
 const processingUser = require('./processing_socketio/processingUser');
 const processingGroup = require('./processing_socketio/processingGroup');
@@ -407,6 +407,32 @@ module.exports.eventHandling = function(socketIo) {
                 writeLogFile.writeLog('\tError: ' + err.toString());
             } else {
                 socketIo.emit('list all files obtained result filtering', resultObj);
+            }
+        });
+    });
+
+    /* скачать все файлы созданные в результате фильтрации */
+    socketIo.on('download all files obtained result filtering', function(data) {
+        debug('REQUEST DOWNLOAD ALL FILES');
+        debug(data);
+
+        preparingFileDownloadRequest(data, socketIo, redis, (err) => {
+            if (err) {
+                writeLogFile.writeLog('\tError: ' + err.toString());
+                showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`);
+            }
+        });
+    });
+
+    /* скачать все файлы выбранные пользователем и полученые в результате фильтрации */
+    socketIo.on('download choose files obtained result filtering', function(data) {
+        debug('REQUEST DOWNLOAD CHOOSE FILES');
+        debug(data);
+
+        preparingFileDownloadRequest(data, socketIo, redis, (err) => {
+            if (err) {
+                writeLogFile.writeLog('\tError: ' + err.toString());
+                showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`);
             }
         });
     });

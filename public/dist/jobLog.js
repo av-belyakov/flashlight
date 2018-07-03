@@ -182,6 +182,10 @@ function createModalWindow(objData) {
 
     document.getElementById('field_table').innerHTML = createTable(objData.information);
 
+    let elementModalLabelListDownloadFiles = document.getElementById('modalLabelListDownloadFiles');
+    elementModalLabelListDownloadFiles.dataset.taskIndex = objData.taskIndex;
+    elementModalLabelListDownloadFiles.dataset.sourceId = objData.sourceId;
+
     //обработчик на кнопки сортировки
     (function () {
         let elementsByName = document.getElementsByName('sortColumns');
@@ -220,7 +224,7 @@ function createTable(data) {
             fd = objFileDownload['true'];
         } else {
             fd = objFileDownload['false'];
-            isChecked = `<input type="checkbox" name="checkbox_setFileDownload" data-file-name="${fn}" value="false">`;
+            isChecked = `<input type="checkbox" name="checkbox_setFileDownload" data-file-name="${fn}">`;
         }
 
         table += `<tr data-toggle="tooltip">
@@ -296,6 +300,120 @@ function sortColumns(event) {
         return 0;
     }
 }
+
+/***/ }),
+
+/***/ 105:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__parametersRequestDownloadFiles__ = __webpack_require__(109);
+/**
+ * Модуль обрабатывающий запрос на выгрузку всех найденных в результате фильтрации файлов
+ * 
+ * Версия 0.1, дата релиза 02.06.2018
+ */
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["a"] = (function (socket) {
+  let parametersRequestDownloadFiles = new __WEBPACK_IMPORTED_MODULE_0__parametersRequestDownloadFiles__["a" /* default */]('modalLabelListDownloadFiles');
+  let objData = parametersRequestDownloadFiles.getObjectData(['taskIndex', 'sourceId']);
+
+  socket.emit('download all files obtained result filtering', objData);
+
+  $('#modalListDownloadFiles').modal('hide');
+});;
+
+/***/ }),
+
+/***/ 106:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__parametersRequestDownloadFiles__ = __webpack_require__(109);
+/**
+ * Модуль формирующий запрос на загрузку всех выбранных пользователем файлов
+ * 
+ * Версия 0.1, дата релиза 02.06.2018
+ */
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["a"] = (function (socket) {
+    let parametersRequestDownloadFiles = new __WEBPACK_IMPORTED_MODULE_0__parametersRequestDownloadFiles__["a" /* default */]('modalLabelListDownloadFiles');
+    let objData = parametersRequestDownloadFiles.getObjectData(['taskIndex', 'sourceId']);
+
+    let checkBox = document.getElementsByName('checkbox_setFileDownload');
+
+    let fileIsChecked = [];
+    for (let i = 0; i < checkBox.length; i++) {
+        if (!checkBox[i].checked) continue;
+        if (checkBox[i].dataset === null || checkBox[i].dataset.fileName === null) continue;
+
+        fileIsChecked.push(checkBox[i].dataset.fileName);
+    }
+
+    if (fileIsChecked.length === 0) return;
+
+    objData.listFiles = fileIsChecked;
+
+    socket.emit('download choose files obtained result filtering', objData);
+
+    $('#modalListDownloadFiles').modal('hide');
+});
+
+/***/ }),
+
+/***/ 109:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/**
+ * Шаблон для формирования запроса на скачивание файлов
+ * 
+ * Версия 0.1, дата релиза 02.06.2018
+ */
+
+
+
+class ParametersRequestDownloadFiles {
+    constructor(id) {
+        this.id = id;
+    }
+
+    getElementId() {
+        let element = document.getElementById(this.id);
+
+        return element !== null ? element : false;
+    }
+
+    getDataSet(dataSetName) {
+        let element = this.getElementId();
+        if (!element || element.dataset === null) return '';
+
+        let targetValue = element.dataset[dataSetName];
+
+        if (targetValue === null) return '';
+
+        return targetValue;
+    }
+
+    getObjectData(listName) {
+        let objResult = {};
+        listName.forEach(element => {
+            objResult[element] = this.getDataSet(element);
+        });
+
+        return objResult;
+    }
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = ParametersRequestDownloadFiles;
+
 
 /***/ }),
 
@@ -1192,13 +1310,17 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__commons_processPagination__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__job_log_changeObjectStatus__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__job_log_openModalWindowDelete__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__job_log_createTableTaskResultFilter__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__commons_getBodyJournalOfFiltrations__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__commons_createModalWindowFilterResults__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__job_log_createModalWindowListDownloadFiles__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__job_log_requestDownloadAllFiles__ = __webpack_require__(105);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__job_log_requestDownloadChooseFiles__ = __webpack_require__(106);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__job_log_createTableTaskResultFilter__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__commons_getBodyJournalOfFiltrations__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__commons_createModalWindowFilterResults__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__job_log_createModalWindowListDownloadFiles__ = __webpack_require__(104);
 
 
 __webpack_require__(5);
+
+
 
 
 
@@ -1230,17 +1352,17 @@ __webpack_require__(5);
     });
 
     socket.on('show new page', function (data) {
-        Object(__WEBPACK_IMPORTED_MODULE_7__job_log_createTableTaskResultFilter__["a" /* default */])(data);
+        Object(__WEBPACK_IMPORTED_MODULE_9__job_log_createTableTaskResultFilter__["a" /* default */])(data);
     });
 
     //вывод подробной информации о задаче на фильтрацию
     socket.on('all information for task index', function (data) {
-        Object(__WEBPACK_IMPORTED_MODULE_9__commons_createModalWindowFilterResults__["a" /* default */])(data);
+        Object(__WEBPACK_IMPORTED_MODULE_11__commons_createModalWindowFilterResults__["a" /* default */])(data);
     });
 
     //вывод списка найденных файлов
     socket.on('list all files obtained result filtering', function (data) {
-        Object(__WEBPACK_IMPORTED_MODULE_10__job_log_createModalWindowListDownloadFiles__["a" /* default */])(data);
+        Object(__WEBPACK_IMPORTED_MODULE_12__job_log_createModalWindowListDownloadFiles__["a" /* default */])(data);
     });
 
     socket.on('found all tasks Index', function (data) {
@@ -1256,7 +1378,7 @@ __webpack_require__(5);
         $('.chosen-select').chosen({ width: '550px' });
 
         //формируем таблицу с данными и пагинатор
-        Object(__WEBPACK_IMPORTED_MODULE_8__commons_getBodyJournalOfFiltrations__["a" /* default */])('job_log', data.informationTasks);
+        Object(__WEBPACK_IMPORTED_MODULE_10__commons_getBodyJournalOfFiltrations__["a" /* default */])('job_log', data.informationTasks);
     });
 
     //изменение статуса заданного объекта
@@ -1334,6 +1456,20 @@ __webpack_require__(5);
                 setTimeout(function () {
                     window.location.reload();
                 }, 5000);
+            });
+        })();
+
+        //обработчик на кнопку 'скачать все'
+        (function () {
+            document.querySelector('#modalListDownloadFiles .btn-primary').addEventListener('click', function () {
+                Object(__WEBPACK_IMPORTED_MODULE_7__job_log_requestDownloadAllFiles__["a" /* default */])(socket);
+            });
+        })();
+
+        //обработчик на кнопку 'скачать выбранное'
+        (function () {
+            document.querySelector('#modalListDownloadFiles .btn-default').addEventListener('click', function () {
+                Object(__WEBPACK_IMPORTED_MODULE_8__job_log_requestDownloadChooseFiles__["a" /* default */])(socket);
             });
         })();
 

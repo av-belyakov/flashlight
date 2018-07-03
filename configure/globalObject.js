@@ -36,7 +36,7 @@
  *    '<tasksIndex>': {
  *     'taskType': <filtering'/'upload>
  *     'sourceId': <идентификатор источника>
- *     'status': <expect' и 'execute' (для фильрации), 'expect', 'in line', 'loaded' (для загрузки файлов)>
+ *     'status': <'expect' и 'execute' (для фильрации), 'expect', 'in line', 'loaded' (для загрузки файлов)>
  *     'timestampStart': <дата в формате unix>
  *     'timestampModify': <дата в формате unix>
  *    }}

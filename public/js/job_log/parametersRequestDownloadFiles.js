@@ -6,7 +6,7 @@
 
 'use strict';
 
-class PatternRequestDownloadFiles {
+export default class ParametersRequestDownloadFiles {
     constructor(id) {
         this.id = id;
     }
@@ -22,6 +22,7 @@ class PatternRequestDownloadFiles {
         if (!element || (element.dataset === null)) return '';
 
         let targetValue = element.dataset[dataSetName];
+
         if (targetValue === null) return '';
 
         return targetValue;
@@ -30,11 +31,9 @@ class PatternRequestDownloadFiles {
     getObjectData(listName) {
         let objResult = {};
         listName.forEach(element => {
-            objResult[element] = this.getDataSet;
+            objResult[element] = this.getDataSet(element);
         });
 
         return objResult;
     }
 }
-
-module.exports = PatternRequestDownloadFiles;

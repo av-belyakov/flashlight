@@ -31,12 +31,8 @@ const objWebsocket = require('../../configure/objWebsocket');
   - userNameStartUploadFiles,
   - dateTimeStartUploadFiles
 */
-module.exports.startRequestDownloadFiles = function(redis, id, socketIo, func) {
-    if (!(~id.indexOf(':'))) {
-        return func(new errorsType.receivedIncorrectData('Ошибка: невозможно выгрузить файлы, получены некорректные данные'));
-    }
-
-    let [sourceId, hashId] = id.split(':');
+module.exports.startRequestDownloadFiles = function(redis, objData, socketIo, func) {
+    let { sourceId, hashId } = objData;
 
     async.waterfall([
         //получаем логин пользователя
@@ -78,7 +74,7 @@ module.exports.startRequestDownloadFiles = function(redis, id, socketIo, func) {
                 else callback(null, {
                     'messageType': 'download files',
                     'processing': 'start',
-                    'taskIndex': id,
+                    'taskIndex': `${sourceId}:${hashId}`,
                     'countFilesFound': result[0],
                     'directoryFiltering': result[1]
                 });

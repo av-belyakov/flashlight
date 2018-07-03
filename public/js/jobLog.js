@@ -9,6 +9,8 @@ import getSelectList from './job_log/getSelectedList';
 import processPagination from './commons/processPagination';
 import changeObjectStatus from './job_log/changeObjectStatus';
 import openModalWindowDelete from './job_log/openModalWindowDelete';
+import requestDownloadAllFiles from './job_log/requestDownloadAllFiles';
+import requestDownloadChooseFiles from './job_log/requestDownloadChooseFiles';
 import createTableTaskResultFilter from './job_log/createTableTaskResultFilter';
 import getBodyJournalOfFiltrations from './commons/getBodyJournalOfFiltrations';
 import createModalWindowFilterResults from './commons/createModalWindowFilterResults';
@@ -135,6 +137,20 @@ import createModalWindowListDownloadFiles from './job_log/createModalWindowListD
 
                 setTimeout((function() { window.location.reload(); }), 5000);
             }));
+        })();
+
+        //обработчик на кнопку 'скачать все'
+        (function() {
+            document.querySelector('#modalListDownloadFiles .btn-primary').addEventListener('click', function() {
+                requestDownloadAllFiles(socket);
+            });
+        })();
+
+        //обработчик на кнопку 'скачать выбранное'
+        (function() {
+            document.querySelector('#modalListDownloadFiles .btn-default').addEventListener('click', function() {
+                requestDownloadChooseFiles(socket);
+            });
         })();
 
         common.toolTip();

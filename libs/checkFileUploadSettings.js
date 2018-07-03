@@ -17,7 +17,6 @@ const async = require('async');
 
 const errorsType = require('../errors/errorsType');
 const controllers = require('../controllers');
-const writeLogFile = require('./writeLogFile');
 const globalObject = require('../configure/globalObject');
 const getSourceIdToHex = require('./getSourceIdToHex');
 
@@ -28,19 +27,19 @@ module.exports = function(taskIndex, func) {
         //проверка хеша регулярным выражением
         function(callback) {
             let pattern = new RegExp('^[a-zA-Z0-9\\s]+$');
-            if ((taskIndex === undefined) || (!pattern.test(taskIndex))) {
+            if ((typeof taskIndex === 'undefined') || (!pattern.test(taskIndex))) {
                 callback(new errorsType.receivedIncorrectData('Ошибка: выгрузка сетевого трафика невозможна, получены некорректные данные'));
             } else {
-                callback(null, true);
+                callback(null);
             }
         },
         //проверка наличия хеша taskIndex
         function(callback) {
-            redis.exists('task_filtering_all_information:' + taskIndex, function(err, result) {
+            redis.exists(`task_filtering_all_information:${taskIndex}`, function(err, result) {
                 if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
                 if (result === 0) return callback(new errorsType.receivedIncorrectData('Ошибка: выгрузка сетевого трафика невозможна, получены некорректные данные'));
 
-                callback(null, true);
+                callback(null);
             });
         },
         //проверка статуса задачи на фильтрацию
@@ -51,7 +50,7 @@ module.exports = function(taskIndex, func) {
                 if (jobStatus !== 'complete') {
                     callback(new errorsType.fieldJobStatusIsNotComplete('Ошибка: выгрузка сетевого трафика невозможна, фильтрация не завершена'));
                 } else {
-                    callback(null, true);
+                    callback(null);
                 }
             });
         },
@@ -62,7 +61,7 @@ module.exports = function(taskIndex, func) {
                 if (+count === 0) {
                     callback(new errorsType.fieldCountFilesFoundIsZero('Ошибка: выгрузка сетевого трафика невозможна, по заданным параметрам фильтрации найдено 0 файлов'));
                 } else {
-                    callback(null, true);
+                    callback(null);
                 }
             });
         },
@@ -84,11 +83,11 @@ module.exports = function(taskIndex, func) {
                 if ((connectionStatus === null) || (connectionStatus === 'disconnect')) {
                     callback(new errorsType.receivedIncorrectData('Ошибка: выгрузка сетевого трафика невозможна, источник №' + sourceId + ' не подключен'));
                 } else {
-                    callback(null, true);
+                    callback(null);
                 }
             });
         }
-    ], function(err, result) {
+    ], function(err) {
         if (err) {
             //if (err.name === 'ErrorRedisDataBase') writeLogFile.writeLog('\tError: ' + err.cause);
             func(err, err.message);

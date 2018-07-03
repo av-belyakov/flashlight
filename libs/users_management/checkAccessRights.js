@@ -57,7 +57,8 @@ module.exports = function(socketIo, settingManagement, settingType, func) {
             func(false);
         } else {
             let obj = JSON.parse(result);
-            if (!obj.hasOwnProperty('data')) func(false);
+
+            if (obj === null || !obj.hasOwnProperty('data')) func(false);
             else func(obj.data[settingType][0]);
         }
     });
