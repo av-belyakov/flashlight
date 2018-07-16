@@ -119,14 +119,14 @@ let showNotify = function (type, message) {
 
 /***/ }),
 
-/***/ 56:
+/***/ 61:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__errors_log_submitQuery__ = __webpack_require__(57);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__errors_log_createTable__ = __webpack_require__(58);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__errors_log_createPaginate__ = __webpack_require__(59);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__errors_log_submitQuery__ = __webpack_require__(62);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__errors_log_createTable__ = __webpack_require__(63);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__errors_log_createPaginate__ = __webpack_require__(64);
 
 
 __webpack_require__(5);
@@ -193,7 +193,7 @@ __webpack_require__(5);
 
 /***/ }),
 
-/***/ 57:
+/***/ 62:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -230,7 +230,7 @@ __webpack_require__(5);
 
 /***/ }),
 
-/***/ 58:
+/***/ 63:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -277,7 +277,7 @@ __webpack_require__(5);
 
 /***/ }),
 
-/***/ 59:
+/***/ 64:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -321,5 +321,5 @@ __webpack_require__(5);
 
 /***/ })
 
-},[56]);
+},[61]);
 //# sourceMappingURL=errorsLog.js.map

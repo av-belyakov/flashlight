@@ -34,6 +34,7 @@ function createList(objectForCreate, redis, callback) {
             redis.hmset(`task_list_files_found_during_filtering:${objectForCreate.sourceId}:${objectForCreate.taskIndex}`, {
                 [object.fileName]: JSON.stringify({
                     'fileSize': object.fileSize,
+                    'fileChecket': false,
                     'fileDownloaded': false
                 })
             }, (err) => {

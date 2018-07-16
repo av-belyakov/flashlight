@@ -8,7 +8,6 @@
 
 const async = require('async');
 
-const objGlobal = require('../../configure/objGlobal');
 const errorsType = require('../../errors/errorsType');
 const writeLogFile = require('../writeLogFile');
 const searchEnginesUploadedFiles = require('../search_engines/searchEnginesUploadedFiles');
@@ -91,6 +90,8 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
 
     const MAX_COUNT_TASK_INDEX = 14;
 
+    const objGlobal = {};
+
     if (objReq.isNewReq === true) {
         //получить информацию для первой страницы или при поиске
         getStartInformationUploadFiles(function(err, result) {
@@ -109,7 +110,7 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
                 writeLogFile.writeLog('\tError: ' + err.toString());
                 func(err);
             } else {
-                func(null, result)
+                func(null, result);
             }
         });
     }
@@ -175,9 +176,10 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
                 else callbackFunc(null, arrayResult[0]);
             });
         });
+
     }
 
-    /* получить информацию при переходе по постраничным ссылкам */
+    // получить информацию при переходе по постраничным ссылкам 
     function getInformationUploadFilesChoicePage(callbackFunc) {
         if ((typeof objGlobal.objResultFindTaskUpload[objReq.userId] === 'undefined') || (!Array.isArray(objGlobal.objResultFindTaskUpload[objReq.userId]))) {
             writeLogFile.writeLog('\tError: userId is not defined');
@@ -238,4 +240,5 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
             else callbackFunc(null, arrayResult[0]);
         });
     }
+
 };

@@ -30,7 +30,7 @@ let helpers = {
         }
     },
 
-    //конвертирование даты и вермени из формата Unix в стандартный формат
+    //конвертирование даты и времени из формата Unix в стандартный формат
     getDate(dateUnix) {
         let x = new Date().getTimezoneOffset() * 60000;
         return new Date(+dateUnix - x).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, '');
@@ -126,44 +126,6 @@ let helpers = {
 };
 
 
-
-/***/ }),
-
-/***/ 103:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/*
- * Модуль очистки виджета в котором содержитсякраткая информация о сенсоре.
- * срабатывает при отключении источника
- * 
- * Версия 0.1, дата релиза 18.06.2018
- * */
-
-
-
-/* harmony default export */ __webpack_exports__["a"] = (function (listSources) {
-    let listWidgets = document.querySelectorAll('[name=minWidget]');
-
-    for (let source in listSources.statusListSources) {
-        listWidgets.forEach(element => {
-            if (element.dataset.sourceid === null) return;
-
-            if (source === element.dataset.sourceid) {
-                if (!listSources.statusListSources[source].statusConnection) {
-                    element.innerHTML = `<div class="white-panel pn donut-chart" name="minWidget" data-sourceId="${source}">
-                        <div class="white-header"><h5>${source} ${listSources.statusListSources[source].detailedDescription}</h5></div>
-                            <div class="row">
-                                <div class="col-sm-12 col-xs-12 goleft" name="${source}">
-                                    <div class="text-center"><h4>источник не подключен</h4></div>
-                                </div>
-                            </div>
-                        </div>`;
-                }
-            }
-        });
-    }
-});
 
 /***/ }),
 
@@ -483,7 +445,7 @@ function createModalWindowFilterResults(obj, objectTimers) {
 
 /***/ }),
 
-/***/ 44:
+/***/ 45:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -491,15 +453,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__index_page_checkChangeAdminPassword__ = __webpack_require__(45);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__index_page_checkChangeAdminPassword__ = __webpack_require__(46);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__ = __webpack_require__(46);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__index_page_createWidgetVisualizationFiltration__ = __webpack_require__(47);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__index_page_changeWidget__ = __webpack_require__(49);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__ = __webpack_require__(103);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__index_page_changeInfoMinWidget__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__ = __webpack_require__(47);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__index_page_createWidgetVisualizationFiltration__ = __webpack_require__(48);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__index_page_changeWidget__ = __webpack_require__(50);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__index_page_changeInfoMinWidget__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__index_page_modalWindowFilterResults__ = __webpack_require__(6);
 
 
@@ -779,7 +741,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 45:
+/***/ 46:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -826,7 +788,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 46:
+/***/ 47:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -849,7 +811,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 47:
+/***/ 48:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -936,7 +898,7 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 48:
+/***/ 49:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -992,7 +954,7 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 49:
+/***/ 50:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1020,7 +982,45 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 50:
+/***/ 51:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/*
+ * Модуль очистки виджета в котором содержитсякраткая информация о сенсоре.
+ * срабатывает при отключении источника
+ * 
+ * Версия 0.1, дата релиза 18.06.2018
+ * */
+
+
+
+/* harmony default export */ __webpack_exports__["a"] = (function (listSources) {
+    let listWidgets = document.querySelectorAll('[name=minWidget]');
+
+    for (let source in listSources.statusListSources) {
+        listWidgets.forEach(element => {
+            if (element.dataset.sourceid === null) return;
+
+            if (source === element.dataset.sourceid) {
+                if (!listSources.statusListSources[source].statusConnection) {
+                    element.innerHTML = `<div class="white-panel pn donut-chart" name="minWidget" data-sourceId="${source}">
+                        <div class="white-header"><h5>${source} ${listSources.statusListSources[source].detailedDescription}</h5></div>
+                            <div class="row">
+                                <div class="col-sm-12 col-xs-12 goleft" name="${source}">
+                                    <div class="text-center"><h4>источник не подключен</h4></div>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+            }
+        });
+    }
+});
+
+/***/ }),
+
+/***/ 52:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1082,12 +1082,12 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 51:
+/***/ 53:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_networkCalc__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_networkCalc__ = __webpack_require__(54);
 /*
  * Модуль для формирования модального окна для выбранного источника, 
  * позволяет
@@ -1520,7 +1520,7 @@ function getInputFieldIpAddress() {
 
 /***/ }),
 
-/***/ 52:
+/***/ 54:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1754,5 +1754,5 @@ function IPv4_BinaryDotQuad(binaryString) {
 
 /***/ })
 
-},[44]);
+},[45]);
 //# sourceMappingURL=indexPage.js.map

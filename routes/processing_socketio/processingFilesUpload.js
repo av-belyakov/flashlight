@@ -1,39 +1,7 @@
 /*
- * Обработка заданий по загрузке файлов
+ * Модуль выполняющий обработку заданий по загрузке файлов
  *
- *     Отмена задач находящихся в очереди (cancel), выполняется:
- * 1. Удаление информации из очереди задач (таблица task_turn_downloading_files)
- * 2. Изменение следующих параметров в таблице (task_filtering_all_information:*)
- *   - uploadFiles
- *   - userNameStartUploadFiles
- *   - dateTimeStartUploadFiles
- *
- *     Начало загрузки (start), выполняется:
- * 1. Добавление информации в очередь задач (таблица task_turn_downloading_files)
- * 2. Проверка выполняется ли загрузка с выбранного источника (поиск идентификатора сенсора
- *    в таблице task_implementation_downloading_files)
- * 3. Формирование JSON пакета с заданием и отправка его на источник
- *
- *     Остановка загрузки файлов
- * 1, Проверка выполняется ли загрузка с выбранного источника (поиск идентификатора сенсора
- *    в таблице task_implementation_downloading_files)
- * 2, Изменение следующих параметров в таблице (task_filtering_all_information:*)
- *   - uploadFiles
- *   - userNameStopUploadFiles
- *   - dateTimeStopUploadFiles
- *
- *     Возобновление загрузки файлов
- * 1. Проверка выполняется ли уже какая либо загрузка с источника, если да то вывести инф. сообщение
- *    и прекратить работу. Возобновление загрузки может быть выполненно только если источник подключен, нет выполняемых задач
- *    и нет задач находящихся в очереди (все относится к конкретному источнику). Проверка таблиц:
- *   - task_turn_downloading_files
- *   - task_implementation_downloading_files
- *
- * 2. Получаем массив состоящий из имен уже принятых файлов
- * 3. Проверяем что количество принятых файлов меньше чем общее кол-во файлов (таблица task_loading_files:*)
- * 4. Формирование JSON пакета с необходимыми параметрами, втом числе списком имен уже принятых файлов.
- *
- * Версия 0.3, дата релиза 29.11.2016
+ * Версия 0.4, дата релиза 10.07.2018
  * */
 
 'use strict';
@@ -52,7 +20,217 @@ const checkSoursIdTableTaskImplementationDownloadingFiles = require('../../libs/
 
 let redis = controllers.connectRedis();
 
-//отмена задачи находящийся в очереди
+/**
+ * Инициализация загрузки файлов (start)
+ * 
+ * @param data - содержит следующие параметры: taskIndex, sourceId, listFiles
+ * @param socketIo - дискриптор соединения по протоколу socketio
+ * @param cb - функция обратного вызова
+ */
+module.exports.start = function(socketIo, data, cb) {
+    let taskIndex = data.taskIndex;
+
+    async.waterfall([
+        //получаем идентификатор сенсора
+        function(callback) {
+            redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', function(err, sourceID) {
+                if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+                else callback(null, sourceID);
+            });
+        },
+        //проверяем есть ли соединение с источником
+        function(sourceID, callback) {
+            let connectionStatus = globalObject.getData('sources', sourceID, 'connectionStatus');
+
+            if (connectionStatus === null || connectionStatus === 'disconnect') {
+                callback(new errorsType.sourceIsNotConnection(`Ошибка: источник №<strong>${sourceID}</strong> не подключен`));
+            } else {
+                callback(null, sourceID);
+            }
+        },
+        //проверяем есть ли в очереди на загрузку задача с соответствующим идентификатором
+        function(sourceID, callback) {
+            redis.lrange('task_turn_downloading_files', [0, -1], function(err, list) {
+                if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+
+                let isTrue = list.some((item) => ((`${sourceID}:${taskIndex}`) === item));
+
+                if (isTrue) callback(new errorsType.taskIndexAlreadyExistToTurn(`Задача на экспорт сетевого трафика с идентификатором ${taskIndex} уже добавлена в очередь`));
+                else callback(null, sourceID);
+            });
+        },
+        //добавление задачи в очередь (загрузка данных в таблицу task_turn_downloading_files)
+        function(sourceID, callback) {
+            redis.rpush('task_turn_downloading_files', `${sourceID}:${taskIndex}`, function(err) {
+                if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+                else callback(null, sourceID);
+            });
+        },
+        //проверка осуществления загрузки файлов с указанного источника (идентификатор источника в таблице task_implementation_downloading_files)
+        function(sourceID, callback) {
+            redis.exists('task_implementation_downloading_files', function(err, result) {
+                if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+
+                //если таблица task_implementation_downloading_files не существует
+                if (result === 0) return callback(null, sourceID, false);
+
+                //проверяем существует ли идентификатор в таблице task_implementation_downloading_files
+                checkSoursIdTableTaskImplementationDownloadingFiles(redis, sourceID, function(err, taskIsPerformed) {
+                    if (err) callback(new errorsType.undefinedServerError('Внутренняя ошибка сервера', err.toString()));
+                    else callback(null, sourceID, taskIsPerformed);
+                });
+            });
+        }
+    ], function(err, sourceID, taskIsPerformed) {
+        if (err) {
+            if (err.name === 'errorRedisDataBase') {
+                writeLogFile.writeLog('\tError: ' + err.cause);
+            }
+
+            return cb(err);
+        }
+
+
+        //------------------ ДЛЯ ТЕСТОВ
+        redis.lrange('task_implementation_downloading_files', [0, -1], (err, result) => {
+            if (err) return debug(err);
+
+            debug('********* START **********');
+            debug(' +++ downloadfiles +++ ');
+            debug(result);
+        });
+        //-------------------
+
+        //------------------ ДЛЯ ТЕСТОВ
+        redis.lrange('task_turn_downloading_files', [0, -1], (err, result) => {
+            if (err) return debug(err);
+
+            debug('********* START **********');
+            debug(' *** turn downloadfiles *** ');
+            debug(result);
+        });
+        //-------------------
+
+        debug(data.listFiles);
+
+        if (taskIsPerformed) return new errorsType.errorLoadingFile('Ошибка: в настоящее время задача с заданным ID уже выполняется');
+
+        //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
+        downloadManagementFiles.startRequestDownloadFiles(redis, socketIo, {
+            sourceId: sourceID,
+            taskIndex: taskIndex,
+            listFiles: data.listFiles
+        }).then(() => {
+            //создаем псевдоиндекс, таблица task_uploaded_index_all
+            redis.zadd('task_uploaded_index_all', [+new Date(), taskIndex], (err) => {
+                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+            });
+
+            cb(null, sourceID);
+        }).catch((err) => {
+            if (typeof err.cause === 'undefined') writeLogFile.writeLog('\tError: ' + err.message);
+            else writeLogFile.writeLog('\tError: ' + err.cause);
+
+            cb(err);
+        });
+
+        /* if (isTrue) {
+             new Promise((resolve, reject) => {
+                 //получаем ID пользователя
+                 getUserId.userId(redis, socketIo, (err, userId) => {
+                     if (err) {
+                         writeLogFile.writeLog('\tError: Невозможно выгрузить файлы, получены некорректные данные');
+                         reject(new errorsType.receivedIncorrectData('Ошибка: невозможно выгрузить файлы, получены некорректные данные'));
+                     } else {
+                         resolve(userId);
+                     }
+                 });
+             }).then((userId) => {
+                 //по ID получаем имя и логин пользователя
+                 new Promise((resolve, reject) => {
+                     redis.hmget(`user_authntication:${userId}`, 'login', 'user_name', (err, user) => {
+                         if (err) {
+                             writeLogFile.writeLog('\tError: ' + err.toString());
+                             reject(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+                         } else {
+                             resolve(user);
+                         }
+                     });
+                 });
+             }).then((user) => {
+                 //записываем информацию о пользователе инициализировавшем загрузку
+                 new Promise((resolve, reject) => {
+                     redis.hmset(`task_filtering_all_information:${taskIndex}`, {
+                         'userLoginImport': user[0],
+                         'userNameStartUploadFiles': user[1],
+                         'dateTimeStartUploadFiles': +new Date(),
+                         'userNameStopUploadFiles': 'null',
+                         'dataTimeStopUploadFiles': 'null',
+                         'uploadFiles': 'in line'
+                     }, (err) => {
+                         if (err) {
+                             writeLogFile.writeLog('\tError: ' + err.toString());
+                             reject(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+                         } else {
+                             resolve();
+                         }
+                     });
+                 });
+             }).then(() => {
+                 //добавляем информацию о задаче в глобальный объект
+                 globalObject.setData('processingTasks', taskIndex, {
+                     'taskType': 'upload',
+                     'sourceId': sourceId,
+                     'status': 'in line',
+                     'timestampStart': +new Date(),
+                     'timestampModify': +new Date()
+                 });
+
+                 //добавляем в очередь
+                 func(null, sourceId);
+             }).catch((err) => {
+                 func(err);
+             });
+         } else {
+
+             debug(data.listFiles);
+
+             //выгрузка сет. трафика
+             redis.rpush('task_implementation_downloading_files', `${sourceId}:${taskIndex}`, function(err) {
+                 if (err) return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+
+                 //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
+                 downloadManagementFiles.startRequestDownloadFiles(redis, {
+                     sourceId: sourceId,
+                     taskIndex: taskIndex,
+                     listFiles: data.listFiles
+                 }, socketIo, function(err) {
+                     if (err) {
+                         if (typeof err.cause === 'undefined') writeLogFile.writeLog('\tError: ' + err.message);
+                         else writeLogFile.writeLog('\tError: ' + err.cause);
+
+                         func(err);
+                     } else {
+                         func(null, sourceId);
+                     }
+                 });
+             });
+         }*/
+    });
+};
+
+/**
+ * Отмена задач находящихся в очереди (cancel), выполняется:
+ * 1. Удаление информации из очереди задач (таблица task_turn_downloading_files)
+ * 2. Изменение следующих параметров в таблице (task_filtering_all_information:*)
+ *   - uploadFiles
+ *   - userNameStartUploadFiles
+ *   - dateTimeStartUploadFiles
+ * 
+ * @param socketIo - дискриптор соединения по протоколу socketio
+ * @param taskIndex - идентификатор задачи
+ * @param func - функция обратного вызова
+ */
 module.exports.cancel = function(socketIo, taskIndex, func) {
     redis.exists('task_turn_downloading_files', function(err, result) {
         if (err) {
@@ -128,164 +306,19 @@ module.exports.cancel = function(socketIo, taskIndex, func) {
     });
 };
 
-//инициализация загрузки файлов
-module.exports.start = function(socketIo, data, func) {
-    let taskIndex = data.taskIndex;
-    async.waterfall([
-        //получаем идентификатор сенсора
-        function(callback) {
-            redis.hget('task_filtering_all_information:' + taskIndex, 'sourceId', function(err, sourceId) {
-                if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                else callback(null, sourceId);
-            });
-        },
-        //проверяем есть ли в очереди на загрузку задача с соответствующим идентификатором
-        function(sourceId, callback) {
-            redis.lrange('task_turn_downloading_files', [0, -1], function(err, list) {
-                if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-
-                let isTrue = list.some((item) => ((`${sourceId}:${taskIndex}`) === item));
-
-                if (isTrue) callback(new errorsType.taskIndexAlreadyExistToTurn(`Задача на экспорт сетевого трафика с идентификатором ${taskIndex} уже добавлена в очередь`));
-                else callback(null, sourceId);
-            });
-        },
-        //добавление задачи в очередь (загрузка данных в таблицу task_turn_downloading_files)
-        function(sourceId, callback) {
-            redis.rpush('task_turn_downloading_files', `${sourceId}:${taskIndex}`, function(err) {
-                if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                else callback(null, sourceId);
-            });
-        },
-        //проверка осуществления загрузки файлов с указанного источника (идентификатор источника в таблице task_implementation_downloading_files)
-        function(sourceId, callback) {
-            redis.exists('task_implementation_downloading_files', function(err, result) {
-                if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-
-                //если таблица task_implementation_downloading_files не существует
-                if (result === 0) {
-                    redis.rpush('task_implementation_downloading_files', `${sourceId}:${taskIndex}`, function(err) {
-                        if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                        else callback(null, sourceId, false);
-                    });
-                } else {
-                    //проверяем существует ли идентификатор в таблице task_implementation_downloading_files
-                    checkSoursIdTableTaskImplementationDownloadingFiles(redis, sourceId, function(err, isTrue) {
-                        if (err) callback(new errorsType.undefinedServerError('Внутренняя ошибка сервера', err.toString()));
-                        else callback(null, sourceId, isTrue);
-                    });
-                }
-            });
-        }
-    ], function(err, sourceId, isTrue) {
-        if (err) {
-            if (err.name === 'errorRedisDataBase') writeLogFile.writeLog('\tError: ' + err.cause);
-
-            return func(err);
-        }
-
-
-        //------------------
-        redis.lrange('task_implementation_downloading_files', [0, -1], (err, result) => {
-            if (err) return debug(err);
-            debug('********* START **********');
-            debug(' +++ downloadfiles +++ ');
-            debug(result);
-        });
-        //-------------------
-
-        //------------------
-        redis.lrange('task_turn_downloading_files', [0, -1], (err, result) => {
-            if (err) return debug(err);
-            debug('********* START **********');
-            debug(' *** turn downloadfiles *** ');
-            debug(result);
-        });
-        //-------------------
-
-        //создаем псевдоиндекс, таблица task_uploaded_index_all
-        redis.zadd('task_uploaded_index_all', [+new Date(), taskIndex], (err) => {
-            if (err) writeLogFile.writeLog('\tError: ' + err.toString());
-        });
-
-        if (isTrue) {
-            new Promise((resolve, reject) => {
-                getUserId.userId(redis, socketIo, (err, userId) => {
-                    if (err) {
-                        writeLogFile.writeLog('\tError: Невозможно выгрузить файлы, получены некорректные данные');
-                        reject(new errorsType.receivedIncorrectData('Ошибка: невозможно выгрузить файлы, получены некорректные данные'));
-                    } else {
-                        resolve(userId);
-                    }
-                });
-            }).then((userId) => {
-                new Promise((resolve, reject) => {
-                    redis.hmget(`user_authntication:${userId}`, 'login', 'user_name', (err, user) => {
-                        if (err) {
-                            writeLogFile.writeLog('\tError: ' + err.toString());
-                            reject(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                        } else {
-                            resolve(user);
-                        }
-                    });
-                });
-            }).then((user) => {
-                new Promise((resolve, reject) => {
-                    redis.hmset(`task_filtering_all_information:${taskIndex}`, {
-                        'userLoginImport': user[0],
-                        'userNameStartUploadFiles': user[1],
-                        'dateTimeStartUploadFiles': +new Date(),
-                        'userNameStopUploadFiles': 'null',
-                        'dataTimeStopUploadFiles': 'null',
-                        'uploadFiles': 'in line'
-                    }, (err) => {
-                        if (err) {
-                            writeLogFile.writeLog('\tError: ' + err.toString());
-                            reject(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
-            }).then(() => {
-                //добавляем информацию о задаче в глобальный объект
-                globalObject.setData('processingTasks', taskIndex, {
-                    'taskType': 'upload',
-                    'sourceId': sourceId,
-                    'status': 'in line',
-                    'timestampStart': +new Date(),
-                    'timestampModify': +new Date()
-                });
-                //добавляем в очередь
-                func(null, sourceId);
-            }).catch((err) => {
-                func(err);
-            });
-        } else {
-            //выгрузка сет. трафика
-            redis.rpush('task_implementation_downloading_files', `${sourceId}:${taskIndex}`, function(err) {
-                if (err) return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-
-                //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
-                downloadManagementFiles.startRequestDownloadFiles(redis, {
-                    sourceId: sourceId,
-                    taskIndex: taskIndex
-                }, socketIo, function(err) {
-                    if (err) {
-                        if (typeof err.cause === 'undefined') writeLogFile.writeLog('\tError: ' + err.message);
-                        else writeLogFile.writeLog('\tError: ' + err.cause);
-
-                        func(err);
-                    } else {
-                        func(null, sourceId);
-                    }
-                });
-            });
-        }
-    });
-};
-
-//остановка выполняемой задачи
+/**
+ * Останов выполнения задачи по скачиванию файлов
+ * 1, Проверка выполняется ли загрузка с выбранного источника (поиск идентификатора сенсора
+ *    в таблице task_implementation_downloading_files)
+ * 2, Изменение следующих параметров в таблице (task_filtering_all_information:*)
+ *   - uploadFiles
+ *   - userNameStopUploadFiles
+ *   - dateTimeStopUploadFiles
+ * 
+ * @param socketIo - дискриптор соединения по протоколу socketio
+ * @param taskIndex - идентификатор задачи
+ * @param func - функция обратного вызова
+ */
 module.exports.stop = function(socketIo, taskIndex, func) {
     async.waterfall([
         function(callback) {
@@ -385,7 +418,22 @@ module.exports.stop = function(socketIo, taskIndex, func) {
     });
 };
 
-//возобновление загрузки файлов
+/**
+ * Возобновление скачивания файлов
+ * 1. Проверка выполняется ли уже какая либо загрузка с источника, если да то вывести инф. сообщение
+ *    и прекратить работу. Возобновление загрузки может быть выполненно только если источник подключен, нет выполняемых задач
+ *    и нет задач находящихся в очереди (все относится к конкретному источнику). Проверка таблиц:
+ *   - task_turn_downloading_files
+ *   - task_implementation_downloading_files
+ *
+ * 2. Получаем массив состоящий из имен уже принятых файлов
+ * 3. Проверяем что количество принятых файлов меньше чем общее кол-во файлов (таблица task_loading_files:*)
+ * 4. Формирование JSON пакета с необходимыми параметрами, втом числе списком имен уже принятых файлов.
+ *
+ * @param socketIo - дискриптор соединения по протоколу socketio
+ * @param taskIndex - идентификатор задачи
+ * @param func - функция обратного вызова
+ */
 module.exports.resume = function(socketIo, taskIndex, func) {
     redis.hget('task_filtering_all_information:' + taskIndex, 'sourceId', function(err, sourceId) {
         if (err) {

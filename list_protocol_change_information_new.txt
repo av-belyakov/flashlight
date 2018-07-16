@@ -234,7 +234,6 @@ _____________________________________
     'info': {
         'processing': 'start',
         'taskIndex': <ID задачи>,
-        'ipAddress': <ip>,
         'downloadDirectoryFiles': <путь до директории в которой находятся отфильтрованные файлы>,
         'downloadSelectedFiles': <скачивание выбранных файлов true/false>,
         если 'downloadSelectedFiles' = true, то Moth будет смотреть следующие заголовки

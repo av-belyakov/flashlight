@@ -16,7 +16,6 @@ const webSocketClient = require('websocket').client;
 
 const debug = require('debug')('websocketClient.js');
 
-const objGlobal = require('../configure/objGlobal');
 const controllers = require('../controllers');
 const globalObject = require('../configure/globalObject');
 const objWebsocket = require('../configure/objWebsocket');
@@ -26,13 +25,15 @@ const routeWebsocket = require('../routes/routeWebsocket');
 const getRemoteHostSetupDbRedis = require('../libs/getRemoteHostSetupDbRedis');
 const controllingConnectedSources = require('../libs/controllingConnectedSources');
 
+
+const objGlobal = {};
+
 /*
  * remote_hosts_exist:id - список
  * remote_host:setup:* - хеши
  * remote_host:errors:* - упорядочные множества
  * remote_host:information:* - хеши
  * */
-
 module.exports = function(socketIo) {
     const redis = controllers.connectRedis();
 

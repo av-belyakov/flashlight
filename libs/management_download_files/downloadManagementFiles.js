@@ -4,105 +4,172 @@
  *
  * модули:
  * startRequestDownloadFiles - запрос на выгрузку файлов
- * stopRequestDownloadFiles - запрос на остановку выгрузке файлов
+ * stopRequestDownloadFiles - запрос на останов процесса выгрузки файлов
  *
  *
- * Версия 0.1, дата релиза 01.09.2016
+ * Версия 0.1, дата релиза 10.07.2018
  * */
 
 'use strict';
+
+const debug = require('debug')('downloadManagemetFiles');
 
 const async = require('async');
 
 const getUserId = require('./../users_management/getUserId');
 const errorsType = require('../../errors/errorsType');
+const globalObject = require('../../configure/globalObject');
 const objWebsocket = require('../../configure/objWebsocket');
 
-/*
- Запрос на загрузку файлов
- формат запроса, JSON, со следующими параметрами:
-  - messageType - тип запроса
-  - processing - начало выгрузки файлов
-  - taskIndex - уникальный идентификатор задачи,
-  - countFilesFound - колличество найденнх файлов,
-  - directoryFiltering - директория для результатов фильтрации
+/**
+ * @param {*} redis - дискриптор соединения с БД
+ * @param {*} objData - содержит следующие параметры: sourceId, taskIndex и listFiles
+ * @param {*} socketIo - дискриптор соединения по протоколу sockeio
+ */
+module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
+    let { sourceId, taskIndex, listFiles } = objData;
+    let countDownloadSelectedFiles = listFiles.length;
 
- изменяет следующие параметры в таблице task_filtering_all_information:
-  - userNameStartUploadFiles,
-  - dateTimeStartUploadFiles
-*/
-module.exports.startRequestDownloadFiles = function(redis, objData, socketIo, func) {
-    let { sourceId, hashId } = objData;
-
-    async.waterfall([
-        //получаем логин пользователя
-        function(callback) {
+    return new Promise((resolve, reject) => {
+        //удаляем идентификатор задачи из таблицы task_turn_downloading_files и добавляем в таблицу task_implementation_downloading_files
+        changeTaskInListDownloadFiles(redis, {
+            sourceId: sourceId,
+            taskIndex: taskIndex
+        }, 'start', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    }).then(() => {
+        //получаем имя и логин пользователя
+        return new Promise((resolve, reject) => {
             getUserId.userId(redis, socketIo, (err, userId) => {
-                if (err) {
-                    callback(new errorsType.receivedIncorrectData('Ошибка: невозможно выгрузить файлы, получены некорректные данные'));
-                } else {
-                    redis.hmget('user_authntication:' + userId, 'login', 'user_name', (err, user) => {
-                        if (err) callback(err);
-                        else callback(null, user[0], user[1]);
+                if (err) reject(err);
+                else resolve(userId);
+            });
+        }).then((userID) => {
+            return new Promise((resolve, reject) => {
+                redis.hmget(`user_authntication:${userID}`, 'login', 'user_name', (err, user) => {
+                    if (err) reject(err);
+                    else resolve({
+                        userLogin: user[0],
+                        userName: user[1]
                     });
-                }
+                });
+            }).catch((err) => {
+                throw (err);
             });
-        },
-        //удаляем идентификатор задачи из таблицы task_turn_downloading_files
-        function(userLogin, userName, callback) {
-            redis.lrem('task_turn_downloading_files', 0, id, (err) => {
-                if (err) callback(err);
-                else callback(null, userLogin, userName);
-            });
-        },
+        });
+    }).then((objResult) => {
+        let { userLogin, userName } = objResult;
+
         //записываем логин пользователя инициировавшего загрузку в таблицу task_filtering_all_information:
-        function(userLogin, userName, callback) {
-            redis.hmset('task_filtering_all_information:' + hashId, {
+        return new Promise((resolve, reject) => {
+            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
                 'userLoginImport': userLogin,
                 'userNameStartUploadFiles': userName,
                 'dateTimeStartUploadFiles': +new Date(),
                 'uploadFiles': 'expect'
             }, (err) => {
-                if (err) callback(err);
-                else callback(null);
+                if (err) reject(err);
+                else resolve();
             });
-        },
-        //получаем необходимую информацию для формирования запроса о начале загрузки файлов
-        function(callback) {
-            redis.hmget('task_filtering_all_information:' + hashId, 'countFilesFound', 'directoryFiltering', (err, result) => {
-                if (err) callback(err);
-                else callback(null, {
-                    'messageType': 'download files',
-                    'processing': 'start',
-                    'taskIndex': `${sourceId}:${hashId}`,
-                    'countFilesFound': result[0],
-                    'directoryFiltering': result[1]
-                });
+        }).catch((err) => {
+            throw (err);
+        });
+    }).then(() => {
+        //добавляем информацию о задаче в глобальный объект
+        globalObject.setData('processingTasks', taskIndex, {
+            'taskType': 'upload',
+            'sourceId': sourceId,
+            'status': 'expect',
+            'timestampStart': +new Date(),
+            'timestampModify': +new Date()
+        });
+    }).then(() => {
+        //получаем директорию в которую сохранялись отфильтрованные файлы
+        return new Promise((resolve, reject) => {
+            redis.hget(`task_filtering_all_information:${taskIndex}`, 'directoryFiltering', (err, directoryFiltering) => {
+                if (err) reject(err);
+                else resolve(directoryFiltering);
             });
-        }
-    ], function(err, obj) {
-        if (err) {
-            if (err.name === 'Error') {
-                return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-            } else {
-                return func(err);
-            }
+        }).catch((err) => {
+            throw (err);
+        });
+    }).then((directoryFiltering) => {
+        let wsConnection = objWebsocket['remote_host:' + sourceId];
+
+        if (typeof wsConnection === 'undefined') {
+            throw (new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
         }
 
-        let wsConnection = objWebsocket['remote_host:' + sourceId];
-        if (typeof wsConnection === 'undefined') {
-            func(new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${id} не существует`));
-        } else {
-            //изменяем статус загрузки файлов на 'ожидает'
-            redis.hset('task_filtering_all_information:' + hashId, 'uploadFiles', 'expect', (err) => {
-                if (err) {
-                    func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                } else {
-                    wsConnection.sendUTF(JSON.stringify(obj));
-                    func(null);
+        //изменяем статус загрузки файлов на 'ожидает'
+        redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'expect', (err) => {
+            if (err) {
+                throw (new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+            }
+        });
+
+        //формируем и отправляем запрос на скачивание файлов
+        if (listFiles.length === 0) {
+            //если выбранны ВСЕ файлы
+            let strRequest = JSON.stringify({
+                'messageType': 'download files',
+                'info': {
+                    'processing': 'start',
+                    'taskIndex': taskIndex,
+                    'downloadDirectoryFiles': directoryFiltering,
+                    'downloadSelectedFiles': false,
+                    'countDownloadSelectedFiles': 0,
+                    'numberMessageParts': [0, 0],
+                    'listDownloadSelectedFiles': []
                 }
             });
+
+            debug('CHOOSE ALL FILES');
+            debug(strRequest);
+
+            return wsConnection.sendUTF(strRequest);
         }
+
+        /** ДЛЯ ТЕСТА ВЫБРАННО ТОЛЬКО 3 файла в сообщении, УВЕЛИЧИТЬ ДО 30 */
+
+        //если скачиваются ТОЛЬКО выбранные пользователем файлы
+        let { countChunk, list: newListFiles } = transformListIndexFiles(3, listFiles);
+
+        debug(`count chunks = ${countChunk}`);
+        debug(newListFiles);
+        debug(`countDownloadSelectedFiles ${listFiles.length}`);
+
+        //предварительный запрос
+        let objRequest = {
+            'messageType': 'download files',
+            'info': {
+                'processing': 'start',
+                'taskIndex': taskIndex,
+                'downloadDirectoryFiles': directoryFiltering,
+                'downloadSelectedFiles': true,
+                'countDownloadSelectedFiles': countDownloadSelectedFiles,
+                'numberMessageParts': [0, countChunk],
+                'listDownloadSelectedFiles': []
+            }
+        };
+
+        debug('CHOOSE FILES');
+        debug(objRequest);
+
+        wsConnection.sendUTF(JSON.stringify(objRequest));
+
+        for (let i = 0; i < countChunk; i++) {
+            objRequest.info.numberMessageParts = [(i + 1), countChunk];
+            objRequest.info.listDownloadSelectedFiles = newListFiles[i];
+
+            debug('------');
+            debug(objRequest);
+
+            wsConnection.sendUTF(JSON.stringify(objRequest));
+        }
+    }).catch((err) => {
+        throw (err);
     });
 };
 
@@ -138,11 +205,9 @@ module.exports.stopRequestDownloadFiles = function(sourceId, id, func) {
  - directoryFiltering - директория для результатов фильтрации
  - arrayNameReceivedFiles - массив имен уже переданных файлов
 
- изменяет следующие параметры в таблице task_filtering_all_information:
- - userNameStartUploadFiles,
- - dateTimeStartUploadFiles
+ 
 */
-module.exports.resumeRequestDownloadFiles = function(redis, sourceId, taskIndex, arrayNameReceivedFiles, socketIo, func) {
+module.exports.resumeRequestDownloadFiles = function(redis, sourceId, taskIndex, arrayNameReceivedFiles, socketIo, cb) {
     async.waterfall([
         function(callback) {
             getUserId.userId(redis, socketIo, (err, userId) => {
@@ -183,19 +248,80 @@ module.exports.resumeRequestDownloadFiles = function(redis, sourceId, taskIndex,
         }
     ], function(err, obj) {
         if (err) {
-            if (err.name === 'Error') {
-                return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-            } else {
-                return func(err);
-            }
+            if (err.name !== 'Error') return cb(err);
+            return cb(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
         }
 
         let wsConnection = objWebsocket['remote_host:' + sourceId];
         if (typeof wsConnection === 'undefined') {
-            func(new errorsType.taskIndexDoesNotExist('Задачи с идентификатором ' + sourceId + ':' + taskIndex + ' не существует, или источник №<strong>' + sourceId + '</strong> не подключен'));
-        } else {
-            wsConnection.sendUTF(JSON.stringify(obj));
-            func(null, sourceId);
+            return cb(new errorsType.taskIndexDoesNotExist('Задачи с идентификатором ' + sourceId + ':' + taskIndex + ' не существует, или источник №<strong>' + sourceId + '</strong> не подключен'));
         }
+
+        wsConnection.sendUTF(JSON.stringify(obj));
+        cb(null, sourceId);
     });
 };
+
+//делим список файлов на фрагменты и считаем их количество
+function transformListIndexFiles(sizeChunk, listFiles) {
+    let newListFiles = [];
+
+    if (listFiles.length === 0) return { countChunk: 0, list: [] };
+    if (listFiles.length < sizeChunk) return { countChunk: 1, list: listFiles };
+
+    let countChunk = Math.floor(listFiles.length / sizeChunk);
+    let y = listFiles.length / sizeChunk;
+
+    if ((y - countChunk) !== 0) countChunk++;
+
+
+    for (let i = 0; i < countChunk; i++) {
+        newListFiles.push(listFiles.splice(0, sizeChunk));
+    }
+
+    return { countChunk: countChunk, list: newListFiles };
+}
+
+function changeTaskInListDownloadFiles(redis, obj, typeChange, cb) {
+    let hashId = `${obj.sourceId}:${obj.taskIndex}`;
+
+    if (typeChange === 'start') {
+        //удаляем идентификатор задачи из таблицы task_turn_downloading_files и добавляем в таблицу task_implementation_downloading_files
+        async.parallel([
+            (callback) => {
+                redis.lrem('task_turn_downloading_files', 0, hashId, (err) => {
+                    if (err) callback(err);
+                    else callback(null);
+                });
+            },
+            (callback) => {
+                redis.lpush('task_implementation_downloading_files', hashId, (err) => {
+                    if (err) callback(err);
+                    else callback(null);
+                });
+            }
+        ], (err) => {
+            if (err) cb(err);
+            else cb(null);
+        });
+    } else {
+        //удаляем идентификатор задачи из таблицы task_implementation_downloading_files и добавляем в task_turn_downloading_files
+        async.parallel([
+            (callback) => {
+                redis.lrem('task_implementation_downloading_files', 0, hashId, (err) => {
+                    if (err) callback(err);
+                    else callback(null);
+                });
+            },
+            (callback) => {
+                redis.lpush('task_turn_downloading_files', hashId, (err) => {
+                    if (err) callback(err);
+                    else callback(null);
+                });
+            }
+        ], (err) => {
+            if (err) cb(err);
+            else cb(null);
+        });
+    }
+}

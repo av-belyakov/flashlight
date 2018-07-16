@@ -1,7 +1,7 @@
 /*
- * Обработка событий вызываемых при передаче файлов
+ * Модуль обработки событий вызываемых при передаче файлов
  *
- * Версия 0.1, дата релиза 16.09.2016
+ * Версия 0.2, дата релиза 10.07.2018
  * */
 
 'use strict';
@@ -11,7 +11,6 @@ const mv = require('mv');
 const exec = require('child_process').exec;
 
 const config = require('../../configure');
-const objGlobal = require('../../configure/objGlobal');
 const errorsType = require('../../errors/errorsType');
 const writeLogFile = require('../writeLogFile');
 const preparingToDownloadFiles = require('./preparingToDownloadFiles');
@@ -21,6 +20,8 @@ const actionWhenReceivingComplete = require('./actionWhenReceivingComplete');
 const actionWhenReceivingFileReceived = require('./actionWhenReceivingFileReceived');
 const actionWhenReceivingFileNotReceived = require('./actionWhenReceivingFileNotReceived');
 const actionWhenRetransmissionReceivingFile = require('./actionWhenRetransmissionReceivingFile');
+
+const objGlobal = {};
 
 //подготовка к приему файла
 module.exports.ready = function(redis, self, wsConnection, callback) {

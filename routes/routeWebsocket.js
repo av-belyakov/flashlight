@@ -7,6 +7,7 @@
 'use strict';
 
 const debug = require('debug')('routeWebsocket.js');
+
 const async = require('async');
 const process = require('process');
 
@@ -523,8 +524,8 @@ let messageTypeUpload = function(redis, remoteHostId, callback) {
         'ready': processingToDownloadFiles.ready,
         'execute': processingToDownloadFiles.execute,
         'execute completed': processingToDownloadFiles.executeCompleted,
-        'execute retransmission': processingToDownloadFiles.executeRetransmission,
-        'execute retransmission completed': processingToDownloadFiles.executeRetransmissionCompleted,
+        //        'execute retransmission': processingToDownloadFiles.executeRetransmission,
+        //        'execute retransmission completed': processingToDownloadFiles.executeRetransmissionCompleted,
         'stop': processingToDownloadFiles.stop,
         'complete': processingToDownloadFiles.complete,
         'cancel': processingToDownloadFiles.cancel

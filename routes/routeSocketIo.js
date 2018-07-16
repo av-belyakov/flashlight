@@ -416,6 +416,7 @@ module.exports.eventHandling = function(socketIo) {
         debug('REQUEST DOWNLOAD ALL FILES');
         debug(data);
 
+        data.listFiles = [];
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
             if (err) {
                 writeLogFile.writeLog('\tError: ' + err.toString());
@@ -424,7 +425,7 @@ module.exports.eventHandling = function(socketIo) {
         });
     });
 
-    /* скачать все файлы выбранные пользователем и полученые в результате фильтрации */
+    /* скачать файлы выбранные пользователем и полученые в результате фильтрации */
     socketIo.on('download choose files obtained result filtering', function(data) {
         debug('REQUEST DOWNLOAD CHOOSE FILES');
         debug(data);

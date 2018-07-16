@@ -57,7 +57,7 @@ let helpers = {
         }
     },
 
-    //конвертирование даты и вермени из формата Unix в стандартный формат
+    //конвертирование даты и времени из формата Unix в стандартный формат
     getDate(dateUnix) {
         let x = new Date().getTimezoneOffset() * 60000;
         return new Date(+dateUnix - x).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, '');
@@ -183,7 +183,53 @@ function getFormElements() {
 
 /***/ }),
 
-/***/ 69:
+/***/ 7:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
+/**
+ * Модуль изменения иконки при проверки полей ввода
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+let managementIcon = {
+    showIcon(elements, trigger) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        if (!trigger) {
+            elem.parentNode.classList.add('has-error');
+            elem.parentNode.classList.remove('has-success');
+            span.classList.add('glyphicon-remove');
+            span.classList.remove('glyphicon-ok');
+        } else {
+            elem.parentNode.classList.add('has-success');
+            elem.parentNode.classList.remove('has-error');
+            span.classList.add('glyphicon-ok');
+            span.classList.remove('glyphicon-remove');
+        }
+    },
+
+    removeIcon(elements) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        elem.parentNode.classList.remove('has-success');
+        span.classList.remove('glyphicon-ok');
+        elem.parentNode.classList.remove('has-error');
+        span.classList.remove('glyphicon-remove');
+    }
+};
+
+
+
+/***/ }),
+
+/***/ 74:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -191,11 +237,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_showNotify__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(70);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(71);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(72);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(74);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(75);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(75);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(76);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(77);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(79);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(80);
 
 
 
@@ -353,53 +399,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 7:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
-/**
- * Модуль изменения иконки при проверки полей ввода
- * 
- * Версия 0.1, дата релиза 29.11.2017
- */
-
-
-
-let managementIcon = {
-    showIcon(elements, trigger) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        if (!trigger) {
-            elem.parentNode.classList.add('has-error');
-            elem.parentNode.classList.remove('has-success');
-            span.classList.add('glyphicon-remove');
-            span.classList.remove('glyphicon-ok');
-        } else {
-            elem.parentNode.classList.add('has-success');
-            elem.parentNode.classList.remove('has-error');
-            span.classList.add('glyphicon-ok');
-            span.classList.remove('glyphicon-remove');
-        }
-    },
-
-    removeIcon(elements) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        elem.parentNode.classList.remove('has-success');
-        span.classList.remove('glyphicon-ok');
-        elem.parentNode.classList.remove('has-error');
-        span.classList.remove('glyphicon-remove');
-    }
-};
-
-
-
-/***/ }),
-
-/***/ 70:
+/***/ 75:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -449,7 +449,7 @@ function importXmlFile() {
 
 /***/ }),
 
-/***/ 71:
+/***/ 76:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -480,7 +480,7 @@ function exportXmlFile() {
 
 /***/ }),
 
-/***/ 72:
+/***/ 77:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -488,7 +488,7 @@ function exportXmlFile() {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__getFormElements__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(73);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(78);
 /**
  * Передача информации необходимой для добавления источника
  * 
@@ -530,7 +530,7 @@ function transmissionInformationSource() {
 
 /***/ }),
 
-/***/ 73:
+/***/ 78:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -565,7 +565,7 @@ function createObjectInformationSetting() {
 
 /***/ }),
 
-/***/ 74:
+/***/ 79:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -637,7 +637,7 @@ function addEditSource(typeWindow, sourceId, object) {
 
 /***/ }),
 
-/***/ 75:
+/***/ 80:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -715,5 +715,5 @@ function showAllInformation(sourceId, object) {
 
 /***/ })
 
-},[69]);
+},[74]);
 //# sourceMappingURL=settingSourcesPage.js.map

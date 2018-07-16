@@ -76,6 +76,10 @@ class GlobalObject {
         return objResult;
     }
 
+    _getListDownloadFiles() {
+        return this.obj.downloadFilesTmp;
+    }
+
     //получить данные по выбранному типу, ID группы и ключу
     getData(type, group = null, key = null) {
         if (this._checkKeys(type)) return null;
@@ -94,6 +98,16 @@ class GlobalObject {
     //получить все выполняемые задачи по выгрузки файлов
     getDataTaskDownloadFiles() {
         return this._getDataTask('upload');
+    }
+
+    //получить всю информацию о загружаемых с указанного ip адреса файлов
+    getInformationDownloadFiles(sourceIP) {
+        let listDownloadFiles = this._getListDownloadFiles();
+        for (let ip in listDownloadFiles) {
+            if (ip === sourceIP) return listDownloadFiles[ip];
+        }
+
+        return {};
     }
 
     //дабавить данные по выбранному типу, ID группы и ключу

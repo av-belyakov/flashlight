@@ -8,9 +8,10 @@
 
 const async = require('async');
 
-const objGlobal = require('../../configure/objGlobal');
 const errorsType = require('../../errors/errorsType');
 const writeLogFile = require('../../libs/writeLogFile');
+
+const objGlobal = {};
 
 //подготовка данных необходимых для визуализации добавления в очередь задачи на выгрузку файлов
 module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, func) {

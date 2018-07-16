@@ -86,6 +86,17 @@ module.exports = function(redis, objData, func) {
                 }
             });
         },
+
+        /** 
+         *      В МЕСТО таблицы task_loading_files: используем РАНЕЕ СОЗДАННУЮ ТАБЛИЦУ 
+         * task_list_files_found_during_filtering:<ID source>:<ID task> где существуют параметры
+         *      <имя_файла>: {
+         *          'fileSize': <размер_файла>,
+         *          'fileDownloaded': <файл_выгружен>,
+         *          'fileChecked': <файл_выбран>
+         *      }
+         * */
+
         //создаем таблицу task_loading_files:*
         function(uploadDirectoryFiles, callback) {
             createTableTaskLoadingFiles.call(objData, redis, function(err) {

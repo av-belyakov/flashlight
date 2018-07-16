@@ -57,7 +57,7 @@ let helpers = {
         }
     },
 
-    //конвертирование даты и вермени из формата Unix в стандартный формат
+    //конвертирование даты и времени из формата Unix в стандартный формат
     getDate(dateUnix) {
         let x = new Date().getTimezoneOffset() * 60000;
         return new Date(+dateUnix - x).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, '');
@@ -1066,7 +1066,7 @@ function getBodyJournalOfFiltrations(pageName, informationTasks) {
 
 /***/ }),
 
-/***/ 60:
+/***/ 65:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1074,8 +1074,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__upload_files_log_submitQuery__ = __webpack_require__(61);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__upload_files_log_sortColumns__ = __webpack_require__(62);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__upload_files_log_submitQuery__ = __webpack_require__(66);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__upload_files_log_sortColumns__ = __webpack_require__(67);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__commons_processPagination__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__upload_files_log_openModalWindowDelete__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__commons_getBodyJournalOfFiltrations__ = __webpack_require__(20);
@@ -1266,7 +1266,7 @@ __webpack_require__(5);
 
 /***/ }),
 
-/***/ 61:
+/***/ 66:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1338,7 +1338,7 @@ function submitQuery(globalObj) {
 
 /***/ }),
 
-/***/ 62:
+/***/ 67:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1403,5 +1403,5 @@ function sortColumns(event) {
 
 /***/ })
 
-},[60]);
+},[65]);
 //# sourceMappingURL=uploadedFilesLog.js.map

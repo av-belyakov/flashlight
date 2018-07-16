@@ -22,7 +22,7 @@ let helpers = {
         }
     },
 
-    //конвертирование даты и вермени из формата Unix в стандартный формат
+    //конвертирование даты и времени из формата Unix в стандартный формат
     getDate(dateUnix) {
         let x = (new Date()).getTimezoneOffset() * 60000;
         return (new Date((+dateUnix - x)).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, ''));

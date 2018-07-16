@@ -7,17 +7,16 @@
 
 'use strict';
 
-const debug = require('debug')('routingRequestFilterFiles');
 const objWebsocket = require('../../configure/objWebsocket');
 const globalObject = require('../../configure/globalObject');
 
 /**
  * 
- * @param {*} sourceId - идентификатор источника
- * @param {*} taskIndex - идентификатор задачи
- * @param {*} filterSettings - параметры фильтрации (могут быть как объект так и строка в формате JSON)
- * @param {*} listFiles - список файлов
- * @param {*} callback - функция обратного вызова
+ * @param {*} sourceId идентификатор источника
+ * @param {*} taskIndex идентификатор задачи
+ * @param {*} filterSettings параметры фильтрации (могут быть как объект так и строка в формате JSON)
+ * @param {*} listFiles список файлов
+ * @param {*} callback функция обратного вызова
  */
 module.exports = function({
     sourceId,
@@ -66,10 +65,6 @@ module.exports = function({
         listFilesFilter: folders
     };
 
-    debug('Flashlight -> Moth_go');
-    debug(`task ID: ${messagePattern.info.taskIndex}`);
-    debug(messagePattern.info.settings);
-
     //первое сообщение с информацией об общем количестве сегментов
     wsConnection.sendUTF(JSON.stringify(messagePattern));
 
@@ -80,12 +75,6 @@ module.exports = function({
             useIndexes: true,
             listFilesFilter: arrayListFilesIndexes[i]
         };
-
-        debug(messagePattern.info.settings.countPartsIndexFiles);
-        for (let dir in messagePattern.info.settings.listFilesFilter) {
-            debug('---------- ' + dir + ' ------------');
-            debug(messagePattern.info.settings.listFilesFilter[dir].length);
-        }
 
         wsConnection.sendUTF(JSON.stringify(messagePattern));
     }

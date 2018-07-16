@@ -25,7 +25,6 @@ const writeLogFile = require('../../libs/writeLogFile');
 const objWebsocket = require('../../configure/objWebsocket');
 const globalObject = require('../../configure/globalObject');
 const checkUserData = require('../../libs/helpers/checkUserData');
-//const transformListIndexFiles = require('../../libs/helpers/transformListIndexFiles.js');
 const createTableIndexSettings = require('../../libs/management_index/createTableIndexSettings');
 const routingRequestFilterFiles = require('../../routes/routing_requests/routingRequestFilterFiles');
 const processingListFilesForFiltering = require('../../libs/list_file_management/processingListFilesForFiltering');
@@ -33,9 +32,9 @@ const processingListFilesForFiltering = require('../../libs/list_file_management
 
 /**
  * 
- * @param {*} redis - дескриптор БД
- * @param {*} obj - объект с информацией для выполнения фильтрации
- * @param {*} socketIo - дескриптор соединения socketio
+ * @param {*} redis дескриптор БД
+ * @param {*} obj объект с информацией для выполнения фильтрации
+ * @param {*} socketIo дескриптор соединения socketio
  */
 module.exports = function(redis, obj, socketIo) {
     let taskIndex = getUniqueId(obj.sourceId);
@@ -173,26 +172,12 @@ module.exports = function(redis, obj, socketIo) {
         },
         //отправка данных источнику
         function(objFilterSettings, arrayIPAndNetwork, indexIsExist, callback) {
-
-            /**
-             * { dateTimeStart: 1459603200,
-              processingFiltering   dateTimeEnd: 1461417600,
-              processingFiltering   ipaddress: [ '120.33.55.4', '56.23.41.50' ],
-              processingFiltering   network: [ '58.77.100.2/27' ] }
-             */
-
             //если индексы не найденны
             if (!indexIsExist) {
                 let wsConnection = objWebsocket[`remote_host:${obj.sourceId}`];
 
-                //                objFilterSettings.ipaddress = arrayIPAndNetwork.arrayIPAddress;
-                //                objFilterSettings.network = arrayIPAndNetwork.arrayNetwork;
-
                 let dtStart = objFilterSettings.dateTimeStart.split(/\.|\s|:/);
                 let dtEnd = objFilterSettings.dateTimeEnd.split(/\.|\s|:/);
-                //                objFilterSettings.dateTimeStart = (+new Date(dtStart[2], (dtStart[1] - 1), dtStart[0], dtStart[3], dtStart[4], 0)) / 1000;
-                //                objFilterSettings.dateTimeEnd = (+new Date(dtEnd[2], (dtEnd[1] - 1), dtEnd[0], dtEnd[3], dtEnd[4], 0)) / 1000;
-
                 let objTaskFilter = {
                     'messageType': 'filtering',
                     'info': {
