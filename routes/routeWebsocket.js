@@ -36,7 +36,8 @@ module.exports.route = function(objData, remoteHostId, callback) {
         'download files': messageTypeUpload
     };
 
-    //    debug(`++++++|||||||| responsed type message: ${objData.messageType} ||||||||||||++++++++`);
+
+    debug('************************* MESSAGE TYPE: ' + objData.messageType + ' ********************');
 
     if (typeof objRoutes[objData.messageType] === 'undefined') return callback();
 
@@ -507,16 +508,19 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 };
 
 //обработка информации об импорте файлов
-let messageTypeUpload = function(redis, remoteHostId, callback) {
+let messageTypeUpload = function(redis, remoteID, callback) {
     let self = this;
+
+    debug(this);
+    debug(`remoteID = ${remoteID}`);
 
     if (!new RegExp('^[a-zA-Z0-9:]').test(self.info.taskIndex)) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));
     }
 
-    if (!(~self.info.taskIndex.indexOf(':'))) {
+    /*if (!(~self.info.taskIndex.indexOf(':'))) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));
-    }
+    }*/
 
     let wsConnection = objWebsocket['remote_host:' + self.info.taskIndex.split(':')[0]];
 

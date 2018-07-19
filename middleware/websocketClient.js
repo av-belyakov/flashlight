@@ -238,7 +238,7 @@ function addHandlerConnection(objSetup) {
 
     objSetup.connection.on('close', () => {
 
-        debug('---------------------------------- connection CLOSED to PING');
+        debug('---------------------------------- connection CLOSED -----------------------');
 
         //изменяем состояние соединения
         writeConnectionStatus(objSetup.hostId, 'disconnect', (err) => {
@@ -388,7 +388,7 @@ function deleteSourceIdTablesDownloadFiles(redis, sourceId, func) {
                             let source = list[num].split(':')[0];
                             if (sourceId === source) {
                                 newArray.push(list[num]);
-                                redis.lrem('task_implementation_downloading_files', 0, list);
+                                redis.lrem('task_implementation_downloading_files', 0, list[num]);
                             }
                         }
                     }

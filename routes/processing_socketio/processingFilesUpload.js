@@ -96,7 +96,7 @@ module.exports.start = function(socketIo, data, cb) {
             if (err) return debug(err);
 
             debug('********* START **********');
-            debug(' +++ downloadfiles +++ ');
+            debug(' +++ task_implementation_downloading_files +++ ');
             debug(result);
         });
         //-------------------
@@ -106,7 +106,7 @@ module.exports.start = function(socketIo, data, cb) {
             if (err) return debug(err);
 
             debug('********* START **********');
-            debug(' *** turn downloadfiles *** ');
+            debug(' *** task_turn_downloading_files *** ');
             debug(result);
         });
         //-------------------
@@ -133,89 +133,6 @@ module.exports.start = function(socketIo, data, cb) {
 
             cb(err);
         });
-
-        /* if (isTrue) {
-             new Promise((resolve, reject) => {
-                 //получаем ID пользователя
-                 getUserId.userId(redis, socketIo, (err, userId) => {
-                     if (err) {
-                         writeLogFile.writeLog('\tError: Невозможно выгрузить файлы, получены некорректные данные');
-                         reject(new errorsType.receivedIncorrectData('Ошибка: невозможно выгрузить файлы, получены некорректные данные'));
-                     } else {
-                         resolve(userId);
-                     }
-                 });
-             }).then((userId) => {
-                 //по ID получаем имя и логин пользователя
-                 new Promise((resolve, reject) => {
-                     redis.hmget(`user_authntication:${userId}`, 'login', 'user_name', (err, user) => {
-                         if (err) {
-                             writeLogFile.writeLog('\tError: ' + err.toString());
-                             reject(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                         } else {
-                             resolve(user);
-                         }
-                     });
-                 });
-             }).then((user) => {
-                 //записываем информацию о пользователе инициализировавшем загрузку
-                 new Promise((resolve, reject) => {
-                     redis.hmset(`task_filtering_all_information:${taskIndex}`, {
-                         'userLoginImport': user[0],
-                         'userNameStartUploadFiles': user[1],
-                         'dateTimeStartUploadFiles': +new Date(),
-                         'userNameStopUploadFiles': 'null',
-                         'dataTimeStopUploadFiles': 'null',
-                         'uploadFiles': 'in line'
-                     }, (err) => {
-                         if (err) {
-                             writeLogFile.writeLog('\tError: ' + err.toString());
-                             reject(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                         } else {
-                             resolve();
-                         }
-                     });
-                 });
-             }).then(() => {
-                 //добавляем информацию о задаче в глобальный объект
-                 globalObject.setData('processingTasks', taskIndex, {
-                     'taskType': 'upload',
-                     'sourceId': sourceId,
-                     'status': 'in line',
-                     'timestampStart': +new Date(),
-                     'timestampModify': +new Date()
-                 });
-
-                 //добавляем в очередь
-                 func(null, sourceId);
-             }).catch((err) => {
-                 func(err);
-             });
-         } else {
-
-             debug(data.listFiles);
-
-             //выгрузка сет. трафика
-             redis.rpush('task_implementation_downloading_files', `${sourceId}:${taskIndex}`, function(err) {
-                 if (err) return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-
-                 //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
-                 downloadManagementFiles.startRequestDownloadFiles(redis, {
-                     sourceId: sourceId,
-                     taskIndex: taskIndex,
-                     listFiles: data.listFiles
-                 }, socketIo, function(err) {
-                     if (err) {
-                         if (typeof err.cause === 'undefined') writeLogFile.writeLog('\tError: ' + err.message);
-                         else writeLogFile.writeLog('\tError: ' + err.cause);
-
-                         func(err);
-                     } else {
-                         func(null, sourceId);
-                     }
-                 });
-             });
-         }*/
     });
 };
 
