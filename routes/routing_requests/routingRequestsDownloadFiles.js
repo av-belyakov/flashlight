@@ -26,7 +26,9 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
         'execute retransmission completed': requestTypeExecuteRetransmissionCompleted
     };
 
-    objTypeRequest[req.processing]();
+    console.log(req);
+
+    if (typeof objTypeRequest[req.processing] === 'function') objTypeRequest[req.processing]()
 
     function requestCancel() {
         showNotify(socketIoS, 'danger', `Неопределенная ошибка, загрузка файлов с источника №<strong>${remoteHostId}</strong> не возможна`);

@@ -87,6 +87,9 @@ module.exports.start = function(socketIo, data, cb) {
                 writeLogFile.writeLog('\tError: ' + err.cause);
             }
 
+            debug('+++ ERORO ++++');
+            debug(err);
+
             return cb(err);
         }
 

@@ -1,7 +1,7 @@
 /*
- * Модуль обработки событий вызываемых при передаче файлов
+ * Набор модулей для обработки событий, генерируемых при передаче файлов
  *
- * Версия 0.2, дата релиза 10.07.2018
+ * Версия 0.2, дата релиза 24.07.2018
  * */
 
 'use strict';
@@ -9,11 +9,14 @@
 const fs = require('fs');
 const mv = require('mv');
 const exec = require('child_process').exec;
+const async = require('async');
+
+const debug = require('debug')('processingToDownloadFiles');
 
 const config = require('../../configure');
 const errorsType = require('../../errors/errorsType');
+const objWebsocket = require('../../configure/objWebsocket.js');
 const writeLogFile = require('../writeLogFile');
-const preparingToDownloadFiles = require('./preparingToDownloadFiles');
 const actionWhenReceivingCancel = require('./actionWhenReceivingCancel');
 const checkQueueTaskDownloadFiles = require('./checkQueueTaskDownloadFiles');
 const actionWhenReceivingComplete = require('./actionWhenReceivingComplete');
@@ -23,31 +26,142 @@ const actionWhenRetransmissionReceivingFile = require('./actionWhenRetransmissio
 
 const objGlobal = {};
 
-//подготовка к приему файла
-module.exports.ready = function(redis, self, wsConnection, callback) {
+/**
+ * Модуль осуществляющий действия для подготовки файлов к приему
+ * 
+ * @param {*} redis дискриптор соединения с БД
+ * @param {*} objData объект содержащий даннные
+ * @param {*} sourceID идентификатор источника
+ * @param {*} callback функция обратного вызова
+ */
+module.exports.ready = function(redis, objData, sourceID, callback) {
+    let wsConnection = objWebsocket[`remote_host:${sourceID}`];
+    let taskIndex = objData.info.taskIndex;
+
+    let objResponse = {
+        'messageType': 'download files',
+        'info': {
+            'processing': 'ready',
+            'taskIndex': taskIndex
+        }
+    };
+
+    debug('------------ RESIVED MESSAGE "ready" ---------------');
+    debug(objData);
+
     //удаляем временный файл если он есть
-    fs.unlink('/' + config.get('downloadDirectoryTmp:directoryName') + '/uploading_with_' + wsConnection.remoteAddress + '.tmp', function(err) {
-        if (err) writeLogFile.writeLog('\t' + err.toString());
+    debug('1. удаляем временный файл если он есть');
+
+    fs.access(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, fs.constants.R_OK, (err) => {
+        if (!err) fs.unlink(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`);
     });
 
-    preparingToDownloadFiles(redis, self, function(err, result) {
-        if (err) {
-            wsConnection.sendUTF(JSON.stringify({
-                'messageType': 'download files',
-                'processing': 'cancel',
-                'taskIndex': self.taskIndex
-            }));
+    new Promise((resolve, reject) => {
+        async.waterfall([
+            //получаем краткое название источника
+            function(cb) {
 
-            callback(err);
-        } else {
-            wsConnection.sendUTF(JSON.stringify({
-                'messageType': 'download files',
-                'processing': 'ready',
-                'taskIndex': self.taskIndex
-            }));
+                debug('2. получаем краткое название источника');
 
-            callback(null);
-        }
+                redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortSourceName) => {
+                    if (err) cb(err);
+                    else cb(null, shortSourceName);
+                });
+            },
+            //формируем массив с данными о расположении загружаемых файлов
+            function(shortSourceName, cb) {
+
+                debug(shortSourceName);
+                debug('3. формируем массив с данными о расположении загружаемых файлов');
+
+                let newArray = shortSourceName.split(' ');
+                let sourceIdShortName = newArray.join('_');
+
+                redis.hget(`task_filtering_all_information:${taskIndex}`, 'filterSettings', (err, filterSetting) => {
+                    if (err) return cb(err);
+
+                    let objSettings = JSON.parse(filterSetting);
+
+                    let dateTimeStart = objSettings.dateTimeStart.replace(' ', '_');
+                    let dateTimeEnd = objSettings.dateTimeEnd.replace(' ', '_');
+                    let arrayDayMonthYear = (objSettings.dateTimeStart.split(' ')[0]).split('.');
+                    let directory = `${dateTimeStart}_${dateTimeEnd}_${taskIndex}`;
+
+                    let array = [
+                        `${sourceID}-${sourceIdShortName}/`,
+                        arrayDayMonthYear[2] + '/',
+                        arrayDayMonthYear[1] + '/',
+                        arrayDayMonthYear[0] + '/',
+                        directory,
+                        ''
+                    ];
+
+                    cb(null, array);
+                });
+            },
+            //выполняем формирование директорий
+            function(arrayDownloadDirectoryName, cb) {
+
+                debug(arrayDownloadDirectoryName);
+                debug('4. выполняем формирование директорий');
+
+                let sourceId = arrayDownloadDirectoryName.splice(0, 1);
+                let mainDownloadDirectoryName = '/' + config.get('downloadDirectory:directoryName') + '/';
+
+                async.reduce(arrayDownloadDirectoryName, sourceId, (memo, item, done) => {
+                    fs.lstat(mainDownloadDirectoryName + memo, (err) => {
+                        if (err) {
+                            fs.mkdir(mainDownloadDirectoryName + memo, (err) => {
+                                if (err) done(err);
+                                else done(null, memo + item);
+                            });
+                        } else {
+                            done(null, memo + item);
+                        }
+                    });
+                }, (err, directory) => {
+                    if (err) return cb(err);
+
+                    let uploadDirectoryFiles = mainDownloadDirectoryName + directory;
+                    cb(null, uploadDirectoryFiles);
+                });
+            },
+            //изменяем в таблице task_filtering_all_information:* ряд значений
+            function(uploadDirectoryFiles, cb) {
+
+                debug(uploadDirectoryFiles);
+                debug('5. изменяем в таблице task_filtering_all_information:* ряд значений');
+
+                redis.hmset(`task_filtering_all_information:${taskIndex}`, {
+                    'uploadFiles': 'in line',
+                    'uploadDirectoryFiles': uploadDirectoryFiles
+                }, (err) => {
+                    if (err) cb(err);
+                    else cb(null);
+                });
+            }
+        ], function(err) {
+            if (err) reject(err);
+            else resolve(null, true);
+        });
+    }).then(() => {
+
+        debug('SEND SUCCESS MESSAGE TO MOTH_GO');
+        debug(objResponse);
+
+        wsConnection.sendUTF(JSON.stringify(objResponse));
+
+        callback(null);
+    }).catch((err) => {
+        writeLogFile.writeLog('\t' + err.toString());
+        objResponse.info.processing = 'cancel';
+
+        debug('SEND ERROR MESSAGE TO MOTH_GO');
+        debug(objResponse);
+
+        wsConnection.sendUTF(JSON.stringify(objResponse));
+
+        callback(err);
     });
 };
 

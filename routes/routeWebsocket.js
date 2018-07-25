@@ -36,9 +36,6 @@ module.exports.route = function(objData, remoteHostId, callback) {
         'download files': messageTypeUpload
     };
 
-
-    debug('************************* MESSAGE TYPE: ' + objData.messageType + ' ********************');
-
     if (typeof objRoutes[objData.messageType] === 'undefined') return callback();
 
     process.nextTick(() => {
@@ -522,8 +519,6 @@ let messageTypeUpload = function(redis, remoteID, callback) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));
     }*/
 
-    let wsConnection = objWebsocket['remote_host:' + self.info.taskIndex.split(':')[0]];
-
     let objProcessing = {
         'ready': processingToDownloadFiles.ready,
         'execute': processingToDownloadFiles.execute,
@@ -535,7 +530,7 @@ let messageTypeUpload = function(redis, remoteID, callback) {
         'cancel': processingToDownloadFiles.cancel
     };
 
-    objProcessing[self.info.processing](redis, self, wsConnection, callback);
+    objProcessing[self.info.processing](redis, self, remoteID, callback);
 };
 
 //проверка передоваемых данных

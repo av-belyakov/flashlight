@@ -30,7 +30,7 @@ module.exports = function(data, socketIo, redis, callback) {
         });
     }).then(() => {
         //проверка переданных пользователем данных
-        new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             checkFileUploadSettings(data.taskIndex, (err) => {
                 if (err) reject(err);
                 else resolve();
@@ -38,7 +38,7 @@ module.exports = function(data, socketIo, redis, callback) {
         });
     }).then(() => {
         //обработка задачи по загрузке файлов
-        new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             processingFilesUpload.start(socketIo, data, function(err, sourceId) {
                 if (err) return reject(err);
                 if (data.sourceId !== sourceId) return reject(new Error('source ID does not match'));
@@ -48,7 +48,7 @@ module.exports = function(data, socketIo, redis, callback) {
         });
     }).then(() => {
         //добавить задачу в очередь (визуализация выполнения задачи)
-        new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             preparingVisualizationDownloadFiles.preparingVisualizationAddTurn(redis, data.taskIndex, function(err, data) {
                 if (err) return reject(err);
 
@@ -62,7 +62,7 @@ module.exports = function(data, socketIo, redis, callback) {
         });
     }).then((taskIndex) => {
         //сообщения об изменении статуса задач
-        new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', function(err, objTaskStatus) {
                 if (err) reject(err);
                 else resolve(objTaskStatus);
