@@ -39,17 +39,17 @@ module.exports = function(data, socketIo, redis, callback) {
     }).then(() => {
         //обработка задачи по загрузке файлов
         return new Promise((resolve, reject) => {
-            processingFilesUpload.start(socketIo, data, function(err, sourceId) {
+            processingFilesUpload.start(socketIo, data, (err, sourceID) => {
                 if (err) return reject(err);
-                if (data.sourceId !== sourceId) return reject(new Error('source ID does not match'));
+                if (data.sourceId !== sourceID) return reject(new Error('source ID does not match'));
 
-                resolve();
+                resolve(sourceID);
             });
         });
-    }).then(() => {
+    }).then((sourceID) => {
         //добавить задачу в очередь (визуализация выполнения задачи)
         return new Promise((resolve, reject) => {
-            preparingVisualizationDownloadFiles.preparingVisualizationAddTurn(redis, data.taskIndex, function(err, data) {
+            preparingVisualizationDownloadFiles.preparingVisualizationAddTurn(redis, data.taskIndex, sourceID, (err, data) => {
                 if (err) return reject(err);
 
                 if (Object.keys(data).length === 0) return resolve();
@@ -63,7 +63,7 @@ module.exports = function(data, socketIo, redis, callback) {
     }).then((taskIndex) => {
         //сообщения об изменении статуса задач
         return new Promise((resolve, reject) => {
-            getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', function(err, objTaskStatus) {
+            getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
                 if (err) reject(err);
                 else resolve(objTaskStatus);
             });

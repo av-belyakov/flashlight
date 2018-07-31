@@ -46,7 +46,7 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
         }
     };
 
-    debug('------------ RESIVED MESSAGE "ready" ---------------');
+    debug('------------ RESIVED MESSAGE "ready" for Moth_go ---------------');
     debug(objData);
 
     //удаляем временный файл если он есть
@@ -166,8 +166,11 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
 };
 
 //обработка пакета JSON полученного с источника и содержащего имя отправляемого файла
-module.exports.execute = function(redis, self, wsConnection, callback) {
-    let taskIndexHash = self.taskIndex.split(':')[1];
+module.exports.execute = function(redis, objData, wsConnection, callback) {
+
+    debug(objData);
+
+    let taskIndex = objData.info.taskIndex;
 
     /*
      * 'taskIndex' - id задачи
@@ -179,16 +182,16 @@ module.exports.execute = function(redis, self, wsConnection, callback) {
      * 'fileUploadedPercent' - объем загруженного файла в %
      * */
     objGlobal.downloadFilesTmp[wsConnection.remoteAddress] = {
-        'taskIndex': self.taskIndex,
-        'fileName': self.fileName,
-        'fileFullSize': +self.fileFullSize,
-        'fileChunkSize': Math.ceil(+self.fileFullSize / 100),
+        'taskIndex': taskIndex,
+        'fileName': objData.info.fileName,
+        'fileFullSize': +objData.info.fileSize,
+        'fileChunkSize': Math.ceil(+objData.info.fileSize / 100),
         'fileUploadedSize': 0,
         'fileSizeTmp': 0,
         'fileUploadedPercent': 0
     };
 
-    redis.hset('task_filtering_all_information:' + taskIndexHash, 'uploadFiles', 'loaded', function(err) {
+    redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'loaded', function(err) {
         if (err) callback(err);
         else callback(null);
     });

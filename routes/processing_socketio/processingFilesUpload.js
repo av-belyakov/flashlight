@@ -33,7 +33,7 @@ module.exports.start = function(socketIo, data, cb) {
     async.waterfall([
         //получаем идентификатор сенсора
         function(callback) {
-            redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', function(err, sourceID) {
+            redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', (err, sourceID) => {
                 if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
                 else callback(null, sourceID);
             });
@@ -50,8 +50,8 @@ module.exports.start = function(socketIo, data, cb) {
         },
         //проверяем есть ли в очереди на загрузку задача с соответствующим идентификатором
         function(sourceID, callback) {
-            redis.lrange('task_turn_downloading_files', [0, -1], function(err, list) {
-                if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+            redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
+                if (err) return callback(err);
 
                 let isTrue = list.some((item) => ((`${sourceID}:${taskIndex}`) === item));
 
@@ -61,15 +61,15 @@ module.exports.start = function(socketIo, data, cb) {
         },
         //добавление задачи в очередь (загрузка данных в таблицу task_turn_downloading_files)
         function(sourceID, callback) {
-            redis.rpush('task_turn_downloading_files', `${sourceID}:${taskIndex}`, function(err) {
-                if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+            redis.rpush('task_turn_downloading_files', `${sourceID}:${taskIndex}`, (err) => {
+                if (err) callback(err);
                 else callback(null, sourceID);
             });
         },
         //проверка осуществления загрузки файлов с указанного источника (идентификатор источника в таблице task_implementation_downloading_files)
         function(sourceID, callback) {
-            redis.exists('task_implementation_downloading_files', function(err, result) {
-                if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
+            redis.exists('task_implementation_downloading_files', (err, result) => {
+                if (err) return callback(err);
 
                 //если таблица task_implementation_downloading_files не существует
                 if (result === 0) return callback(null, sourceID, false);
@@ -82,45 +82,48 @@ module.exports.start = function(socketIo, data, cb) {
             });
         }
     ], function(err, sourceID, taskIsPerformed) {
-        if (err) {
-            if (err.name === 'errorRedisDataBase') {
-                writeLogFile.writeLog('\tError: ' + err.cause);
+        if (err) return cb(err);
+
+
+        //------------------ ДЛЯ ТЕСТОВ
+        async.series([
+            function(callback) {
+                redis.lrange('task_implementation_downloading_files', [0, -1], (err, result) => {
+                    if (err) return callback(err);
+
+                    debug('********* START **********');
+                    debug(' +++ task_implementation_downloading_files +++ ');
+                    debug(result);
+
+                    callback(null);
+                });
+            },
+            function(callback) {
+                redis.lrange('task_turn_downloading_files', [0, -1], (err, result) => {
+                    if (err) return callback(err);
+
+                    debug('********* START **********');
+                    debug(' *** task_turn_downloading_files *** ');
+                    debug(result);
+
+                    callback(null);
+                });
             }
-
-            debug('+++ ERORO ++++');
-            debug(err);
-
-            return cb(err);
-        }
-
-
-        //------------------ ДЛЯ ТЕСТОВ
-        redis.lrange('task_implementation_downloading_files', [0, -1], (err, result) => {
+        ], (err) => {
             if (err) return debug(err);
 
-            debug('********* START **********');
-            debug(' +++ task_implementation_downloading_files +++ ');
-            debug(result);
+            debug('list files for filtering');
+            debug(data.listFiles);
         });
-        //-------------------
-
         //------------------ ДЛЯ ТЕСТОВ
-        redis.lrange('task_turn_downloading_files', [0, -1], (err, result) => {
-            if (err) return debug(err);
 
-            debug('********* START **********');
-            debug(' *** task_turn_downloading_files *** ');
-            debug(result);
-        });
-        //-------------------
 
-        debug(data.listFiles);
 
         if (taskIsPerformed) return new errorsType.errorLoadingFile('Ошибка: в настоящее время задача с заданным ID уже выполняется');
 
         //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
         downloadManagementFiles.startRequestDownloadFiles(redis, socketIo, {
-            sourceId: sourceID,
+            sourceID: sourceID,
             taskIndex: taskIndex,
             listFiles: data.listFiles
         }).then(() => {
@@ -131,9 +134,6 @@ module.exports.start = function(socketIo, data, cb) {
 
             cb(null, sourceID);
         }).catch((err) => {
-            if (typeof err.cause === 'undefined') writeLogFile.writeLog('\tError: ' + err.message);
-            else writeLogFile.writeLog('\tError: ' + err.cause);
-
             cb(err);
         });
     });

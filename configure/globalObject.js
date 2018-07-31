@@ -20,12 +20,13 @@
  *
  *  загружаемые файлы
  *   'downloadFilesTmp' : { 
- *   '<ip_адрес>' : {
+ *   '<ID источника>' : {
  *    'taskIndex': <id задачи>
  *    'fileName': <имя загружаемого файла>
+ *    'fileHash': <хеш файла>
  *    'fileFullSize': <полный размер файла>
  *    'fileChunkSize': <размер 1%, для подсчета % загрузки>
- *    'fileUploadedSize': <загруженный размер файла>
+ *    'fileUploadedSize': <загруженный объем файла>
  *    'fileSizeTmp': <временный размер файла>
  *    'fileUploadedPercent': <объем загруженного файла в %>
  *    'uploadDirectoryFiles': <директория для сохранения файлов>
@@ -110,7 +111,17 @@ class GlobalObject {
         return {};
     }
 
-    //дабавить данные по выбранному типу, ID группы и ключу
+    /**
+     * дабавить данные по выбранному типу, ID группы и ключу
+     * пример:
+     *    globalObject.setData('processingTasks', taskIndex, {
+     *        'taskType': 'upload',
+     *        'sourceId': sourceId,
+     *        'status': 'expect',
+     *        'timestampStart': +new Date(),
+     *        'timestampModify': +new Date()
+     *    });
+     */
     setData(type, group, key = null, value = null) {
         if (this._checkKeys(type)) return false;
         if (typeof group === 'undefined') return false;
@@ -123,6 +134,26 @@ class GlobalObject {
 
         this.obj[type][group][key] = value;
         return true;
+    }
+
+    /**
+     * модифицируем информацию 
+     * пример:
+     *    globalObject.modufyData('processingType', taskIndex, [
+     *          ['status', 'in line'],
+     *          ['timestampModify', +new Date()]
+     *     }]);
+     */
+    modifyData(type, group, arrayData) {
+        if (this._checkKeys(type)) return false;
+        if (typeof group === 'undefined') return false;
+
+        arrayData.forEach(element => {
+            if (Array.isArray(element) && (element.length === 2)) {
+                this.obj[type][group][element[0]] = element[1];
+            }
+        });
+
     }
 
     //удалить данные по выбранному типу и ID группы

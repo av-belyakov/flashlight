@@ -7,7 +7,12 @@
 
 'use strict';
 
+const debug = require('debug')('routingRequestsDownloadFiles');
+
 const showNotify = require('../../libs/showNotify');
+const errorsType = require('../../errors/errorsType');
+const globalObject = require('../../configure/globalObject');
+const objWebsocket = require('../../configure/objWebsocket');
 const writeLogFile = require('../../libs/writeLogFile');
 const getListsTaskProcessing = require('../../libs/getListsTaskProcessing');
 const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPage');
@@ -26,23 +31,28 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
         'execute retransmission completed': requestTypeExecuteRetransmissionCompleted
     };
 
-    console.log(req);
+    debug(req);
+    if (typeof req.info.taskIndex === 'undefined') {
+        return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
+    }
 
-    if (typeof objTypeRequest[req.processing] === 'function') objTypeRequest[req.processing]()
+    let taskIndex = req.info.taskIndex;
+
+    if (typeof objTypeRequest[req.info.processing] === 'function') objTypeRequest[req.info.processing]();
 
     function requestCancel() {
         showNotify(socketIoS, 'danger', `Неопределенная ошибка, загрузка файлов с источника №<strong>${remoteHostId}</strong> не возможна`);
     }
 
     function requestTypeReady() {
-        preparingVisualizationDownloadFiles.preparingVisualizationStartExecute(redis, req.taskIndex, (err, data) => {
+        debug('--- TASK TYPE READY');
+
+        preparingVisualizationDownloadFiles.preparingVisualizationStartExecute(redis, taskIndex, remoteHostId, (err, data) => {
             if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
 
             if (Object.keys(data).length > 0) {
                 showNotify(socketIoS, 'success', `Источник №<strong>${remoteHostId}</strong>, началась загрузка файлов`);
                 socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
-
-                let taskIndex = (~req.taskIndex.indexOf(':')) ? req.taskIndex.split(':')[1] : req.taskIndex;
 
                 //сообщения об изменении статуса задач
                 new Promise((resolve, reject) => {
@@ -75,26 +85,83 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
     }
 
     function requestTypeExecute() {
-        if ((typeof req.taskIndex === 'undefined') || !(~req.taskIndex.indexOf(':'))) {
-            return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-        }
+        debug('--- TASK TYPE EXECUTE');
 
-        let taskIndex = (~req.taskIndex.indexOf(':')) ? req.taskIndex.split(':')[1] : req.taskIndex;
-        getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, obj) => {
-            if (err) {
-                showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-            } else {
+        //добавляем информацию о загружаемом файле в объект globalObject
+        new Promise((resolve, reject) => {
+            debug('get task information');
+
+            getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, result) => {
+                if (err) return reject(err);
+
                 socketIoS.emit('change object status', {
                     processingType: 'showChangeObject',
-                    informationPageJobLog: obj,
+                    informationPageJobLog: result,
                     informationPageAdmin: {}
                 });
+
+                debug(result);
+
+                resolve({
+                    'status': result.newStatus,
+                    'uploadDirectoryFiles': result.uploadDirectoryFiles
+                });
+            });
+        }).then((objDataTask) => {
+            //изменяем информацию о выполняемой задаче (processingTask)
+            globalObject.modifyData('processingTasks', taskIndex, [
+                ['status', objDataTask.newStatus],
+                ['timestampModify', +new Date()]
+            ]);
+
+            debug('globalObject.modifyData');
+            debug(globalObject.getData('processingTasks', taskIndex));
+
+            return objDataTask.uploadDirectoryFiles;
+        }).then((uploadDirectoryFiles) => {
+            //добавляем информацию о загружаемом файле
+            globalObject.setData('downloadFilesTmp', remoteHostId, {
+                'taskIndex': taskIndex,
+                'fileName': req.info.fileName,
+                'fileHash': req.info.fileHash, //хеш файла в md5
+                'fileFullSize': req.info.fileSize, //полный размер файла в байтах
+                'fileChunkSize': (+req.info.fileSize / 100), //размер в байтах одного %
+                'fileUploadedSize': 0, //загруженный объем файла
+                'fileSizeTmp': 0, //временный размер файла
+                'fileUploadedPercent': 0, //объем загруженного файла в %
+                'uploadDirectoryFiles': uploadDirectoryFiles //путь до директории в которой будут сохранятся файлы
+            });
+
+            debug('globalObject.setData (downloadFilesTmp)');
+            debug(globalObject.getData('downloadFilesTmp', remoteHostId));
+
+        }).then(() => {
+            //отправляем Moth_go сообщение об ожидании самого файла
+            let wsConnection = objWebsocket[`remote_host:${remoteHostId}`];
+            if (typeof wsConnection === 'undefined') {
+                throw (new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
             }
+            let msg = JSON.stringify({
+                'messageType': 'download files',
+                'info': {
+                    'processing': 'waiting for transfer',
+                    'taskIndex': taskIndex,
+                    'fileName': req.info.fileName
+                }
+            });
+
+            debug('send data for Moth_go');
+            debug(msg);
+
+            wsConnection.sendUTF(msg);
+        }).catch((err) => {
+            writeLogFile.writeLog('\tError: ' + err.toString());
+            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
         });
     }
 
     function requestTypeExecuteCompleted() {
-        preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, req.taskIndex, function(err, data) {
+        preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, remoteHostId, function(err, data) {
             if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
 
             if (Object.keys(data).length > 0) {
@@ -104,7 +171,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
     }
 
     function requestTypeExecuteRetransmission() {
-        preparingVisualizationDownloadFiles.preparingVisualizationStartExecute(redis, req.taskIndex, function(err, data) {
+        preparingVisualizationDownloadFiles.preparingVisualizationStartExecute(redis, taskIndex, remoteHostId, function(err, data) {
             if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
 
             if (Object.keys(data).length > 0) {
@@ -123,7 +190,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
     }
 
     function requestTypeComplete() {
-        preparingVisualizationDownloadFiles.preparingVisualizationComplete(redis, req.taskIndex, function(err, data) {
+        preparingVisualizationDownloadFiles.preparingVisualizationComplete(redis, taskIndex, remoteHostId, function(err, data) {
             if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
 
             if (Object.keys(data).length > 0) {
@@ -145,8 +212,6 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
                         });
                     }
                 }
-
-                let taskIndex = (~req.taskIndex.indexOf(':')) ? req.taskIndex.split(':')[1] : req.taskIndex;
                 //сообщения об изменении статуса задач
                 new Promise((resolve, reject) => {
                     getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', function(err, objTaskStatus) {
@@ -178,7 +243,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
     }
 
     function requestTypeUpdateProgress() {
-        preparingVisualizationDownloadFiles.preparingVisualizationUpdateProgress(redis, remoteHostId, function(err, data) {
+        preparingVisualizationDownloadFiles.preparingVisualizationUpdateProgress(redis, taskIndex, remoteHostId, function(err, data) {
             if (err) return showNotify(socketIoS, 'danger', 'Неопределенная ошибка, контроль загрузки файлов не возможен');
 
             if (Object.keys(data).length > 0) {

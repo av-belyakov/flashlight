@@ -419,7 +419,9 @@ module.exports.eventHandling = function(socketIo) {
         data.listFiles = [];
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
             if (err) {
-                writeLogFile.writeLog('\tError: ' + err.toString());
+                let errMsg = (err.name) ? err.message : err.toString();
+                writeLogFile.writeLog('\tError: ' + errMsg);
+
                 showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`);
             }
         });
@@ -432,7 +434,9 @@ module.exports.eventHandling = function(socketIo) {
 
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
             if (err) {
-                writeLogFile.writeLog('\tError: ' + err.toString());
+                let errMsg = (err.name) ? err.message : err.toString();
+                writeLogFile.writeLog('\tError: ' + errMsg);
+
                 showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`);
             }
         });

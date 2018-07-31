@@ -27,13 +27,13 @@ const objWebsocket = require('../../configure/objWebsocket');
  * @param {*} socketIo - дискриптор соединения по протоколу sockeio
  */
 module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
-    let { sourceId, taskIndex, listFiles } = objData;
+    let { sourceID, taskIndex, listFiles } = objData;
     let countDownloadSelectedFiles = listFiles.length;
 
     return new Promise((resolve, reject) => {
         //удаляем идентификатор задачи из таблицы task_turn_downloading_files и добавляем в таблицу task_implementation_downloading_files
         changeTaskInListDownloadFiles(redis, {
-            sourceId: sourceId,
+            sourceId: sourceID,
             taskIndex: taskIndex
         }, 'start', (err) => {
             if (err) reject(err);
@@ -80,7 +80,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
         //добавляем информацию о задаче в глобальный объект
         globalObject.setData('processingTasks', taskIndex, {
             'taskType': 'upload',
-            'sourceId': sourceId,
+            'sourceId': sourceID,
             'status': 'expect',
             'timestampStart': +new Date(),
             'timestampModify': +new Date()
@@ -96,7 +96,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
             throw (err);
         });
     }).then((directoryFiltering) => {
-        let wsConnection = objWebsocket['remote_host:' + sourceId];
+        let wsConnection = objWebsocket['remote_host:' + sourceID];
 
         if (typeof wsConnection === 'undefined') {
             throw (new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
@@ -180,18 +180,18 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
   - processing - остановка выгрузки файлов
   - taskIndex - уникальный идентификатор задачи,
 */
-module.exports.stopRequestDownloadFiles = function(sourceId, id, func) {
-    let wsConnection = objWebsocket['remote_host:' + sourceId];
+module.exports.stopRequestDownloadFiles = function(sourceID, id, func) {
+    let wsConnection = objWebsocket['remote_host:' + sourceID];
 
     if (typeof wsConnection === 'undefined') {
-        func(new errorsType.taskIndexDoesNotExist('Задачи с идентификатором ' + id + ' не существует'));
+        func(new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${id} не существует`));
     } else {
         wsConnection.sendUTF(JSON.stringify({
             'messageType': 'download files',
             'processing': 'stop',
             'taskIndex': id
         }));
-        func(null, sourceId);
+        func(null, sourceID);
     }
 };
 
@@ -207,7 +207,7 @@ module.exports.stopRequestDownloadFiles = function(sourceId, id, func) {
 
  
 */
-module.exports.resumeRequestDownloadFiles = function(redis, sourceId, taskIndex, arrayNameReceivedFiles, socketIo, cb) {
+module.exports.resumeRequestDownloadFiles = function(redis, sourceID, taskIndex, arrayNameReceivedFiles, socketIo, cb) {
     async.waterfall([
         function(callback) {
             getUserId.userId(redis, socketIo, (err, userId) => {
@@ -239,7 +239,7 @@ module.exports.resumeRequestDownloadFiles = function(redis, sourceId, taskIndex,
                 else callback(null, {
                     'messageType': 'download files',
                     'processing': 'resume',
-                    'taskIndex': sourceId + ':' + taskIndex,
+                    'taskIndex': sourceID + ':' + taskIndex,
                     'countFilesFound': result[0],
                     'directoryFiltering': result[1],
                     'arrayNameReceivedFiles': arrayNameReceivedFiles
@@ -252,13 +252,13 @@ module.exports.resumeRequestDownloadFiles = function(redis, sourceId, taskIndex,
             return cb(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
         }
 
-        let wsConnection = objWebsocket['remote_host:' + sourceId];
+        let wsConnection = objWebsocket['remote_host:' + sourceID];
         if (typeof wsConnection === 'undefined') {
             return cb(new errorsType.taskIndexDoesNotExist('Задачи с идентификатором ' + sourceId + ':' + taskIndex + ' не существует, или источник №<strong>' + sourceId + '</strong> не подключен'));
         }
 
         wsConnection.sendUTF(JSON.stringify(obj));
-        cb(null, sourceId);
+        cb(null, sourceID);
     });
 };
 
