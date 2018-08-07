@@ -2,6 +2,8 @@
  * Модуль обрабатывающий типы состояний при скачивании с источников
  * отфильтрванных файлов сет. трафика
  * 
+ * после обработки модуля routeSocketIo.eventGenerator()
+ * 
  * Верися 0.1, дата релиза 20.02.2018 
  */
 
@@ -27,8 +29,8 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
         'complete': requestTypeComplete,
         'update progress': requestTypeUpdateProgress,
         'execute completed': requestTypeExecuteCompleted,
-        'execute retransmission': requestTypeExecuteRetransmission,
-        'execute retransmission completed': requestTypeExecuteRetransmissionCompleted
+        //        'execute retransmission': requestTypeExecuteRetransmission,
+        //        'execute retransmission completed': requestTypeExecuteRetransmissionCompleted
     };
 
     debug(req);
@@ -87,8 +89,25 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
     function requestTypeExecute() {
         debug('--- TASK TYPE EXECUTE');
 
+        getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, result) => {
+            if (err) return reject(err);
+
+            socketIoS.emit('change object status', {
+                processingType: 'showChangeObject',
+                informationPageJobLog: result,
+                informationPageAdmin: {}
+            });
+
+            /*debug(result);
+
+            resolve({
+                'status': result.newStatus,
+                'uploadDirectoryFiles': result.uploadDirectoryFiles
+            });*/
+        });
+
         //добавляем информацию о загружаемом файле в объект globalObject
-        new Promise((resolve, reject) => {
+        /*new Promise((resolve, reject) => {
             debug('get task information');
 
             getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, result) => {
@@ -157,7 +176,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId, notifyMessage }
         }).catch((err) => {
             writeLogFile.writeLog('\tError: ' + err.toString());
             showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-        });
+        });*/
     }
 
     function requestTypeExecuteCompleted() {

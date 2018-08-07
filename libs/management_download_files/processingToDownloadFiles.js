@@ -1,5 +1,7 @@
 /*
  * Набор модулей для обработки событий, генерируемых при передаче файлов
+ * 
+ * после обработки модуля routeWebsocket.route()
  *
  * Версия 0.2, дата релиза 24.07.2018
  * */
@@ -17,14 +19,13 @@ const config = require('../../configure');
 const errorsType = require('../../errors/errorsType');
 const objWebsocket = require('../../configure/objWebsocket.js');
 const writeLogFile = require('../writeLogFile');
+const globalObject = require('../../configure/globalObject');
 const actionWhenReceivingCancel = require('./actionWhenReceivingCancel');
 const checkQueueTaskDownloadFiles = require('./checkQueueTaskDownloadFiles');
 const actionWhenReceivingComplete = require('./actionWhenReceivingComplete');
 const actionWhenReceivingFileReceived = require('./actionWhenReceivingFileReceived');
 const actionWhenReceivingFileNotReceived = require('./actionWhenReceivingFileNotReceived');
 const actionWhenRetransmissionReceivingFile = require('./actionWhenRetransmissionReceivingFile');
-
-const objGlobal = {};
 
 /**
  * Модуль осуществляющий действия для подготовки файлов к приему
@@ -146,6 +147,7 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
         });
     }).then(() => {
 
+        debug('EVENT "READY"');
         debug('SEND SUCCESS MESSAGE TO MOTH_GO');
         debug(objResponse);
 
@@ -156,6 +158,7 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
         writeLogFile.writeLog('\t' + err.toString());
         objResponse.info.processing = 'cancel';
 
+        debug('EVENT "READY"');
         debug('SEND ERROR MESSAGE TO MOTH_GO');
         debug(objResponse);
 
@@ -166,35 +169,112 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
 };
 
 //обработка пакета JSON полученного с источника и содержащего имя отправляемого файла
-module.exports.execute = function(redis, objData, wsConnection, callback) {
+module.exports.execute = function(redis, objData, sourceID, callback) {
 
+    debug('EVENT EXECUTE');
     debug(objData);
 
-    let taskIndex = objData.info.taskIndex;
+    let wsConnection = objWebsocket[`remote_host:${sourceID}`];
+    if (typeof wsConnection === 'undefined') {
+        throw (new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
+    }
 
-    /*
-     * 'taskIndex' - id задачи
-     * 'fileName' - имя загружаемого файла
-     * 'fileFullSize' - полный размер файла
-     * 'fileChunkSize' : размер 1%, для подсчета % загрузки
-     * 'fileUploadedSize' - загруженный размер файла
-     * 'fileSizeTmp' - временный размер файла
-     * 'fileUploadedPercent' - объем загруженного файла в %
-     * */
-    objGlobal.downloadFilesTmp[wsConnection.remoteAddress] = {
-        'taskIndex': taskIndex,
-        'fileName': objData.info.fileName,
-        'fileFullSize': +objData.info.fileSize,
-        'fileChunkSize': Math.ceil(+objData.info.fileSize / 100),
-        'fileUploadedSize': 0,
-        'fileSizeTmp': 0,
-        'fileUploadedPercent': 0
+    let taskIndex = objData.info.taskIndex;
+    let objResponse = {
+        'messageType': 'download files',
+        'info': {
+            'processing': 'waiting for transfer',
+            'taskIndex': taskIndex
+        }
     };
 
-    redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'loaded', function(err) {
-        if (err) callback(err);
-        else callback(null);
+    new Promise((resolve, reject) => {
+
+        debug('1. изменяем статус uploadFiles в таблице task_filtering_all_information:');
+
+        redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'loaded', (err) => {
+            if (err) reject(err);
+            else resolve(null);
+        });
+    }).then(() => {
+        //изменяем информацию о выполняемой задаче (processingTask)
+        globalObject.modifyData('processingTasks', taskIndex, [
+            ['status', 'loaded'],
+            ['timestampModify', +new Date()]
+        ]);
+
+        debug('globalObject.modifyData');
+        debug(globalObject.getData('processingTasks', taskIndex));
+
+    }).then(() => {
+        redis.hget(`task_filtering_all_information:${taskIndex}`, 'uploadDirectoryFiles', (err, uploadDirectoryFiles) => {
+            if (err) throw (err);
+
+            //добавляем информацию о загружаемом файле
+            globalObject.setData('downloadFilesTmp', sourceID, {
+                'taskIndex': taskIndex,
+                'fileName': objData.info.fileName,
+                'fileHash': objData.info.fileHash, //хеш файла в md5
+                'fileFullSize': objData.info.fileSize, //полный размер файла в байтах
+                'fileChunkSize': (+objData.info.fileSize / 100), //размер в байтах одного %
+                'fileUploadedSize': 0, //загруженный объем файла
+                'fileSizeTmp': 0, //временный размер файла
+                'fileUploadedPercent': 0, //объем загруженного файла в %
+                'uploadDirectoryFiles': uploadDirectoryFiles //путь до директории в которой будут сохранятся файлы
+            });
+
+            debug('globalObject.setData (downloadFilesTmp)');
+            debug(globalObject.getData('downloadFilesTmp', sourceID));
+
+        });
+    }).then(() => {
+        debug('EVENT "EXECUTE"');
+        debug('SEND SUCCESS MESSAGE TO MOTH_GO');
+        debug(objResponse);
+
+        objResponse.info.fileName = objData.info.fileName;
+
+        wsConnection.sendUTF(JSON.stringify(objResponse));
+
+        callback(null);
+    }).catch((err) => {
+        writeLogFile.writeLog('\t' + err.toString());
+        objResponse.info.processing = 'cancel';
+
+        debug('EVENT "EXECUTE"');
+        debug('SEND ERROR MESSAGE TO MOTH_GO');
+        debug(objResponse);
+
+        wsConnection.sendUTF(JSON.stringify(objResponse));
+
+        callback(err);
     });
+    /*.then((remoteHostIP) => {
+
+            debug('2. получили IP адрес источника ' + remoteHostIP);
+
+            /*
+             * 'taskIndex' - id задачи
+             * 'fileName' - имя загружаемого файла
+             * 'fileHash' - хеш файла
+             * 'fileFullSize' - полный размер файла
+             * 'fileChunkSize' : размер 1%, для подсчета % загрузки
+             * 'fileUploadedSize' - загруженный размер файла
+             * 'fileSizeTmp' - временный размер файла
+             * 'fileUploadedPercent' - объем загруженного файла в %
+             * */
+    /*objGlobal.downloadFilesTmp[remoteHostIP] = {
+            'taskIndex': taskIndex,
+            'fileName': objData.info.fileName,
+            'fileHash': objData.info.fileHash,
+            'fileFullSize': +objData.info.fileSize,
+            'fileChunkSize': Math.ceil(+objData.info.fileSize / 100),
+            'fileUploadedSize': 0,
+            'fileSizeTmp': 0,
+            'fileUploadedPercent': 0
+        };
+    })*/
+
 };
 
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
@@ -286,7 +366,7 @@ module.exports.executeCompleted = function(redis, self, wsConnection, callback) 
 };
 
 //обработка пакета JSON полученного с источника информирующего о повторной передачи неуспешно переданных файлов
-module.exports.executeRetransmission = function(redis, self, wsConnection, callback) {
+/*module.exports.executeRetransmission = function(redis, self, wsConnection, callback) {
     /*
      * 'taskIndex' - id задачи
      * 'fileName' - имя загружаемого файла
@@ -296,7 +376,7 @@ module.exports.executeRetransmission = function(redis, self, wsConnection, callb
      * 'fileSizeTmp' - временный размер файла
      * 'fileUploadedPercent' - объем загруженного файла в %
      * */
-    objGlobal.downloadFilesTmp[wsConnection.remoteAddress] = {
+/*    objGlobal.downloadFilesTmp[wsConnection.remoteAddress] = {
         'taskIndex': self.taskIndex,
         'fileName': self.fileName,
         'fileFullSize': +self.fileFullSize,
@@ -306,10 +386,10 @@ module.exports.executeRetransmission = function(redis, self, wsConnection, callb
         'fileUploadedPercent': 0
     };
     callback(null);
-};
+};*/
 
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи повторно передающегося файла
-module.exports.executeRetransmissionCompleted = function(redis, self, wsConnection, callback) {
+/*module.exports.executeRetransmissionCompleted = function(redis, self, wsConnection, callback) {
     if (!(~self.taskIndex.indexOf(':'))) return callback(new errorsType.errorLoadingFile('Ошибка при загрузке файла ' + objDownloadFiles.fileName));
 
     let taskIndexHash = self.taskIndex.split(':')[1];
@@ -393,7 +473,7 @@ module.exports.executeRetransmissionCompleted = function(redis, self, wsConnecti
             }
         });
     });
-};
+};*/
 
 //обработка пакета JSON полученного с источника и содержащего информацию о количестве успешно или неуспешно переданных файлов
 module.exports.complete = function(redis, self, wsConnection, callback) {

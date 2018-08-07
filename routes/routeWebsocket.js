@@ -49,7 +49,31 @@ let messageTypeUndefined = function(redis, remoteHostId, callback) {
 };
 
 //обработка ошибок принимаемых от удаленных источников
-let messageTypeError = function(redis, remoteHostId, callback) {
+let messageTypeError = function(redis, sourceID, callback) {
+
+    debug('websocket RESIVED MESSAGE TYPE "ERROR"');
+    debug(this);
+
+    function changeStatusProcessingTask(taskIndex, taskType) {
+
+        debug(`taskIndex = ${taskIndex}, taskType = ${taskType}`);
+
+        let objChangeStatus = {
+            'filtering': {
+                'table': ['jobStatus', 'rejected']
+            },
+            'upload': {
+                'table': ['uploadFiles', 'suspended']
+            }
+        };
+        if (typeof objChangeStatus[taskType] === 'undefined') return new errorsType.receivedIncorrectData(`incorrect type 'taskType' equal to ${taskType}`);
+
+        redis.hset(`task_filtering_all_information:${taskIndex}`, objChangeStatus[taskType].table[0], objChangeStatus[taskType].table[1], (err) => {
+            if (err) return err;
+        });
+    }
+
+
     let dateUnix = +new Date();
     let obj = {
         ip: this.serverIp,
@@ -58,29 +82,38 @@ let messageTypeError = function(redis, remoteHostId, callback) {
         errorMessage: this.errorMessage
     };
 
-    if (this.taskId === null) return callback();
+    if (this.taskId === null) return callback(null);
 
-    redis.zadd('remote_host:errors:' + remoteHostId, dateUnix, JSON.stringify(obj), function(err) {
-        if (err) return callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
+    redis.zadd(`remote_host:errors:${sourceID}`, dateUnix, JSON.stringify(obj), function(err) {
+        if (err) return callback(err);
     });
     //ошибка авторизации на источнике
     if (+this.errorCode === 403) {
-        redis.hset('remote_host:settings:' + remoteHostId, 'isAuthorization', false, function(err) {
-            if (err) return callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
+        redis.hset(`remote_host:settings:${sourceID}`, 'isAuthorization', false, function(err) {
+            if (err) return callback(err);
         });
     }
+
+    if ((+this.errorCode === 400) || (+this.errorCode === 406)) {
+        let tasksIndex = globalObject.getData('processingTasks');
+        for (let taskID in tasksIndex) {
+            if (taskID === this.taskId) changeStatusProcessingTask(this.taskId, tasksIndex[taskID].taskType)
+        }
+    }
+
     /*
      * отсутствует сетевой трафик за выбранный промежуток времени или
      * превышен лимит одновременно запущеных задач на фильтрацию
      * */
     if (+this.errorCode === 410 || +this.errorCode === 413 || +this.errorCode === 500) {
         let taskId = (~this.taskId.indexOf(':')) ? this.taskId.split(':')[1] : this.taskId;
-        redis.hget('task_filtering_all_information:' + taskId, 'jobStatus', function(err, jobStatus) {
-            if (err) return callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
+
+        redis.hget(`task_filtering_all_information:${taskId}`, 'jobStatus', function(err, jobStatus) {
+            if (err) return callback(err);
 
             if (jobStatus === 'expect') {
-                redis.hset('task_filtering_all_information:' + taskId, 'jobStatus', 'rejected', function(err) {
-                    if (err) return callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
+                redis.hset(`task_filtering_all_information:${taskId}`, 'jobStatus', 'rejected', function(err) {
+                    if (err) return callback(err);
                 });
             }
         });
@@ -94,16 +127,16 @@ let messageTypeError = function(redis, remoteHostId, callback) {
 
         debug('ERROR error code 414');
 
-        redis.hmset('task_filtering_all_information:' + this.taskId, {
+        redis.hmset(`task_filtering_all_information:${this.taskId}`, {
             'uploadFiles': 'loaded',
             'userNameStopUploadFiles': 'null',
             'dateTimeStopUploadFiles': 'null'
         }, (err) => {
-            if (err) return callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
+            if (err) return callback(err);
         });
     }
 
-    callback();
+    callback(null);
 };
 
 //обработка messageType - pong, сравнение с настройками хоста хранящимися в БД

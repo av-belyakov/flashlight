@@ -13,6 +13,7 @@ const debug = require('debug')('routeSocketIo.js');
 const showNotify = require('../libs/showNotify');
 const controllers = require('../controllers');
 const writeLogFile = require('../libs/writeLogFile');
+const globalObject = require('../configure/globalObject');
 const getListSources = require('../libs/helpers/getListSources');
 const checkAccessRights = require('../libs/users_management/checkAccessRights');
 const listParametersSearch = require('../libs/listParametersSearch');
@@ -55,6 +56,48 @@ const redis = controllers.connectRedis();
  * @param {*} notifyMessage 
  */
 module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage, notifyMessage) {
+    let sendMessageChangeTaskStatus = (taskIndex, taskType) => {
+
+        debug('function sendMessageChangeTaskStatus...');
+
+        let objChangeStatus = {
+            'filtering': 'jobStatus',
+            'upload': 'uploadFiles'
+        };
+
+        if (typeof objChangeStatus[taskType] === 'undefined') return writeLogFile.writeLog(`\tError: incorrect type 'taskType' equal to ${taskType}`);
+
+        //сообщения об изменении статуса задач
+        new Promise((resolve, reject) => {
+            getTaskStatusForJobLogPage(redis, taskIndex, objChangeStatus[taskType], function(err, objTaskStatus) {
+                if (err) reject(err);
+                else resolve(objTaskStatus);
+            });
+        }).then((objTaskStatus) => {
+            return new Promise((resolve, reject) => {
+                getListsTaskProcessing((err, objListsTaskProcessing) => {
+                    if (err) reject(err);
+                    else resolve({
+                        status: objTaskStatus,
+                        lists: objListsTaskProcessing
+                    });
+                });
+            });
+        }).then((obj) => {
+
+            debug(obj);
+
+            socketIoS.emit('change object status', {
+                processingType: 'showChangeObject',
+                informationPageJobLog: obj.status,
+                informationPageAdmin: obj.lists
+            });
+        }).catch((err) => {
+            writeLogFile.writeLog('\tError: ' + err.toString());
+            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
+        });
+    }
+
     let obj = {
         'pong': function() {
             //для главной странице
@@ -86,8 +129,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                     socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
 
+                    sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                     //сообщения об изменении статуса задач
-                    new Promise((resolve, reject) => {
+                    /*new Promise((resolve, reject) => {
                         getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', (err, objTaskStatus) => {
                             if (err) reject(err);
                             else resolve(objTaskStatus);
@@ -111,7 +155,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     }).catch((err) => {
                         writeLogFile.writeLog('\tError: ' + err.toString());
                         showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-                    });
+                    });*/
                 });
             }
 
@@ -135,8 +179,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     showNotify(socketIoS, 'success', `Завершение фильтрации на источнике №<strong>${remoteHostId}</strong>`);
                     socketIoS.emit('filtering stop', { processingType: 'showInformationFilter', information: data });
 
+                    sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                     //сообщения об изменении статуса задач
-                    new Promise((resolve, reject) => {
+                    /*new Promise((resolve, reject) => {
                         getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', function(err, objTaskStatus) {
                             if (err) reject(err);
                             else resolve(objTaskStatus);
@@ -160,7 +205,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     }).catch((err) => {
                         writeLogFile.writeLog('\tError: ' + err.toString());
                         showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-                    });
+                    });*/
                 });
             }
 
@@ -176,7 +221,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     socketIoS.emit('filtering stop', { processingType: 'showInformationFilter', information: data });
 
                     //сообщения об изменении статуса задач
-                    new Promise((resolve, reject) => {
+                    sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
+
+                    /*new Promise((resolve, reject) => {
                         getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', function(err, objTaskStatus) {
                             if (err) reject(err);
                             else resolve(objTaskStatus);
@@ -200,7 +247,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     }).catch((err) => {
                         writeLogFile.writeLog('\tError: ' + err.toString());
                         showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-                    });
+                    });*/
                 });
             }
         },
@@ -233,6 +280,17 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 500: `Неопределенная ошибка сервера, источник №<string>${remoteHostId}</strong>`,
                 501: `Невозможно выполнить загрузку файлов с источника №<strong>${remoteHostId}</strong>`
             };
+
+            if ((stringMessage.errorCode === 400) || (stringMessage.errorCode === 406)) {
+                let tasksIndex = globalObject.getData('processingTasks');
+                for (let taskID in tasksIndex) {
+
+                    debug(`taskID: ${taskID} === this.taskId: ${stringMessage.taskId}`);
+
+                    if (taskID === stringMessage.taskId) sendMessageChangeTaskStatus(stringMessage.taskId, tasksIndex[taskID].taskType);
+                }
+            }
+
             showNotify(socketIoS, 'danger', objErrorMessage[stringMessage.errorCode]);
         },
         'close': function() {

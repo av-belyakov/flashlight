@@ -131,7 +131,7 @@ function getShortSourcesInformation(redis, arrayResult, done) {
                     else resolve(objResult);
                 });
         }).then((infoAll) => {
-            new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 redis.hmget((`remote_host:settings:${sourceID}`,
                     'shortName',
                     'ipaddress', (err, infoSource) => {
