@@ -538,11 +538,11 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 };
 
 //обработка информации об импорте файлов
-let messageTypeUpload = function(redis, remoteID, callback) {
+let messageTypeUpload = function(redis, sourceID, callback) {
     let self = this;
 
     debug(this);
-    debug(`remoteID = ${remoteID}`);
+    debug(`remoteID = ${sourceID}`);
 
     if (!new RegExp('^[a-zA-Z0-9:]').test(self.info.taskIndex)) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));
@@ -563,7 +563,7 @@ let messageTypeUpload = function(redis, remoteID, callback) {
         'cancel': processingToDownloadFiles.cancel
     };
 
-    objProcessing[self.info.processing](redis, self, remoteID, callback);
+    objProcessing[self.info.processing](redis, self, sourceID, callback);
 };
 
 //проверка передоваемых данных

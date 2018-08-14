@@ -156,7 +156,7 @@ let helpers = {
 
 /***/ }),
 
-/***/ 22:
+/***/ 23:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -229,7 +229,7 @@ let managementIcon = {
 
 /***/ }),
 
-/***/ 74:
+/***/ 79:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -237,11 +237,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_showNotify__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(75);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(76);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(77);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(79);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(80);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(80);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(81);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(82);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(84);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(85);
 
 
 
@@ -399,7 +399,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 75:
+/***/ 80:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -449,7 +449,7 @@ function importXmlFile() {
 
 /***/ }),
 
-/***/ 76:
+/***/ 81:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -480,15 +480,15 @@ function exportXmlFile() {
 
 /***/ }),
 
-/***/ 77:
+/***/ 82:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = transmissionInformationSource;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__getFormElements__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(78);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__getFormElements__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(83);
 /**
  * Передача информации необходимой для добавления источника
  * 
@@ -530,13 +530,13 @@ function transmissionInformationSource() {
 
 /***/ }),
 
-/***/ 78:
+/***/ 83:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createObjectInformationSetting;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(23);
 /**
  * Модуль формирования объекта с введенной пользователем информации
  * 
@@ -565,13 +565,13 @@ function createObjectInformationSetting() {
 
 /***/ }),
 
-/***/ 79:
+/***/ 84:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = addEditSource;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(23);
 /**
  * Модуль формирования и открытия модального окна преднозначенного для создания
  * или редактирования источника
@@ -637,7 +637,7 @@ function addEditSource(typeWindow, sourceId, object) {
 
 /***/ }),
 
-/***/ 80:
+/***/ 85:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -715,5 +715,5 @@ function showAllInformation(sourceId, object) {
 
 /***/ })
 
-},[74]);
+},[79]);
 //# sourceMappingURL=settingSourcesPage.js.map

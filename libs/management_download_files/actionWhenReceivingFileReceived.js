@@ -1,65 +1,55 @@
 /*
- * Выполняется когда от источника приходит JSON пакет информирующий о завершении передачи файла
- * УДАЧНАЯ ЗАГРУЗКА ФАЙЛА
- * выполняются изменеия в следующих таблицах:
- *
- * - task_loading_files:*
- * - task_filtering_all_information:*
- *
- * Версия 0.2, дата релиза 16.09.2016
+ * Модуль вызываемый при удачном приеме загружаемого файла
+ * 
+ * Версия 0.2, дата релиза 13.08.2018
  * */
 
 'use strict';
 
-const fs = require('fs');
-const async = require('async');
+const globalObject = require('../../configure/globalObject');
 
-module.exports = function (redis, obj, func) {
-    let taskIndexHash = obj.taskIndex.split(':')[1];
+module.exports = function(redis, taskIndex, sourceID, cb) {
+    let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
 
-    async.waterfall([
-        function (callback) {
-            redis.hmget('task_filtering_all_information:' + taskIndexHash,
-                'countFilesLoaded',
-                'uploadDirectoryFiles',
-                function (err, value) {
-                    if(err) callback(err);
-                    else callback(null, +value[0], value[1]);
+    new Promise((resolve, reject) => {
+        redis.hget(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', (err, countFilesLoaded) => {
+            if (err) reject(err);
+            else resolve(countFilesLoaded);
+        });
+    }).then(countFilesLoaded => {
+        return new Promise((resolve, reject) => {
+            redis.hset(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', ++countFilesLoaded, err => {
+                if (err) reject(err);
+                else resolve();
             });
-        },
-        //увеличиваем счетчик успешно загруженных файлов на 1
-        function (countFilesLoaded, uploadDirectoryFiles, callback) {
-            redis.hset('task_filtering_all_information:' + taskIndexHash, 'countFilesLoaded', ++countFilesLoaded, function (err) {
-                if(err) callback(err);
-                else callback(null, uploadDirectoryFiles);
+        });
+    }).then(() => {
+        return new Promise((resolve, reject) => {
+            redis.hget(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
             });
-        },
-        //получаем размер загруженного файла
-        function (uploadDirectoryFiles, callback) {
-            fs.lstat(uploadDirectoryFiles + '/' + obj.fileName, function (err, fileStat) {
-                if(err) callback(err);
-                else callback(null, fileStat.size);
-            });
-        },
-        //получаем информацию по загружаемомму файлу
-        function (fileSize, callback) {
-            redis.hget('task_loading_files:' + taskIndexHash, obj.fileName, function (err, value) {
-                if(err) callback(err);
-                else callback(null, value, fileSize);
-            });
-        },
-        //изменяем информацию по загружаемому файлу
-        function (value, fileSize, callback) {
-            let arrayValue = value.split('/');
+        });
+    }).then(fileInfo => {
+        try {
+            let fi = JSON.parse(fileInfo);
 
-            let newValue = arrayValue[0] + '/' + fileSize + '/successfully';
-            redis.hset('task_loading_files:' + taskIndexHash, obj.fileName, newValue, function (err) {
-                if(err) callback(err);
-                else callback(null, true);
-            });
+            fi.fileDownloaded = true;
+
+            return JSON.stringify(fi);
+        } catch (err) {
+            throw err;
         }
-    ], function (err) {
-        if(err) func(err);
-        else func();
+    }).then(fi => {
+        return new Promise((resolve, reject) => {
+            redis.hset(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, fi, err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+    }).then(() => {
+        cb(null);
+    }).catch((err) => {
+        cb(err);
     });
 };

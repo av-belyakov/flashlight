@@ -129,7 +129,7 @@ let helpers = {
 
 /***/ }),
 
-/***/ 12:
+/***/ 11:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -445,23 +445,23 @@ function createModalWindowFilterResults(obj, objectTimers) {
 
 /***/ }),
 
-/***/ 45:
+/***/ 50:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__index_page_checkChangeAdminPassword__ = __webpack_require__(46);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__ = __webpack_require__(47);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__index_page_createWidgetVisualizationFiltration__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__ = __webpack_require__(49);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__index_page_changeWidget__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__index_page_changeInfoMinWidget__ = __webpack_require__(52);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__index_page_checkChangeAdminPassword__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__index_page_createWidgetVisualizationFiltration__ = __webpack_require__(53);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__index_page_changeWidget__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__index_page_changeInfoMinWidget__ = __webpack_require__(57);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__ = __webpack_require__(58);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__index_page_modalWindowFilterResults__ = __webpack_require__(6);
 
 
@@ -741,7 +741,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 46:
+/***/ 51:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -788,7 +788,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 47:
+/***/ 52:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -811,7 +811,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 48:
+/***/ 53:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -898,7 +898,7 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 49:
+/***/ 54:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -954,7 +954,7 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 50:
+/***/ 55:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -982,7 +982,7 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 51:
+/***/ 56:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1020,7 +1020,7 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 52:
+/***/ 57:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1082,12 +1082,12 @@ function createElementInformationFiltering(objData) {
 
 /***/ }),
 
-/***/ 53:
+/***/ 58:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_networkCalc__ = __webpack_require__(54);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_networkCalc__ = __webpack_require__(59);
 /*
  * Модуль для формирования модального окна для выбранного источника, 
  * позволяет
@@ -1520,7 +1520,7 @@ function getInputFieldIpAddress() {
 
 /***/ }),
 
-/***/ 54:
+/***/ 59:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1754,5 +1754,5 @@ function IPv4_BinaryDotQuad(binaryString) {
 
 /***/ })
 
-},[45]);
+},[50]);
 //# sourceMappingURL=indexPage.js.map

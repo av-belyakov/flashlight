@@ -1,87 +1,81 @@
 /*
  * Подготовка к визуализации хода выполнения загрузки файлов
  *
- * Версия 0.1, дата релиза 26.09.2016
+ * Версия 0.1, дата релиза 14.08.2018
  * */
 
 'use strict';
 
 const async = require('async');
 
-//const errorsType = require('../../errors/errorsType');
+const globalObject = require('../../configure/globalObject');
 const writeLogFile = require('../../libs/writeLogFile');
 
 const objGlobal = {};
 
 //подготовка данных необходимых для визуализации добавления в очередь задачи на выгрузку файлов
-module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, sourceID, func) {
+module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, sourceID, cb) {
     getShortSourcesInformationTurn(redis, taskIndex, sourceID, (err, obj) => {
         if (err) {
             if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
             else writeLogFile.writeLog('\tError: ' + err.message.toString());
 
-            func(err);
+            cb(err);
         } else {
-            func(null, obj);
+            cb(null, obj);
         }
     });
 };
 
 //подготовка данных необходимых для визуализации начала загрузки файлов
-module.exports.preparingVisualizationStartExecute = function(redis, taskIndex, sourceID, func) {
+module.exports.preparingVisualizationStartExecute = function(redis, taskIndex, sourceID, cb) {
     getShortSourcesInformationImplementation(redis, taskIndex, sourceID, (err, obj) => {
         if (err) {
             if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
             else writeLogFile.writeLog('\tError: ' + err.message.toString());
 
-            func(err);
+            cb(err);
         } else {
-            func(null, obj);
+            cb(null, obj);
         }
     });
 };
 
 //подготовка данных для визуализации прогресса
-module.exports.preparingVisualizationUpdateProgress = function(redis, remoteHostIp, sourceID, func) {
-    for (let sourceIp in objGlobal.downloadFilesTmp) {
-        if (remoteHostIp === sourceIp) {
-            getShortSourcesInformationImplementation(
-                redis,
-                objGlobal.downloadFilesTmp[sourceIp].taskIndex, (err, obj) => {
-                    if (err) {
-                        if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
-                        else writeLogFile.writeLog('\tError: ' + err.message.toString());
+module.exports.preparingVisualizationUpdateProgress = function(redis, taskIndex, sourceID, cb) {
+    let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
+    if ((infoDownloadFile === null) || (typeof infoDownloadFile === 'undefined')) {
+        writeLogFile.writeLog('\tError: not found a temporary object \'downloadFilesTmp\' to store information about the download file');
 
-                        func(err);
-                    } else {
-                        obj.fileUploadedPercent = 0;
-                        if (typeof objGlobal.downloadFilesTmp[sourceIp] !== 'undefined') {
-                            if (typeof objGlobal.downloadFilesTmp[sourceIp].fileUploadedPercent !== 'undefined') {
-                                obj.fileUploadedPercent = objGlobal.downloadFilesTmp[sourceIp].fileUploadedPercent;
-                            }
-                        }
-                        func(null, obj);
-                    }
-                });
-        } else {
-            func(null, {});
-        }
+        return cb(null, {});
     }
-};
 
-//подготовка данных необходимых для визуализации загрузки файла
-module.exports.preparingVisualizationExecuteCompleted = function(redis, taskIndex, sourceID, func) {
-    getShortSourcesInformationImplementation(redis, taskIndex, function(err, obj) {
+    getShortSourcesInformationImplementation(redis, taskIndex, sourceID, (err, obj) => {
         if (err) {
             if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
             else writeLogFile.writeLog('\tError: ' + err.message.toString());
 
-            func(err);
-        } else {
-            obj.fileUploadedPercent = 100;
-
-            func(null, obj);
+            return cb(err);
         }
+
+        obj.fileUploadedPercent = infoDownloadFile.fileUploadedPercent;
+        cb(null, obj);
+    });
+};
+
+//подготовка данных необходимых для визуализации загрузки файла
+module.exports.preparingVisualizationExecuteCompleted = function(redis, taskIndex, sourceID, cb) {
+    getShortSourcesInformationImplementation(redis, taskIndex, sourceID, (err, obj) => {
+        if (err) {
+            if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
+            else writeLogFile.writeLog('\tError: ' + err.message.toString());
+
+            return cb(err);
+        }
+
+        obj.fileUploadedPercent = 100;
+
+        cb(null, obj);
     });
 };
 
@@ -101,7 +95,7 @@ module.exports.preparingVisualizationComplete = function(redis, taskIndex, sourc
 
 //получаем краткую информацию об источнике с которого выполняется загрузка
 function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, done) {
-    redis.lrange('task_implementation_downloading_files', [0, -1], function(err, arrayResult) {
+    redis.lrange('task_implementation_downloading_files', [0, -1], (err, arrayResult) => {
         if (err) return done(err);
 
         let isExistTaskIndex = arrayResult.some((item) => {
@@ -112,9 +106,8 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
         //если идентификатор задачи не был найден
         if (!isExistTaskIndex) return done(null, {});
 
-        async.waterfall([
-            //получаем содержимое таблицы task_filtering_all_information:*
-            function(callback) {
+        async.parallel({
+            counts: function(callback) {
                 redis.hmget(`task_filtering_all_information:${taskIndex}`,
                     'countFilesFound',
                     'countFilesLoaded',
@@ -128,21 +121,20 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
                         });
                     });
             },
-            //получаем краткое название источника
-            function(obj, callback) {
-                redis.hget(`remote_host:settings:${sourceID}`, 'shortName', function(err, shortName) {
+            shortNameSource: function(callback) {
+                redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortName) => {
                     if (err) callback(err);
-                    else callback(null, obj, shortName);
+                    else callback(null, shortName);
                 });
             }
-        ], (err, obj, shortName) => {
+        }, (err, results) => {
             if (err) return done(err);
 
-            obj.taskIndex = taskIndex;
-            obj.sourceId = sourceID;
-            obj.shortName = shortName;
+            results.counts.taskIndex = taskIndex;
+            results.counts.sourceId = sourceID;
+            results.counts.shortName = results.shortNameSource.shortName;
 
-            done(null, obj);
+            done(null, results.counts);
         });
     });
 }

@@ -129,33 +129,8 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                     socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
 
-                    sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                     //сообщения об изменении статуса задач
-                    /*new Promise((resolve, reject) => {
-                        getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', (err, objTaskStatus) => {
-                            if (err) reject(err);
-                            else resolve(objTaskStatus);
-                        });
-                    }).then((objTaskStatus) => {
-                        return new Promise((resolve, reject) => {
-                            getListsTaskProcessing((err, objListsTaskProcessing) => {
-                                if (err) reject(err);
-                                else resolve({
-                                    status: objTaskStatus,
-                                    lists: objListsTaskProcessing
-                                });
-                            });
-                        });
-                    }).then((obj) => {
-                        socketIoS.emit('change object status', {
-                            processingType: 'showChangeObject',
-                            informationPageJobLog: obj.status,
-                            informationPageAdmin: obj.lists
-                        });
-                    }).catch((err) => {
-                        writeLogFile.writeLog('\tError: ' + err.toString());
-                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-                    });*/
+                    sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                 });
             }
 
@@ -179,33 +154,8 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     showNotify(socketIoS, 'success', `Завершение фильтрации на источнике №<strong>${remoteHostId}</strong>`);
                     socketIoS.emit('filtering stop', { processingType: 'showInformationFilter', information: data });
 
-                    sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                     //сообщения об изменении статуса задач
-                    /*new Promise((resolve, reject) => {
-                        getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', function(err, objTaskStatus) {
-                            if (err) reject(err);
-                            else resolve(objTaskStatus);
-                        });
-                    }).then((objTaskStatus) => {
-                        return new Promise((resolve, reject) => {
-                            getListsTaskProcessing((err, objListsTaskProcessing) => {
-                                if (err) reject(err);
-                                else resolve({
-                                    status: objTaskStatus,
-                                    lists: objListsTaskProcessing
-                                });
-                            });
-                        });
-                    }).then((obj) => {
-                        socketIoS.emit('change object status', {
-                            processingType: 'showChangeObject',
-                            informationPageJobLog: obj.status,
-                            informationPageAdmin: obj.lists
-                        });
-                    }).catch((err) => {
-                        writeLogFile.writeLog('\tError: ' + err.toString());
-                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-                    });*/
+                    sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                 });
             }
 
@@ -222,39 +172,10 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                     //сообщения об изменении статуса задач
                     sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
-
-                    /*new Promise((resolve, reject) => {
-                        getTaskStatusForJobLogPage(redis, stringMessage.info.taskIndex, 'jobStatus', function(err, objTaskStatus) {
-                            if (err) reject(err);
-                            else resolve(objTaskStatus);
-                        });
-                    }).then((objTaskStatus) => {
-                        return new Promise((resolve, reject) => {
-                            getListsTaskProcessing((err, objListsTaskProcessing) => {
-                                if (err) reject(err);
-                                else resolve({
-                                    status: objTaskStatus,
-                                    lists: objListsTaskProcessing
-                                });
-                            });
-                        });
-                    }).then((obj) => {
-                        socketIoS.emit('change object status', {
-                            processingType: 'showChangeObject',
-                            informationPageJobLog: obj.status,
-                            informationPageAdmin: obj.lists
-                        });
-                    }).catch((err) => {
-                        writeLogFile.writeLog('\tError: ' + err.toString());
-                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-                    });*/
                 });
             }
         },
         'download files': function() {
-
-            //debug(stringMessage);
-
             routingRequestDownloadFiles({
                 redis: redis,
                 socketIoS: socketIoS,
@@ -477,10 +398,15 @@ module.exports.eventHandling = function(socketIo) {
         data.listFiles = [];
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
             if (err) {
-                let errMsg = (err.name) ? err.message : err.toString();
-                writeLogFile.writeLog('\tError: ' + errMsg);
+                let errMsgLog = err.toString();
+                let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
+                if (err.name) {
+                    errMsgLog = err.message;
+                    errMsg = err.message;
+                }
 
-                showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`);
+                writeLogFile.writeLog('\tError: ' + errMsgLog);
+                showNotify(socketIo, 'danger', errMsg);
             }
         });
     });
@@ -492,10 +418,15 @@ module.exports.eventHandling = function(socketIo) {
 
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
             if (err) {
-                let errMsg = (err.name) ? err.message : err.toString();
-                writeLogFile.writeLog('\tError: ' + errMsg);
+                let errMsgLog = err.toString();
+                let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
+                if (err.name) {
+                    errMsgLog = err.message;
+                    errMsg = err.message;
+                }
 
-                showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`);
+                writeLogFile.writeLog('\tError: ' + errMsgLog);
+                showNotify(socketIo, 'danger', errMsg);
             }
         });
     });

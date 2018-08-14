@@ -1,5 +1,5 @@
 var settingGroupsPage =
-webpackJsonp_name_([7],{
+webpackJsonp_name_([8],{
 
 /***/ 0:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
@@ -28,7 +28,7 @@ let showNotify = function (type, message) {
 
 /***/ }),
 
-/***/ 34:
+/***/ 39:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -71,7 +71,7 @@ ManagementIcon.prototype.clearIcon = function () {
 
 /***/ }),
 
-/***/ 35:
+/***/ 40:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -102,16 +102,16 @@ function createObjInformationGroup(getGroupCheckbox, groupName) {
 
 /***/ }),
 
-/***/ 71:
+/***/ 76:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__setting_groups_page_markRead__ = __webpack_require__(72);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__setting_groups_page_createGroup__ = __webpack_require__(73);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_groups_page_managementIcon__ = __webpack_require__(34);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_groups_page_createObjInformationGroup__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__setting_groups_page_markRead__ = __webpack_require__(77);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__setting_groups_page_createGroup__ = __webpack_require__(78);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_groups_page_managementIcon__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_groups_page_createObjInformationGroup__ = __webpack_require__(40);
 
 
 
@@ -234,7 +234,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 72:
+/***/ 77:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -291,13 +291,13 @@ function markRead(elem) {
 
 /***/ }),
 
-/***/ 73:
+/***/ 78:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createGroup;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__managementIcon__ = __webpack_require__(34);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createObjInformationGroup__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__managementIcon__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createObjInformationGroup__ = __webpack_require__(40);
 /**
  * Содание новой группы пользователей
  * 
@@ -328,5 +328,5 @@ function createGroup() {
 
 /***/ })
 
-},[71]);
+},[76]);
 //# sourceMappingURL=settingGroupsPage.js.map

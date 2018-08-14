@@ -28,7 +28,7 @@ let showNotify = function (type, message) {
 
 /***/ }),
 
-/***/ 81:
+/***/ 86:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -67,5 +67,5 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ })
 
-},[81]);
+},[86]);
 //# sourceMappingURL=settingDashboard.js.map

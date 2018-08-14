@@ -25,9 +25,6 @@ const routeWebsocket = require('../routes/routeWebsocket');
 const getRemoteHostSetupDbRedis = require('../libs/getRemoteHostSetupDbRedis');
 const controllingConnectedSources = require('../libs/controllingConnectedSources');
 
-
-const objGlobal = {};
-
 /*
  * remote_hosts_exist:id - список
  * remote_host:setup:* - хеши
@@ -297,38 +294,53 @@ function addHandlerConnection(objSetup) {
 
         //как правило это прием бинарного файла сетевого трафика
         if (message.type === 'binary') {
-            if (typeof objGlobal.downloadFilesTmp[objSetup.connection.remoteAddress] === 'undefined') {
-                writeLogFile.writeLog('\tError, not found a temporary object \'downloadFilesTmp\' to store information about the download file');
 
-                routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.connection.remoteAddress, {
+            //debug('---------------------------- MESSAGE BINARY -----------------------');
+
+            let infoDownloadFile = globalObject.getData('downloadFilesTmp', objSetup.hostId);
+
+            if ((infoDownloadFile === null) || (typeof infoDownloadFile === 'undefined')) {
+                writeLogFile.writeLog('\tError: not found a temporary object \'downloadFilesTmp\' to store information about the download file');
+
+                return routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.connection.remoteAddress, {
                     messageType: 'error',
                     errorCode: 501,
                     errorMessage: '',
                     taskId: ''
                 });
-            } else {
-                let objDownloadFiles = objGlobal.downloadFilesTmp[objSetup.connection.remoteAddress];
-
-                let fileChunkSize = objDownloadFiles.fileChunkSize;
-                let fileSizeTmp = objDownloadFiles.fileSizeTmp;
-
-                let messageBinaryDataString = message.binaryData.toString();
-
-                if (fileSizeTmp <= fileChunkSize) {
-                    objDownloadFiles.fileSizeTmp = fileSizeTmp + messageBinaryDataString.length;
-                } else {
-                    objDownloadFiles.fileSizeTmp = 0;
-                    objDownloadFiles.fileUploadedPercent = ++objDownloadFiles.fileUploadedPercent;
-
-                    //генерируем событе прогресса загрузки файлов
-                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.connection.remoteAddress, {
-                        messageType: 'download files',
-                        processing: 'update progress'
-                    });
-                }
-                //пишем кусочки файлов в поток
-                getStreamWrite(objSetup.connection.remoteAddress).write(message.binaryData);
             }
+
+            let fileChunkSize = infoDownloadFile.fileChunkSize;
+            let fileSizeTmp = infoDownloadFile.fileSizeTmp;
+
+            let messageBinaryDataString = message.binaryData.toString();
+
+            if (fileSizeTmp <= fileChunkSize) {
+                infoDownloadFile.fileSizeTmp += messageBinaryDataString.length;
+
+                globalObject.setData('downloadFilesTmp', sourceID, {
+                    'fileSizeTmp': infoDownloadFile.fileSizeTmp
+                });
+            } else {
+                infoDownloadFile.fileSizeTmp = 0;
+                ++infoDownloadFile.fileUploadedPercent;
+
+                globalObject.setData('downloadFilesTmp', sourceID, {
+                    'fileSizeTmp': 0,
+                    'fileUploadedPercent': infoDownloadFile.fileUploadedPercent
+                });
+
+                //генерируем событе прогресса загрузки файлов
+                routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.connection.remoteAddress, {
+                    'messageType': 'download files',
+                    'info': {
+                        'processing': 'update progress',
+                        'taskIndex': infoDownloadFile.taskIndex
+                    }
+                }, objSetup.hostId, '');
+            }
+            //пишем кусочки файлов в поток
+            getStreamWrite(objSetup.connection.remoteAddress).write(message.binaryData);
         }
     });
 }
@@ -464,18 +476,17 @@ function getParseStringJSON(stringJSON) {
 
 //получить ресурс доступа к streamWrite
 function getStreamWrite(remoteAddress) {
-    if (typeof objGlobal['writeStreamLink_' + remoteAddress] === 'undefined') {
-        let writeStream = fs.createWriteStream('/' + config.get('downloadDirectoryTmp:directoryName') + '/uploading_with_' + remoteAddress + '.tmp');
+    let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}`);
 
-        writeStream.on('error', function(err) {
-            writeLogFile.writeLog(`\tError: ${err.toString()}`);
-        });
-        objGlobal['writeStreamLink_' + remoteAddress] = writeStream;
+    if ((typeof wsl !== 'undefined') && (wsl !== null)) return wsl;
 
-        return writeStream;
-    } else {
-        return objGlobal['writeStreamLink_' + remoteAddress];
-    }
+    let writeStream = fs.createWriteStream(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${remoteAddress}.tmp`);
+    writeStream.on('error', (err) => {
+        writeLogFile.writeLog(`\tError: ${err.toString()}`);
+    });
+    globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}`, writeStream);
+
+    return writeStream;
 }
 
 /*let testFilteringJSON = {

@@ -42,6 +42,11 @@
  *     'timestampModify': <дата в формате unix>
  *    }}
  *
+ *  потоки для записи файлов
+ *   'writeStreamLinks': {
+ *    'writeStreamLink'_<source_ip>: writeStream
+ *   }
+ * 
  * Версия 0.1, дата релиза 21.05.2018
  */
 
@@ -52,7 +57,8 @@ class GlobalObject {
         this.obj = {
             'sources': {},
             'processingTasks': {},
-            'downloadFilesTmp': {}
+            'downloadFilesTmp': {},
+            'writeStreamLinks': {}
         };
     }
 
