@@ -210,7 +210,7 @@ function createWebsocketConnect(redis, socketIo, hostId) {
 
 //добавляет обработчики на установленное соединение и получает объекты соединения
 function addHandlerConnection(objSetup) {
-    let remoteHost = 'remote_host:' + objSetup.hostId;
+    let remoteHost = `remote_host:${objSetup.hostId}`;
 
     //отправляем эхо-запрос с некоторыми параметрами
     sendPing(objSetup.connection, objSetup.sourceInfo);
@@ -295,9 +295,11 @@ function addHandlerConnection(objSetup) {
         //как правило это прием бинарного файла сетевого трафика
         if (message.type === 'binary') {
 
-            //debug('---------------------------- MESSAGE BINARY -----------------------');
+            //debug(`---------------------------- MESSAGE BINARY ---------- hostId ${objSetup.hostId} -------------`);
 
             let infoDownloadFile = globalObject.getData('downloadFilesTmp', objSetup.hostId);
+
+            //debug(globalObject.getData('downloadFilesTmp'));
 
             if ((infoDownloadFile === null) || (typeof infoDownloadFile === 'undefined')) {
                 writeLogFile.writeLog('\tError: not found a temporary object \'downloadFilesTmp\' to store information about the download file');
@@ -318,17 +320,14 @@ function addHandlerConnection(objSetup) {
             if (fileSizeTmp <= fileChunkSize) {
                 infoDownloadFile.fileSizeTmp += messageBinaryDataString.length;
 
-                globalObject.setData('downloadFilesTmp', sourceID, {
-                    'fileSizeTmp': infoDownloadFile.fileSizeTmp
-                });
+                globalObject.modifyData('downloadFilesTmp', objSetup.hostId, [
+                    ['fileSizeTmp', infoDownloadFile.fileSizeTmp]
+                ]);
             } else {
-                infoDownloadFile.fileSizeTmp = 0;
-                ++infoDownloadFile.fileUploadedPercent;
-
-                globalObject.setData('downloadFilesTmp', sourceID, {
-                    'fileSizeTmp': 0,
-                    'fileUploadedPercent': infoDownloadFile.fileUploadedPercent
-                });
+                globalObject.modifyData('downloadFilesTmp', objSetup.hostId, [
+                    ['fileSizeTmp', 0],
+                    ['fileUploadedPercent', ++infoDownloadFile.fileUploadedPercent]
+                ]);
 
                 //генерируем событе прогресса загрузки файлов
                 routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.connection.remoteAddress, {

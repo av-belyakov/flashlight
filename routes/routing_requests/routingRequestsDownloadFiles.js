@@ -32,15 +32,15 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
         //        'execute retransmission': requestTypeExecuteRetransmission,
         //        'execute retransmission completed': requestTypeExecuteRetransmissionCompleted
     };
-    /*
-        debug('********************** routingRequestsDownloadFiles ********************');
-        debug(req);
-        debug('*****************************************************');
-    */
+
+    /*debug('********************** routingRequestsDownloadFiles ********************');
+    debug(req);
+    debug('*****************************************************');
+*/
 
     if ((typeof req.info === 'undefined') || (typeof req.info.taskIndex === 'undefined')) {
 
-        debug('req.info or req.info.taskIndex not found');
+        //debug('req.info or req.info.taskIndex not found');
         writeLogFile.writeLog('\tError, not found information about task ID (download files)');
 
         return showNotify(socketIoS, 'danger', `11 11 - Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);

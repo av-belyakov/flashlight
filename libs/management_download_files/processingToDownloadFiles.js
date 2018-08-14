@@ -54,8 +54,10 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
     //удаляем временный файл если он есть
     debug('1. удаляем временный файл если он есть');
 
-    fs.access(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, fs.constants.R_OK, (err) => {
-        if (!err) fs.unlink(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`);
+    fs.access(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, fs.constants.R_OK, err => {
+        if (!err) fs.unlink(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, err => {
+            if (err) debug(err);
+        });
     });
 
     new Promise((resolve, reject) => {
@@ -156,7 +158,7 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
 
         callback(null);
     }).catch((err) => {
-        writeLogFile.writeLog('\t' + err.toString());
+        writeLogFile.writeLog('\tError: ' + err.toString());
         objResponse.info.processing = 'cancel';
 
         debug('EVENT "READY"');
@@ -175,12 +177,13 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
     debug('EVENT EXECUTE');
     debug(objData);
 
+    let taskIndex = objData.info.taskIndex;
+
     let wsConnection = objWebsocket[`remote_host:${sourceID}`];
     if (typeof wsConnection === 'undefined') {
         throw (new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
     }
 
-    let taskIndex = objData.info.taskIndex;
     let objResponse = {
         'messageType': 'download files',
         'info': {
@@ -250,36 +253,10 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         callback(err);
     });
-    /*.then((remoteHostIP) => {
-
-            debug('2. получили IP адрес источника ' + remoteHostIP);
-
-            /*
-             * 'taskIndex' - id задачи
-             * 'fileName' - имя загружаемого файла
-             * 'fileHash' - хеш файла
-             * 'fileFullSize' - полный размер файла
-             * 'fileChunkSize' : размер 1%, для подсчета % загрузки
-             * 'fileUploadedSize' - загруженный размер файла
-             * 'fileSizeTmp' - временный размер файла
-             * 'fileUploadedPercent' - объем загруженного файла в %
-             * */
-    /*objGlobal.downloadFilesTmp[remoteHostIP] = {
-            'taskIndex': taskIndex,
-            'fileName': objData.info.fileName,
-            'fileHash': objData.info.fileHash,
-            'fileFullSize': +objData.info.fileSize,
-            'fileChunkSize': Math.ceil(+objData.info.fileSize / 100),
-            'fileUploadedSize': 0,
-            'fileSizeTmp': 0,
-            'fileUploadedPercent': 0
-        };
-    })*/
-
 };
 
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
-module.exports.executeCompleted = function(redis, self, sourceID, callback) {
+module.exports.executeCompleted = function(redis, self, sourceID, cb) {
     let taskIndex = self.info.taskIndex;
     let objResponse = {
         'messageType': 'download files',
@@ -296,30 +273,56 @@ module.exports.executeCompleted = function(redis, self, sourceID, callback) {
     }
 
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
-    let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${remoteAddress}.tmp`
+    let source = globalObject.getData('sources', sourceID);
+
+    if ((source.ipaddress === null) || (typeof source.ipaddress === 'undefined')) {
+        writeLogFile.writeLog('\t Error: Not found the ip address of the source is impossible to control the uploading of files (function processingToDownloadFiles.js)');
+
+        return cb(new errorsType.receivedEmptyObject('Не найден ip адрес источника, невозможно контролировать загрузку файлов'));
+    }
+
+    let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}.tmp`;
 
     //переименование временного файла /uploading_with_<ip_адрес> в текущий загружаемый файл
-    function fileRename(remoteAddress, countingRecursiveLoops, cb) {
+    function fileRename(remoteAddress, countingRecursiveLoops, callback) {
+
+        debug('START function fileRename, packed processingToDownloadFiles.js');
+
+        /**
+         * ПОЧЕМУ Я СДЕЛАЛ ЗДЕСЬ РЕКУРСИЮ??? 
+         * 
+         */
+
         //ограничиваем рекурсию и выбрасываем ошибку
         if (countingRecursiveLoops === 2000) {
-            return cb(new errorsType.errorLoadingFile('Ошибка при загрузке файла ' + objDownloadFiles.fileName));
+            return callback(new errorsType.errorLoadingFile('Ошибка при загрузке файла ' + infoDownloadFile.fileName));
         }
 
-        new Promise((resolve, reject) => {
+        new Promise(resolve => {
             fs.lstat(fileTmp, (err, fileSettings) => {
                 if (err) return resolve(false);
                 if (fileSettings.size !== infoDownloadFile.fileFullSize) return resolve(false);
 
+                debug('1--1-11-1');
+
                 return true;
             });
-        }).then((fileExist) => {
+        }).then(fileExist => {
             if (!fileExist) return fileRename(remoteAddress, infoDownloadFile.uploadDirectoryFiles, ++countingRecursiveLoops, cb);
 
+            debug('2-22-2-2-22');
+
             return;
-        }).md5File(fileTmp).then(hash => {
+        }).then(() => {
+            return md5File(fileTmp);
+        }).then(hash => {
             return new Promise((resolve, reject) => {
+
+                debug(`${infoDownloadFile.fileHash} === ${hash}`);
+                debug(infoDownloadFile.fileHash === hash);
+
                 if (infoDownloadFile.fileHash !== hash) {
-                    return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла ${objDownloadFiles.fileName}`));
+                    return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла ${infoDownloadFile.fileName}`));
                 }
 
                 mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, (err) => {
@@ -328,18 +331,18 @@ module.exports.executeCompleted = function(redis, self, sourceID, callback) {
                 });
             });
         }).then(() => {
-            cb(null);
-        }).catch((err) => {
-            cb(err);
+            callback(null);
+        }).catch(err => {
+            callback(err);
         });
     }
 
     fileRename(wsConnection.remoteAddress, 0, err => {
         if (err) {
-            if (err.name !== 'ErrorLoadingFile') return callback(err);
+            if (err.name !== 'ErrorLoadingFile') return cb(err);
             writeLogFile.writeLog('\t' + err.message);
 
-            mv(fileTmp, `${uploadDirectoryFiles}/${objDownloadFiles.fileName}`, err => {
+            mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, err => {
                 if (err) writeLogFile.writeLog('\tError: ' + err.toString());
 
 
@@ -349,12 +352,12 @@ module.exports.executeCompleted = function(redis, self, sourceID, callback) {
                  * и сгенерировать событие для UI о приеме файла 
                  * (СОБЫТИЯ генерирует модуль routingRequestsDownloadFiles)
                  */
-                actionWhenReceivingFileNotReceived(redis, self, function(err) {
+                actionWhenReceivingFileNotReceived(redis, self, err => {
                     if (err) return writeLogFile.writeLog('\tError: ' + err.toString());
 
                     objResponse.info.processing = 'execute failure';
                     wsConnection.sendUTF(JSON.stringify(objResponse));
-                    callback(null);
+                    cb(null);
                 });
             });
         } else {
@@ -362,7 +365,7 @@ module.exports.executeCompleted = function(redis, self, sourceID, callback) {
                 if (err) return writeLogFile.writeLog('\tError: ' + err.toString());
 
                 wsConnection.sendUTF(JSON.stringify(objResponse));
-                callback(null);
+                cb(null);
             });
         }
     });
