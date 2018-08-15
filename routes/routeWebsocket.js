@@ -541,16 +541,13 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 let messageTypeUpload = function(redis, sourceID, callback) {
     let self = this;
 
+    debug('messageTypeUpload');
     debug(this);
     debug(`remoteID = ${sourceID}`);
 
     if (!new RegExp('^[a-zA-Z0-9:]').test(self.info.taskIndex)) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));
     }
-
-    /*if (!(~self.info.taskIndex.indexOf(':'))) {
-        return callback(new errorsType.receivedIncorrectData('received incorrect data'));
-    }*/
 
     let objProcessing = {
         'ready': processingToDownloadFiles.ready,

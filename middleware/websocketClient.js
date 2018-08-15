@@ -10,12 +10,13 @@
 const fs = require('fs');
 const async = require('async');
 const https = require('https');
-const config = require('../configure');
+const process = require('process');
 const validator = require('validator');
 const webSocketClient = require('websocket').client;
 
 const debug = require('debug')('websocketClient.js');
 
+const config = require('../configure');
 const controllers = require('../controllers');
 const globalObject = require('../configure/globalObject');
 const objWebsocket = require('../configure/objWebsocket');
@@ -256,29 +257,28 @@ function addHandlerConnection(objSetup) {
         if (message.type === 'utf8') {
             let stringMessage = getParseStringJSON(message);
 
-            if (stringMessage.messageType === 'filtering') {
-                debug('STATUS TASK IS');
-                debug(`processing: ${stringMessage.info.processing}, task ID ${stringMessage.info.taskIndex}`);
-            }
-
             routeWebsocket.route(stringMessage, objSetup.hostId, (err, notifyMessage) => {
                 if (err) {
-
-                    debug('---*** ERROR ***---');
-                    debug(err);
-                    debug('--------******--------');
-
-                    if (err.name === 'ErrorRemoteHost') writeLogFile.writeLog(`\tError: ${err.message.toString()}`);
-                    else if (err.name === 'ErrorRedisDataBase') writeLogFile.writeLog(`\tError Redis: ${err.message.toString()}`);
-                    else if (err.message !== 'undefined') writeLogFile.writeLog(`\t${err.message.toString()}`);
-                    else writeLogFile.writeLog(`\t${err.toString()}`);
-
-                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, {
+                    /*
+                                        debug('---*** ERROR ***---');
+                                        debug(err);
+                                        debug('--------******--------');
+                    */
+                    let errObj = {
                         'messageType': 'error',
-                        'errorCode': 500
-                    });
-                } else {
+                        'errorCode': 500,
+                        'errorMessage': null
+                    };
 
+                    if ((typeof err.name !== 'undefined') && (typeof err.message !== 'undefined')) {
+                        errObj.errorMessage = err.message;
+                        //writeLogFile.writeLog(`\tError: ${err.message}`);
+                    } else {
+                        writeLogFile.writeLog(`\tError: ${err.toString()}`);
+                    }
+
+                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, errObj);
+                } else {
                     /*if (stringMessage.messageType !== 'information') {
                         debug('--- NOTIFY MESSAGE START ---');
                         debug(notifyMessage);
@@ -338,8 +338,9 @@ function addHandlerConnection(objSetup) {
                     }
                 }, objSetup.hostId, '');
             }
+
             //пишем кусочки файлов в поток
-            getStreamWrite(objSetup.connection.remoteAddress).write(message.binaryData);
+            getStreamWrite(objSetup.connection.remoteAddress, objSetup.hostId).write(message.binaryData);
         }
     });
 }
@@ -474,15 +475,34 @@ function getParseStringJSON(stringJSON) {
 }
 
 //получить ресурс доступа к streamWrite
-function getStreamWrite(remoteAddress) {
+function getStreamWrite(remoteAddress, sourceID) {
     let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}`);
 
     if ((typeof wsl !== 'undefined') && (wsl !== null)) return wsl;
 
     let writeStream = fs.createWriteStream(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${remoteAddress}.tmp`);
-    writeStream.on('error', (err) => {
+
+    writeStream.on('error', err => {
         writeLogFile.writeLog(`\tError: ${err.toString()}`);
     });
+    writeStream.end(() => {
+        debug('write binary data END');
+    });
+
+    writeStream.on('finish', () => {
+
+        debug('write binary data FINISH');
+
+        let dft = globalObject.getData('downloadFilesTmp', sourceID);
+        debug(dft);
+
+        if ((typeof dft !== 'undefined') && (typeof dft.taskIndex !== 'undefined')) {
+            process.nextTick(() => {
+                dft.eeWriteToFile.emit('chunk write complete', { fileName: dft.fileName });
+            });
+        }
+    });
+
     globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}`, writeStream);
 
     return writeStream;

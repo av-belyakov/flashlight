@@ -10,9 +10,9 @@
 
 const fs = require('fs');
 const mv = require('mv');
-const exec = require('child_process').exec;
 const async = require('async');
 const md5File = require('md5-file/promise');
+const EventEmitter = require('events').EventEmitter;
 
 const debug = require('debug')('processingToDownloadFiles');
 
@@ -26,7 +26,6 @@ const checkQueueTaskDownloadFiles = require('./checkQueueTaskDownloadFiles');
 const actionWhenReceivingComplete = require('./actionWhenReceivingComplete');
 const actionWhenReceivingFileReceived = require('./actionWhenReceivingFileReceived');
 const actionWhenReceivingFileNotReceived = require('./actionWhenReceivingFileNotReceived');
-const actionWhenRetransmissionReceivingFile = require('./actionWhenRetransmissionReceivingFile');
 
 /**
  * Модуль осуществляющий действия для подготовки файлов к приему
@@ -214,6 +213,12 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         redis.hget(`task_filtering_all_information:${taskIndex}`, 'uploadDirectoryFiles', (err, uploadDirectoryFiles) => {
             if (err) throw (err);
 
+            /**
+             * ЧТО ЕСЛИ ЗДЕСТЬ СДЕЛАТЬ создание ресурса доступа к файлу через 
+             * поток function getStreamWrite из модуля websocketClient
+             * 
+             */
+
             //добавляем информацию о загружаемом файле
             globalObject.setData('downloadFilesTmp', sourceID, {
                 'taskIndex': taskIndex,
@@ -224,7 +229,8 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
                 'fileUploadedSize': 0, //загруженный объем файла
                 'fileSizeTmp': 0, //временный размер файла
                 'fileUploadedPercent': 0, //объем загруженного файла в %
-                'uploadDirectoryFiles': uploadDirectoryFiles //путь до директории в которой будут сохранятся файлы
+                'uploadDirectoryFiles': uploadDirectoryFiles, //путь до директории в которой будут сохранятся файлы
+                'eeWriteToFile': new EventEmitter() //событие информирующее об окончании записи файла
             });
 
             debug('globalObject.setData (downloadFilesTmp)');
@@ -257,6 +263,46 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
 module.exports.executeCompleted = function(redis, self, sourceID, cb) {
+
+    debug('EVENT EXECUTE COMPLETED');
+    debug(self);
+
+    //переименование временного файла /uploading_with_<ip_адрес> в текущий загружаемый файл
+    let fileRename = () => {
+        return new Promise((resolve, reject) => {
+            fs.lstat(fileTmp, (err, fileSettings) => {
+                if (err) return reject(err);
+
+                //debug(fileSettings);
+                debug(`fileSettings.size (${fileSettings.size}) !== infoDownloadFile.fileFullSize( ${infoDownloadFile.fileFullSize} )`);
+                debug(fileSettings.size !== infoDownloadFile.fileFullSize);
+
+                if (fileSettings.size !== infoDownloadFile.fileFullSize) {
+                    writeLogFile.writeLog(`\tError: the SIZE of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
+
+                    return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", размер полученного файла не совпадает с ранее переданным`));
+                }
+
+                resolve();
+            });
+        }).then(() => {
+            return md5File(fileTmp);
+        }).then(hash => {
+            return new Promise((resolve, reject) => {
+                if (infoDownloadFile.fileHash !== hash) {
+                    writeLogFile.writeLog(`\tError: the HEX of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
+
+                    return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", хеш сумма полученного файла не совпадает с ранее переданной`));
+                }
+
+                mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
+        });
+    };
+
     let taskIndex = self.info.taskIndex;
     let objResponse = {
         'messageType': 'download files',
@@ -283,91 +329,32 @@ module.exports.executeCompleted = function(redis, self, sourceID, cb) {
 
     let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}.tmp`;
 
-    //переименование временного файла /uploading_with_<ip_адрес> в текущий загружаемый файл
-    function fileRename(remoteAddress, countingRecursiveLoops, callback) {
+    debug(infoDownloadFile);
 
-        debug('START function fileRename, packed processingToDownloadFiles.js');
+    infoDownloadFile.eeWriteToFile.on('chunk write complete', () => {
 
-        /**
-         * ПОЧЕМУ Я СДЕЛАЛ ЗДЕСЬ РЕКУРСИЮ??? 
-         * 
-         */
+        debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
 
-        //ограничиваем рекурсию и выбрасываем ошибку
-        if (countingRecursiveLoops === 2000) {
-            return callback(new errorsType.errorLoadingFile('Ошибка при загрузке файла ' + infoDownloadFile.fileName));
-        }
+        fileRename()
+            .then(() => {
+                actionWhenReceivingFileReceived(redis, taskIndex, sourceID, err => {
+                    if (err) writeLogFile.writeLog('\tError: ' + err.toString());
 
-        new Promise(resolve => {
-            fs.lstat(fileTmp, (err, fileSettings) => {
-                if (err) return resolve(false);
-                if (fileSettings.size !== infoDownloadFile.fileFullSize) return resolve(false);
-
-                debug('1--1-11-1');
-
-                return true;
-            });
-        }).then(fileExist => {
-            if (!fileExist) return fileRename(remoteAddress, infoDownloadFile.uploadDirectoryFiles, ++countingRecursiveLoops, cb);
-
-            debug('2-22-2-2-22');
-
-            return;
-        }).then(() => {
-            return md5File(fileTmp);
-        }).then(hash => {
-            return new Promise((resolve, reject) => {
-
-                debug(`${infoDownloadFile.fileHash} === ${hash}`);
-                debug(infoDownloadFile.fileHash === hash);
-
-                if (infoDownloadFile.fileHash !== hash) {
-                    return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла ${infoDownloadFile.fileName}`));
-                }
-
-                mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
-        }).then(() => {
-            callback(null);
-        }).catch(err => {
-            callback(err);
-        });
-    }
-
-    fileRename(wsConnection.remoteAddress, 0, err => {
-        if (err) {
-            if (err.name !== 'ErrorLoadingFile') return cb(err);
-            writeLogFile.writeLog('\t' + err.message);
-
-            mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, err => {
-                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
-
-
-                /** 
-                 * actionWhenReceivingFileReceived уже ПЕРЕДЕЛАЛ 
-                 * НУЖНО переделать actionWhenReceivingFileNotReceived
-                 * и сгенерировать событие для UI о приеме файла 
-                 * (СОБЫТИЯ генерирует модуль routingRequestsDownloadFiles)
-                 */
-                actionWhenReceivingFileNotReceived(redis, self, err => {
-                    if (err) return writeLogFile.writeLog('\tError: ' + err.toString());
-
-                    objResponse.info.processing = 'execute failure';
                     wsConnection.sendUTF(JSON.stringify(objResponse));
                     cb(null);
                 });
-            });
-        } else {
-            actionWhenReceivingFileReceived(redis, taskIndex, sourceID, err => {
-                if (err) return writeLogFile.writeLog('\tError: ' + err.toString());
+            }).catch(err => {
+                debug(err.message);
 
-                wsConnection.sendUTF(JSON.stringify(objResponse));
-                cb(null);
+                actionWhenReceivingFileNotReceived(redis, self, err => {
+                    if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+
+                    objResponse.info.processing = 'execute failure';
+                    wsConnection.sendUTF(JSON.stringify(objResponse));
+                });
+
+                cb(err);
             });
-        }
     });
 };
 

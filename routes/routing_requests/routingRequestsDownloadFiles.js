@@ -98,7 +98,7 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
         debug('--- TASK TYPE EXECUTE');
 
         getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, result) => {
-            if (err) return reject(err);
+            if (err) return writeLogFile.writeLog('\tError: ' + err.toString());
 
             socketIoS.emit('change object status', {
                 processingType: 'showChangeObject',

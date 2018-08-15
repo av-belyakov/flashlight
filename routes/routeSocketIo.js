@@ -212,7 +212,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 }
             }
 
-            showNotify(socketIoS, 'danger', objErrorMessage[stringMessage.errorCode]);
+            let errMsg = (stringMessage.errorMessage === null) ? objErrorMessage[stringMessage.errorCode] : stringMessage.errorMessage;
+
+            showNotify(socketIoS, 'danger', errMsg);
         },
         'close': function() {
             //для главной странице

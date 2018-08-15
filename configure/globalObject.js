@@ -30,6 +30,7 @@
  *    'fileSizeTmp': <временный размер файла>
  *    'fileUploadedPercent': <объем загруженного файла в %>
  *    'uploadDirectoryFiles': <директория для сохранения файлов>
+ *    'writeToFile': <true/false>
  *   }}
  *
  *  выполняемые задачи
