@@ -8,8 +8,10 @@
 'use strict';
 
 const fs = require('fs');
+const mv = require('mv');
 const async = require('async');
 const https = require('https');
+const md5File = require('md5-file/promise');
 const process = require('process');
 const validator = require('validator');
 const webSocketClient = require('websocket').client;
@@ -17,6 +19,7 @@ const webSocketClient = require('websocket').client;
 const debug = require('debug')('websocketClient.js');
 
 const config = require('../configure');
+const errorsType = require('../errors/errorsType');
 const controllers = require('../controllers');
 const globalObject = require('../configure/globalObject');
 const objWebsocket = require('../configure/objWebsocket');
@@ -339,8 +342,16 @@ function addHandlerConnection(objSetup) {
                 }, objSetup.hostId, '');
             }
 
+            let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${objSetup.connection.remoteAddress}`);
+            if ((wsl === null) || (typeof wsl === 'undefined')) {
+                return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
+            }
+
             //пишем кусочки файлов в поток
-            getStreamWrite(objSetup.connection.remoteAddress, objSetup.hostId).write(message.binaryData);
+            wsl.write(message.binaryData);
+
+            //пишем кусочки файлов в поток
+            //getStreamWrite(objSetup.connection.remoteAddress, objSetup.hostId).write(message.binaryData);
         }
     });
 }
@@ -483,29 +494,125 @@ function getStreamWrite(remoteAddress, sourceID) {
     let writeStream = fs.createWriteStream(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${remoteAddress}.tmp`);
 
     writeStream.on('error', err => {
-        writeLogFile.writeLog(`\tError: ${err.toString()}`);
+        writeLogFile.writeLog(`\t${err.toString()}`);
     });
-    writeStream.end(() => {
-        debug('write binary data END');
-    });
+    /*
+        writeStream.on('finish', () => {
 
-    writeStream.on('finish', () => {
+            debug('++++++++++++++ write binary data FINISH');
 
-        debug('write binary data FINISH');
-
-        let dft = globalObject.getData('downloadFilesTmp', sourceID);
-        debug(dft);
-
-        if ((typeof dft !== 'undefined') && (typeof dft.taskIndex !== 'undefined')) {
-            process.nextTick(() => {
-                dft.eeWriteToFile.emit('chunk write complete', { fileName: dft.fileName });
-            });
-        }
-    });
-
+            completeWriteBinaryData(sourceID);
+        });
+    */
     globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}`, writeStream);
 
     return writeStream;
+}
+
+//переименование временного файла /uploading_with_<ip_адрес> в текущий загружаемый файл
+function fileRename(infoDownloadFile, fileTmp) {
+    return new Promise((resolve, reject) => {
+        fs.lstat(fileTmp, (err, fileSettings) => {
+            if (err) return reject(err);
+
+            //debug(fileSettings);
+            debug(`fileSettings.size (${fileSettings.size}) !== infoDownloadFile.fileFullSize( ${infoDownloadFile.fileFullSize} )`);
+            debug(fileSettings.size !== infoDownloadFile.fileFullSize);
+
+            if (fileSettings.size !== infoDownloadFile.fileFullSize) {
+                writeLogFile.writeLog(`\tError: the SIZE of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
+
+                return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", размер полученного файла не совпадает с ранее переданным`));
+            }
+
+            resolve();
+        });
+    }).then(() => {
+        return md5File(fileTmp);
+    }).then(hash => {
+        return new Promise((resolve, reject) => {
+            if (infoDownloadFile.fileHash !== hash) {
+                writeLogFile.writeLog(`\tError: the HEX of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
+
+                return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", хеш сумма полученного файла не совпадает с ранее переданной`));
+            }
+
+            mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+    });
+}
+
+function completeWriteBinaryData(sourceID) {
+
+    let dfi = globalObject.getData('downloadFilesTmp', sourceID);
+
+    debug('**-*----*-*- START function completeWriteBinaryData *-*-*-*-*---');
+    debug(`sourceID = ${sourceID}, taskIndex = ${dfi.taskIndex}, fileName = ${dfi.fileName}`);
+    debug('**-*----*-*-*-*-*-*-*---');
+
+    /*let objResponse = {
+        'messageType': 'download files',
+        'info': {
+            'processing': 'execute success',
+            'taskIndex': objData.taskIndex,
+            'fileName': objData.fileName
+        }
+    };*/
+
+    let wsConnection = objWebsocket[`remote_host:${sourceID}`];
+    if (typeof wsConnection === 'undefined') {
+        return writeLogFile.writeLog(`\tError: no websocket connection from source ID "${sourceID}"`);
+
+        //return cb(new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${objData.taskIndex} не существует`));
+    }
+
+    let source = globalObject.getData('sources', sourceID);
+    if ((source.ipaddress === null) || (typeof source.ipaddress === 'undefined')) {
+        return writeLogFile.writeLog('\t Error: Not found the ip address of the source is impossible to control the uploading of files (function processingToDownloadFiles.js)');
+
+        //return cb(new errorsType.receivedEmptyObject('Не найден ip адрес источника, невозможно контролировать загрузку файлов'));
+    }
+
+    let ws = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
+    if ((ws === null) || (typeof ws === 'undefined')) {
+        return writeLogFile.writeLog(`\tError: not found a stream for writing to a file (source ID ${sourceID})`);
+
+        //return cb(new Error('не найден поток для записи в файл'));
+    }
+
+    debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
+
+    let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}.tmp`;
+    fileRename(dfi, fileTmp)
+        .then(() => {
+
+
+            debug('/*/*/*//**/*//*/ fileRename SUCCESFLY');
+
+            /*actionWhenReceivingFileReceived(redis, objData.taskIndex, objData.sourceID, err => {
+                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+
+                wsConnection.sendUTF(JSON.stringify(objResponse));
+                cb(null);
+            });*/
+        }).catch(err => {
+
+            debug('/*/*/*//**/*//*/ fileRename FAILURE');
+            debug(err.message);
+
+            /*actionWhenReceivingFileNotReceived(redis, objData.taskIndex, err => {
+                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+
+                objResponse.info.processing = 'execute failure';
+                wsConnection.sendUTF(JSON.stringify(objResponse));
+            });
+*/
+            //cb(err);
+        });
+
 }
 
 /*let testFilteringJSON = {
