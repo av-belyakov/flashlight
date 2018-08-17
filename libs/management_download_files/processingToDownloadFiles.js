@@ -179,6 +179,9 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
     //получить ресурс доступа к streamWrite
     let getStreamWrite = function(remoteAddress) {
+
+        debug('START function getStreamWrite...');
+
         let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}`);
 
         if ((typeof wsl !== 'undefined') && (wsl !== null)) return wsl;
@@ -189,6 +192,8 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         });
 
         globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}`, writeStream);
+
+        debug('------ создаем ресурс доступа к потоку на запись в файл -------');
 
         return writeStream;
     };
@@ -253,17 +258,29 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             });
         });
     }).then(() => {
+
+        debug('4. создание ресурса на запись в файл');
+
         getStreamWrite(wsConnection.remoteAddress);
     }).then(() => {
+
+        debug('5. добавляем обработчик на событие "finish"');
+
         //обработчик сбытия 'finish' при завершении записи в файл
         let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
         if ((wsl === null) || (typeof wsl === 'undefined')) {
+
+            debug('not found a stream for writing to a file');
+
             throw ('not found a stream for writing to a file');
         }
 
-        wsl.on('finish', () => {
+        wsl.once('finish', () => {
 
             debug('--------- WRITE IS FINISH ------------');
+
+            let fileName = globalObject.getData('downloadFilesTmp', sourceID).fileName;
+            writeLogFile.writeLog(`Info: получено событие 'finish для файла ${fileName}, готовимся отправить сообщение о готовности принять следующий файл'`);
 
             completeWriteBinaryData(redis, sourceID, (err) => {
                 if (err) return callback(err);
@@ -310,6 +327,9 @@ module.exports.executeCompleted = function(redis, self, sourceID, cb) {
         if ((wsl === null) || (typeof wsl === 'undefined')) {
             return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
         }
+
+        let fileName = globalObject.getData('downloadFilesTmp', sourceID).fileName;
+        writeLogFile.writeLog(`Info: закрываем дискриптор потока на запись в файл ${fileName}`);
 
         //закрываем дискриптор потока на запись в файл
         wsl.end();
@@ -437,12 +457,15 @@ function completeWriteBinaryData(redis, sourceID, cb) {
         return cb(new errorsType.receivedEmptyObject('Не найден ip адрес источника, невозможно контролировать загрузку файлов'));
     }
 
-    let ws = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
+    /*let ws = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
     if ((ws === null) || (typeof ws === 'undefined')) {
         writeLogFile.writeLog(`\tError: not found a stream for writing to a file (source ID ${sourceID})`);
 
         return cb(new Error('не найден поток для записи в файл'));
-    }
+    }*/
+
+    //удаляем ресурс для записи в файл
+    globalObject.deleteData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
 
     debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
 
