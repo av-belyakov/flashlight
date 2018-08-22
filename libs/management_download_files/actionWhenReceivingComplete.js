@@ -1,113 +1,93 @@
 /*
- * Выполняется при получении от источника сообщения
- * messageType: download_files
- * processing: complete
+ * Модуль выполняет обработку информации при получении от источника сообщения о завершении передачи файлов
  *
- * При этом удаляется информация из следующих таблиц
- * - task_implementation_downloading_files
- *
- * В таблице task_filtering_all_information:* изменяются следующие поля:
- * - uploadFiles,
- * - dateTimeEndUploadFiles
- *
- * Проверяем количество загруженных файлов анализируя таблицу task_loading_files:*
- *
- * Добавляем в таблицу task_filtering_upload_not_considered хеш задачи по которой выгружали файлы
- *
- * Формируем в загружаемой директории файл в формате XML с информацией о параметрах фильтрации
- *
- * Версия 0.1, дата релиза 11.10.2016
+ * Версия 0.11, дата релиза 22.08.2018
  * */
 
 'use strict';
 
 const fs = require('fs');
-
 const async = require('async');
 const xml2js = require('xml2js');
 
-module.exports = function(redis, taskIndex, func) {
-    let [sourceId, taskIndexHash] = taskIndex.split(':');
-
+module.exports = function(redis, { taskIndex, sourceID }, cb) {
     //проверяем количество загруженных файлов
-    redis.hvals('task_loading_files:' + taskIndexHash, function(err, resultArray) {
-        if (err) return func(err);
+    new Promise((resolve, reject) => {
+        redis.hvals(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, (err, listValueFiles) => {
+            if (err) reject(err);
+            else resolve(listValueFiles);
+        });
+    }).then((listValueFiles) => {
+        let fileIsDownloaded = listValueFiles.filter(item => {
+            try {
+                let tmpObj = JSON.parse(item);
 
-        let newResultArray = resultArray.filter(function(item) {
-            if (~item.indexOf('/')) {
-                let statusDownload = item.split('/')[2];
-                return statusDownload === 'successfully';
+                if (typeof tmpObj.fileDownloaded === 'undefined') return false;
+
+                return tmpObj.fileDownloaded;
+            } catch (err) {
+                return false;
             }
         });
 
-        if (resultArray.length === newResultArray.length) {
-            taskFullyCompleted(redis, sourceId, taskIndexHash, taskIndex, function(err) {
-                if (err) func(err);
-                else func(null, { 'receivedIsSuccess': true });
+        return {
+            countFilesAll: listValueFiles.length,
+            countFilesDownloaded: fileIsDownloaded.length
+        };
+    }).then(({ countFilesAll, countFilesDownloaded }) => {
+        if (countFilesAll === countFilesDownloaded) {
+            taskFullyCompleted(redis, taskIndex, sourceID, err => {
+                if (err) cb(err);
+                else cb(null, { 'receivedIsSuccess': true });
             });
         } else {
-            taskNotFullCompleted(redis, taskIndexHash, taskIndex, function(err) {
-                if (err) func(err);
-                else func(null, { 'receivedIsSuccess': false });
+            taskNotFullCompleted(redis, taskIndex, sourceID, err => {
+                if (err) cb(err);
+                else cb(null, { 'receivedIsSuccess': false });
             });
         }
+    }).catch((err) => {
+        cb(err);
     });
 };
 
 //когда не все файлы были загруженны
-function taskNotFullCompleted(redis, taskIndexHash, taskIndex, feedBack) {
-    async.parallel([
-        //удаляем элемент из таблицы task_implementation_downloading_files
-        function(callback) {
-            redis.lrem('task_implementation_downloading_files', 0, taskIndex, function(err) {
-                if (err) callback(err);
-                else callback(null, true);
-            });
-        },
-        function(callback) {
-            redis.hmset('task_filtering_all_information:' + taskIndexHash, {
-                'uploadFiles': 'suspended',
-                'dateTimeStopUploadFiles': +new Date()
-            }, function(err) {
-                if (err) callback(err);
-                else callback(null, true);
-            });
-        }
-    ], function(err) {
+function taskNotFullCompleted(redis, taskIndex, sourceID, feedBack) {
+    redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
         if (err) feedBack(err);
-        else feedBack(null);
+        else feedBack(null, true);
     });
 }
 
 //выполняется когда все файлы были загруженны
-function taskFullyCompleted(redis, sourceId, taskIndexHash, taskIndex, feedBack) {
+function taskFullyCompleted(redis, taskIndex, sourceID, feedBack) {
     async.parallel([
         //удаляем элемент из таблицы task_implementation_downloading_files
         function(callback) {
-            redis.lrem('task_implementation_downloading_files', 0, taskIndex, function(err) {
+            redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
                 if (err) callback(err);
                 else callback(null, true);
             });
         },
         function(callback) {
-            redis.hmset('task_filtering_all_information:' + taskIndexHash, {
+            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
                 'uploadFiles': 'uploaded',
                 'dateTimeEndUploadFiles': +new Date()
-            }, function(err) {
+            }, err => {
                 if (err) callback(err);
                 else callback(null, true);
             });
         },
         //добавляем в таблицу task_filtering_upload_not_considered хеш задачи
         function(callback) {
-            redis.zadd('task_filtering_upload_not_considered', +new Date(), taskIndex, function(err) {
+            redis.zadd('task_filtering_upload_not_considered', +new Date(), `${sourceID}:${taskIndex}`, err => {
                 if (err) callback(err);
                 else callback(null, true);
             });
         },
         //создаем файл в формате XML
         function(callback) {
-            createFileXml(redis, sourceId, taskIndexHash, function(err) {
+            createFileXml(redis, taskIndex, sourceID, err => {
                 if (err) callback(err);
                 else callback(null, true);
             });
@@ -119,16 +99,16 @@ function taskFullyCompleted(redis, sourceId, taskIndexHash, taskIndex, feedBack)
 }
 
 //формируем XML файл
-function createFileXml(redis, sourceId, taskIndexHash, func) {
+function createFileXml(redis, taskIndex, sourceID, func) {
     async.waterfall([
         //получаем данные из таблицы remote_host:settings:*
         function(callback) {
-            redis.hmget('remote_host:settings:' + sourceId,
+            redis.hmget(`remote_host:settings:${sourceID}`,
                 'shortName',
                 'detailedDescription',
                 'ipaddress',
                 'port',
-                function(err, arrData) {
+                (err, arrData) => {
                     if (err) callback(err);
                     else callback(null, {
                         'shortName': arrData[0],
@@ -140,7 +120,7 @@ function createFileXml(redis, sourceId, taskIndexHash, func) {
         },
         //получаем данные из таблицы task_filtering_all_information:*
         function(objRemoteHostSettings, callback) {
-            redis.hmget('task_filtering_all_information:' + taskIndexHash,
+            redis.hmget(`task_filtering_all_information:${taskIndex}`,
                 'sourceId',
                 'userLogin',
                 'userName',
@@ -209,7 +189,7 @@ function createFileXml(redis, sourceId, taskIndexHash, func) {
 
                     let uploadDirectoryFiles = arrData[13];
 
-                    callback(null, objRemoteHostSettings, uploadDirectoryFiles)
+                    callback(null, objRemoteHostSettings, uploadDirectoryFiles);
                 });
         },
         //формируем XML файл
@@ -217,7 +197,7 @@ function createFileXml(redis, sourceId, taskIndexHash, func) {
             let builder = new xml2js.Builder();
             let xml = builder.buildObject(objRemoteHostSettings);
 
-            fs.appendFile(uploadDirectoryFiles + '/file_description_' + +new Date() + '.xml', xml, { 'encoding': 'utf8' }, function(err) {
+            fs.appendFile(`${uploadDirectoryFiles}/file_description_${+new Date()}.xml`, xml, { 'encoding': 'utf8' }, (err) => {
                 if (err) callback(err);
                 else callback(null, true);
             });

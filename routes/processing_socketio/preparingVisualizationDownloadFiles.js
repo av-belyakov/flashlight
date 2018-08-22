@@ -11,8 +11,6 @@ const async = require('async');
 const globalObject = require('../../configure/globalObject');
 const writeLogFile = require('../../libs/writeLogFile');
 
-const objGlobal = {};
-
 //подготовка данных необходимых для визуализации добавления в очередь задачи на выгрузку файлов
 module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, sourceID, cb) {
     getShortSourcesInformationTurn(redis, taskIndex, sourceID, (err, obj) => {
@@ -98,10 +96,10 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
     redis.lrange('task_implementation_downloading_files', [0, -1], (err, arrayResult) => {
         if (err) return done(err);
 
-        let isExistTaskIndex = arrayResult.some((item) => {
-            if (~item.indexOf(':')) return (item === taskIndex);
-            return false;
-        });
+        let isExistTaskIndex = arrayResult.some((item) => item === taskIndex);
+
+        console.log('preparingVisualizationDownloadFiles.js');
+        console.log('isExistTaskIndex = ' + isExistTaskIndex);
 
         //если идентификатор задачи не был найден
         if (!isExistTaskIndex) return done(null, {});
@@ -133,6 +131,9 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
             results.counts.taskIndex = taskIndex;
             results.counts.sourceId = sourceID;
             results.counts.shortName = results.shortNameSource.shortName;
+
+            console.log('finaly result');
+            console.log(results);
 
             done(null, results.counts);
         });

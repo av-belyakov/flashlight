@@ -26,11 +26,9 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
         'cancel': requestCancel,
         'ready': requestTypeReady,
         'execute': requestTypeExecute,
-        'complete': requestTypeComplete,
-        'update progress': requestTypeUpdateProgress,
         'execute completed': requestTypeExecuteCompleted,
-        //        'execute retransmission': requestTypeExecuteRetransmission,
-        //        'execute retransmission completed': requestTypeExecuteRetransmissionCompleted
+        'completed': requestTypeComplete,
+        'update progress': requestTypeUpdateProgress
     };
 
     /*debug('********************** routingRequestsDownloadFiles ********************');
@@ -188,7 +186,7 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
     }
 
     function requestTypeExecuteCompleted() {
-        preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, function(err, data) {
+        preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
             if (err) return showNotify(socketIoS, 'danger', `2-2-2 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
 
             if (Object.keys(data).length > 0) {
@@ -198,7 +196,7 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
     }
 
     function requestTypeComplete() {
-        preparingVisualizationDownloadFiles.preparingVisualizationComplete(redis, taskIndex, sourceID, function(err, data) {
+        preparingVisualizationDownloadFiles.preparingVisualizationComplete(redis, taskIndex, sourceID, (err, data) => {
             if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
 
             if (Object.keys(data).length > 0) {
@@ -214,7 +212,7 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
                     let receivedIsSuccess = (typeof notifyMessage.receivedIsSuccess !== 'undefined');
 
                     if (receivedIsSuccess && notifyMessage.receivedIsSuccess === true) {
-                        getCountFilesUploadNotConsidered(redis, function(numberUploadedFiles) {
+                        getCountFilesUploadNotConsidered(redis, (numberUploadedFiles) => {
                             //socketIoS.broadcast.emit('change number uploaded files', { 'numberUploadedFiles' : numberUploadedFiles });
                             socketIoS.emit('change number uploaded files', { 'numberUploadedFiles': numberUploadedFiles });
                         });
@@ -251,7 +249,7 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
     }
 
     function requestTypeUpdateProgress() {
-        preparingVisualizationDownloadFiles.preparingVisualizationUpdateProgress(redis, taskIndex, sourceID, function(err, data) {
+        preparingVisualizationDownloadFiles.preparingVisualizationUpdateProgress(redis, taskIndex, sourceID, (err, data) => {
             if (err) return showNotify(socketIoS, 'danger', 'Неопределенная ошибка, контроль загрузки файлов не возможен');
 
             if (Object.keys(data).length > 0) {

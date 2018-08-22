@@ -11,37 +11,52 @@ const async = require('async');
 
 const errorsType = require('../../errors/errorsType');
 
-module.exports = function(redis, obj, func) {
-    if (!(~obj.taskIndex.indexOf(':'))) return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', ''));
+module.exports = function(redis, { taskIndex, sourceID }, callback) {
 
-    let sourceId = obj.taskIndex.split(';')[0];
+    console.log('function checkQueueTaskDownloadFiles');
 
-    //проверяем существование таблицы task_turn_downloading_files
-    redis.exists('task_turn_downloading_files', function(err, result) {
-        if (err) return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-        if (result === 0) return func(null, false);
+    new Promise((resolve, reject) => {
+        redis.exists('task_turn_downloading_files', (err, result) => {
+            if (err) reject(err);
+            else resolve((result !== 0));
+        });
+    }).then(isExist => {
+        if (!isExist) return callback(null, {});
 
-        //проверяем таблицу с очередью
-        redis.lrange('task_turn_downloading_files', [0, -1], function(err, arrayTurn) {
-            if (err) return func(err);
-
-            let arraySourceIdTurnIsExists = arrayTurn.filter((item) => item.split(':')[0] = sourceId);
-            if (arraySourceIdTurnIsExists.length === 0) return func(null, false);
-
-            //проверяе таблицу выполняющихся задач
-            redis.lrange('task_implementation_downloading_files', [0, -1], function(err, arrayImplementation) {
-                if (err) return func(err);
-
-                let arraySourceIdImplementationIsExists = arrayImplementation.filter((item) => item.split(':')[0] = sourceId);
-
-                if (arraySourceIdImplementationIsExists.length === 0) {
-                    startNewTaskDownloadFiles(redis, arraySourceIdTurnIsExists[0], function(err, objTaskIndex) {
-                        if (err) func(err);
-                        else func(null, objTaskIndex);
-                    });
-                }
+        return new Promise((resolve, reject) => {
+            //проверяем таблицу с очередью
+            redis.lrange('task_turn_downloading_files', [0, -1], (err, arrayTurn) => {
+                if (err) reject(err);
+                else resolve(arrayTurn);
             });
         });
+    }).then(listTurnDownloadFiles => {
+        let arraySourceIdTurnIsExists = listTurnDownloadFiles.filter(item => item.split(':')[0] === sourceID);
+        return arraySourceIdTurnIsExists;
+    }).then(arraySourceIdTurnIsExists => {
+        if (arraySourceIdTurnIsExists.length === 0) return callback(null, {});
+
+        return new Promise((resolve, reject) => {
+            //проверяе таблицу выполняющихся задач
+            redis.lrange('task_implementation_downloading_files', [0, -1], (err, arrayImplementation) => {
+                if (err) reject(err);
+                else resolve({
+                    listImplementation: arrayImplementation,
+                    listSourceTurn: arraySourceIdTurnIsExists
+                });
+            });
+        });
+    }).then(({ listImplementation, listSourceTurn }) => {
+        let arraySourceIdImplementationIsExists = listImplementation.filter(item => item.split(':')[0] === sourceID);
+
+        if (arraySourceIdImplementationIsExists.length === 0) {
+            startNewTaskDownloadFiles(redis, listSourceTurn[0], (err, objTaskIndex) => {
+                if (err) throw (err);
+                else callback(null, objTaskIndex);
+            });
+        }
+    }).catch(err => {
+        callback(err);
     });
 };
 

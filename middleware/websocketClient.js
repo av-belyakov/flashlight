@@ -2,7 +2,7 @@
  *
  * Установление соединений через протокол websocket с удаленными хостами
  *
- * Версия 0.21, дата релиза 28.02.2018
+ * Версия 0.22, дата релиза 22.08.2018
  * */
 
 'use strict';
@@ -12,7 +12,6 @@ const mv = require('mv');
 const async = require('async');
 const https = require('https');
 const md5File = require('md5-file/promise');
-const process = require('process');
 const validator = require('validator');
 const webSocketClient = require('websocket').client;
 
@@ -387,7 +386,6 @@ function deleteSourceIdTablesDownloadFiles(redis, sourceId, func) {
         checkTaskTurnDownloadingFiles: function(callback) {
             redis.exists('task_turn_downloading_files', (err, isExist) => {
                 if (err) return callback(err);
-
                 if (isExist !== 1) return callback(null, true);
 
                 redis.lrem('task_turn_downloading_files', 0, sourceId, (err) => {
@@ -415,6 +413,7 @@ function deleteSourceIdTablesDownloadFiles(redis, sourceId, func) {
                             }
                         }
                     }
+
                     callback(null, newArray);
                 });
             });
@@ -486,7 +485,7 @@ function getParseStringJSON(stringJSON) {
 }
 
 //получить ресурс доступа к streamWrite
-function getStreamWrite(remoteAddress, sourceID) {
+/*function getStreamWrite(remoteAddress, sourceID) {
     let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}`);
 
     if ((typeof wsl !== 'undefined') && (wsl !== null)) return wsl;
@@ -504,10 +503,10 @@ function getStreamWrite(remoteAddress, sourceID) {
             completeWriteBinaryData(sourceID);
         });
     */
-    globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}`, writeStream);
+/*globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}`, writeStream);
 
     return writeStream;
-}
+}*/
 
 //переименование временного файла /uploading_with_<ip_адрес> в текущий загружаемый файл
 function fileRename(infoDownloadFile, fileTmp) {

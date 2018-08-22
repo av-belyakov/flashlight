@@ -637,6 +637,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод информации о прогрессе в загрузке файла
         socket.on('update the download progress', function (data) {
+
+            console.log('indexPage.js, event "update the download progress"');
+            console.log(data);
+
             if (timerId !== null) clearTimeout(timerId);
 
             if (document.getElementById('download:' + data.information.taskIndex) === null) {

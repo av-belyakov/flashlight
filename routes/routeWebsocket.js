@@ -553,10 +553,8 @@ let messageTypeUpload = function(redis, sourceID, callback) {
         'ready': processingToDownloadFiles.ready,
         'execute': processingToDownloadFiles.execute,
         'execute completed': processingToDownloadFiles.executeCompleted,
-        //        'execute retransmission': processingToDownloadFiles.executeRetransmission,
-        //        'execute retransmission completed': processingToDownloadFiles.executeRetransmissionCompleted,
         'stop': processingToDownloadFiles.stop,
-        'complete': processingToDownloadFiles.complete,
+        'completed': processingToDownloadFiles.completed,
         'cancel': processingToDownloadFiles.cancel
     };
 

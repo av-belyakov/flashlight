@@ -333,48 +333,59 @@ module.exports.executeCompleted = function(redis, self, sourceID, cb) {
 
         //закрываем дискриптор потока на запись в файл
         wsl.end();
+
+        cb(null);
     });
 
 };
 
 //обработка пакета JSON полученного с источника и содержащего информацию о количестве успешно или неуспешно переданных файлов
-module.exports.complete = function(redis, self, wsConnection, callback) {
-    actionWhenReceivingComplete(redis, self.taskIndex, function(err, ...spread) {
-        if (err) {
-            if (typeof objGlobal.downloadFilesTmp[wsConnection.remoteAddress] !== 'undefined') {
-                delete objGlobal.downloadFilesTmp[wsConnection.remoteAddress];
+module.exports.completed = function(redis, self, sourceID, cb) {
+
+    debug('resived message type "completed"');
+    debug(self);
+
+    actionWhenReceivingComplete(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID },
+        (err, ...spread) => {
+            if (err) {
+                globalObject.deleteData('processingTasks', self.info.taskIndex);
+                globalObject.deleteData('downloadFilesTmp', sourceID);
+
+                return cb(err);
             }
-            callback(err);
-        } else {
+
             //проверка очереди на выгрузку файлов (таблица task_turn_downloading_files)
-            checkQueueTaskDownloadFiles(redis, self, function(err, objTaskIndex) {
-                if (err) {
-                    callback(err);
-                } else {
-                    if (objTaskIndex !== false && (typeof objTaskIndex === 'object')) {
-                        wsConnection.sendUTF(JSON.stringify(objTaskIndex));
-                    }
-                    if (typeof spread[0] === 'undefined') {
-                        callback(null);
-                    } else {
-                        callback(null, spread[0]);
-                    }
+            checkQueueTaskDownloadFiles(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID }, (err, objTaskIndex) => {
+                if (err) return cb(err);
+
+                if (objTaskIndex !== false && (typeof objTaskIndex === 'object')) {
+
+                    debug(objTaskIndex);
+
+                    wsConnection.sendUTF(JSON.stringify(objTaskIndex));
                 }
+
+                if (typeof spread[0] === 'undefined') return cb(null);
+
+                cb(null, spread[0]);
             });
-        }
-    });
+        });
 };
 
-//обработка пакета JSON полученного с источника и информирующего об отмене передачи файлов вызванном какой либо ошибкой
-module.exports.cancel = function(redis, self, wsConnection, callback) {
-    actionWhenReceivingCancel(redis, self.taskIndex, function(err) {
+//обработка пакета JSON полученного с источника и информирующего об отмене передачи файлов по причине ошибки
+module.exports.cancel = function(redis, self, sourceID, cb) {
+
+    debug('resived message type "CANCEL"');
+    debug(self);
+
+    actionWhenReceivingCancel(redis, self.info.taskIndex, function(err) {
         if (err) {
-            if (typeof objGlobal.downloadFilesTmp[wsConnection.remoteAddress] !== 'undefined') {
-                delete objGlobal.downloadFilesTmp[wsConnection.remoteAddress];
-            }
-            callback(err);
+            globalObject.deleteData('processingTasks', self.info.taskIndex);
+            globalObject.deleteData('downloadFilesTmp', sourceID);
+
+            cb(err);
         } else {
-            callback(null);
+            cb(null);
         }
     });
 };
