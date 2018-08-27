@@ -7,6 +7,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 let bootstrapPath = path.join(__dirname, 'node_modules/bootstrap/dist/css');
+let datetimepickerPath = path.join(__dirname, 'node_modules/eonasdan-bootstrap-datetimepicker/dist/css');
 
 module.exports = {
     context: __dirname + '/public/js',
@@ -19,7 +20,7 @@ module.exports = {
             'bootstrapToggle',
             //'bootstrapDropDown',
             'bootstrapTokenfield',
-            'bootstrapDatetimepicker',
+            'datetimepicker',
             'chosen-js',
             //'chosen-js-proto',
             'md5js',
@@ -59,7 +60,7 @@ module.exports = {
     devtool: NODE_ENV === 'development' ? 'source-map' : null,
 
     resolve: {
-        modules: ['node_modules', bootstrapPath],
+        modules: ['node_modules', bootstrapPath, datetimepickerPath],
         extensions: ['.js', '.css'],
         alias: {
             bootstrap: 'bootstrap/dist/js/bootstrap.min.js',
@@ -67,7 +68,8 @@ module.exports = {
             bootstrapToggle: 'bootstrap-toggle/js/bootstrap-toggle.min.js',
             //bootstrapDropDown: 'bootstrap/js/dropdown.js',
             bootstrapTokenfield: 'bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js',
-            bootstrapDatetimepicker: 'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js',
+            //bootstrapDatetimepicker: 'bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js',
+            datetimepicker: 'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js',
             'chosen-js': 'chosen-js/chosen.jquery.min.js',
             //'chosen-js-proto': 'chosen-js/chosen.proto.min.js',
             md5js: 'crypto-js/md5.js',

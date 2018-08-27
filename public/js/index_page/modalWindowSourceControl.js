@@ -276,6 +276,11 @@ function formingPanelFiltering(objInformation) {
         $('#dateTimeEnd').datetimepicker({
             locale: 'ru'
         });
+        /*
+                $('#dateTimeStart').datetimepicker();
+
+                $('#dateTimeEnd').datetimepicker();
+                */
     });
 
     $('#ipaddress').on('tokenfield:createdtoken', function(e) {

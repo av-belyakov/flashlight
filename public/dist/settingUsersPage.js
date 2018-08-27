@@ -28,616 +28,7 @@ let showNotify = function (type, message) {
 
 /***/ }),
 
-/***/ 22:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = getFormElements;
-/**
- * Объект с элементами формы
- */
-
-
-
-function getFormElements() {
-    return {
-        login: document.getElementsByName('login')[0],
-        passwordOne: document.getElementById('passwordOne'),
-        passwordTwo: document.getElementById('passwordTwo'),
-        userName: document.getElementsByName('userName')[0]
-    };
-}
-
-/***/ }),
-
-/***/ 7:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
-/**
- * Модуль изменения иконки при проверки полей ввода
- * 
- * Версия 0.1, дата релиза 29.11.2017
- */
-
-
-
-let managementIcon = {
-    showIcon(elements, trigger) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        if (!trigger) {
-            elem.parentNode.classList.add('has-error');
-            elem.parentNode.classList.remove('has-success');
-            span.classList.add('glyphicon-remove');
-            span.classList.remove('glyphicon-ok');
-        } else {
-            elem.parentNode.classList.add('has-success');
-            elem.parentNode.classList.remove('has-error');
-            span.classList.add('glyphicon-ok');
-            span.classList.remove('glyphicon-remove');
-        }
-    },
-
-    removeIcon(elements) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        elem.parentNode.classList.remove('has-success');
-        span.classList.remove('glyphicon-ok');
-        elem.parentNode.classList.remove('has-error');
-        span.classList.remove('glyphicon-remove');
-    }
-};
-
-
-
-/***/ }),
-
-/***/ 73:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__setting_users_page_getFormElements__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__ = __webpack_require__(74);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_users_page_openModalWindowAddEditUser__ = __webpack_require__(75);
-
-
-
-
-
-
-
-
-(function () {
-    socket.on('notify information', function (data) {
-        let obj = JSON.parse(data.notify);
-        Object(__WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__["a" /* showNotify */])(obj.type, obj.message);
-
-        if (obj.type === 'info') {
-            setTimeout(function () {
-                window.location.reload();
-            }, 5000);
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        //обработчик на кнопку добавить пользователя
-        (function () {
-            let buttonAddUser = document.getElementById('addUserButton');
-            if (buttonAddUser !== null) {
-                buttonAddUser.addEventListener('click', __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__["a" /* default */].bind(null, 'addUser'));
-            }
-        })();
-
-        //обработчик на кнопки редактирование информации о пользователе
-        (function () {
-            let editUserButtons = document.querySelectorAll('#main-content [name="editUserButton"]');
-            editUserButtons.forEach(elementButton => {
-                elementButton.addEventListener('click', __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__["a" /* default */].bind(null, 'editUser'));
-            });
-        })();
-
-        //обработчик на кнопки удаления пользователей
-        (function () {
-            let delUserButtons = document.querySelectorAll('#main-content [name="delUserButton"]');
-            delUserButtons.forEach(elementButton => {
-                elementButton.addEventListener('click', __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__["a" /* default */].bind(null, 'delUser'));
-            });
-        })();
-
-        //обработчик на поля ввода информации в модальном окне
-        (function () {
-            //проверка по регулярным выражениям
-            function checkFieldRegexp(event) {
-                if (event === 'undefined' || event.target === 'undefined') return;
-
-                let elem = event.target;
-                let pattern = '';
-                if (elem.name === 'login') pattern = /\b^[a-zA-Z0-9]{4,}$\b/;
-                if (elem.name === 'userName') pattern = /^[а-яё\s]+$/i;
-
-                if (!pattern.test(elem.value)) __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(elem, false);else __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(elem, true);
-            }
-
-            //сравнение паролей
-            function checkPassword() {
-                let obj = Object(__WEBPACK_IMPORTED_MODULE_2__setting_users_page_getFormElements__["a" /* default */])();
-                let passwordOne = obj.passwordOne;
-                let passwordTwo = obj.passwordTwo;
-                let checkPasswordRegexp = /(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/.test(passwordTwo.value);
-                if (passwordOne.value !== passwordTwo.value || !checkPasswordRegexp) {
-                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordOne, false);
-                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordTwo, false);
-                } else {
-                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordOne, true);
-                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordTwo, true);
-                }
-            }
-
-            document.querySelector('#modalAddEditUser [name="login"]').addEventListener('change', checkFieldRegexp);
-            document.querySelector('#modalAddEditUser [name="userName"]').addEventListener('change', checkFieldRegexp);
-
-            document.getElementById('passwordTwo').addEventListener('change', checkPassword);
-        })();
-
-        //обработчик на кнопку 'отправить' для модального окна
-        (function () {
-            let submitElementModalWindow = document.querySelector('#modalAddEditUser [type="submit"]');
-            submitElementModalWindow.addEventListener('click', __WEBPACK_IMPORTED_MODULE_4__setting_users_page_openModalWindowAddEditUser__["a" /* default */]);
-        })();
-
-        //обработчик на кнопку 'удалить' модального окна подтверждения удаления
-        (function () {
-            document.querySelector('#modalDelete .btn-primary').addEventListener('click', () => {
-                let login = document.querySelector('#modalDelete strong').innerHTML;
-
-                socket.emit('delete user', { processingType: 'deleteUser', login: login });
-                $('#modalDelete').modal('hide');
-            });
-        })();
-    });
-})();
-
-/***/ }),
-
-/***/ 74:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindow;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(22);
-/**
- * Модуль формирования и открытия модального окна
- * 
- * @param {тип окна} typeWindow 
- * @param {элемент источник события} event 
- * 
- * Версия 0.1, дата релиза 29.11.2017
- */
-
-
-
-
-
-
-function openModalWindow(typeWindow, event) {
-    let obj = Object(__WEBPACK_IMPORTED_MODULE_1__getFormElements__["a" /* default */])();
-
-    //чистим поле password
-    obj.passwordOne.value = '';
-    obj.passwordTwo.value = '';
-
-    //убираем значки успешного и неуспешного ввода
-    for (let key in obj) {
-        __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__["a" /* managementIcon */].removeIcon(obj[key]);
-    }
-
-    let arraySelectOptions = document.querySelectorAll('option');
-    arraySelectOptions[0].parentNode.removeAttribute('disabled');
-
-    //сформировать список
-    function setSelected(group) {
-        for (let i = 0; i < arraySelectOptions.length; i++) {
-            arraySelectOptions[i].removeAttribute('selected');
-            if (arraySelectOptions[i].value === group) arraySelectOptions[i].setAttribute('selected', '');
-        }
-    }
-
-    let myModalLabel = document.getElementById('myModalLabel');
-    if (typeWindow === 'addUser') {
-        myModalLabel.innerText = 'Добавить пользователя';
-        myModalLabel.setAttribute('data-type-window', 'add');
-        obj.login.value = '';
-        obj.login.removeAttribute('readonly');
-        obj.userName.value = '';
-        setSelected('administrator');
-
-        $('#modalAddEditUser').modal('show');
-    } else {
-        let userInformation = function (elem) {
-            if (elem.target.tagName === 'BUTTON' && elem.target.dataset.userInformation !== 'undefined') {
-                return elem.target.dataset.userInformation;
-            }
-            let currentElement = elem.target;
-            while (currentElement !== null) {
-                if (currentElement !== 'undefined' && currentElement.tagName === 'BUTTON' && currentElement.dataset.userInformation !== 'undefined') {
-                    return currentElement.dataset.userInformation;
-                }
-                currentElement = currentElement.parentElement;
-            }
-        }(event);
-
-        if (typeWindow === 'editUser') {
-            let [login, group, userName] = userInformation.split('|');
-
-            myModalLabel.innerText = 'Редактировать информацию о пользователе';
-            myModalLabel.setAttribute('data-type-window', 'edit');
-            obj.login.value = login;
-            obj.login.setAttribute('readonly', '');
-            obj.userName.value = userName;
-
-            //для администратора возможность изменения группы выключена
-            if (login === 'administrator') {
-                arraySelectOptions[0].parentNode.setAttribute('disabled', 'disabled');
-            }
-            setSelected(group);
-
-            $('#modalAddEditUser').modal('show');
-        }
-        if (typeWindow === 'delUser') {
-            let login = userInformation;
-            document.querySelector('#modalLabelDelete .modal-title').innerHTML = 'Удаление';
-            let modalBody = document.querySelector('#modalDelete .modal-body');
-            modalBody.innerHTML = `<p>Действительно удалить пользователя <strong>${login}</strong>?</p>`;
-
-            $('#modalDelete').modal('show');
-        }
-    }
-}
-
-/***/ }),
-
-/***/ 75:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindowAddEditUser;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__getFormElements__ = __webpack_require__(22);
-/**
- * Модуль вызова модального окна для добавления пользователя
- * 
- * Версия 0.1, дата релиза 29.11.2017
- */
-
-
-
-const md5js = __webpack_require__(8);
-
-
-
-function openModalWindowAddEditUser() {
-    let obj = Object(__WEBPACK_IMPORTED_MODULE_0__getFormElements__["a" /* default */])();
-    let arrayElement = [obj.login, obj.passwordOne, obj.passwordTwo, obj.userName];
-
-    let processingTrigger = arrayElement.every(function (elem) {
-        if (elem.value.length === 0) return false;else return true;
-    });
-
-    let loginIsTrue = /\b^[a-zA-Z0-9]{4,}$\b/.test(obj.login.value);
-    let userNameIsTrue = /^[а-яё\s]+$/i.test(obj.userName.value);
-    let checkPassword = obj.passwordOne.value === obj.passwordTwo.value;
-    let checkPasswordRegexp = /(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/.test(obj.passwordTwo.value);
-
-    if (processingTrigger && checkPassword && checkPasswordRegexp) {
-        if (loginIsTrue && userNameIsTrue) {
-            let objInformationUser = createObjInformationUser();
-
-            socket.emit('add or edit user', objInformationUser);
-            $('#modalAddEditUser').modal('hide');
-        }
-    }
-
-    //формирование объекта с информацией о пользователе
-    function createObjInformationUser() {
-        let obj = Object(__WEBPACK_IMPORTED_MODULE_0__getFormElements__["a" /* default */])();
-        let myModalLabel = document.getElementById('myModalLabel').getAttribute('data-type-window');
-        let selectElem = document.getElementsByName('itemGroups')[0];
-        let typeModal = myModalLabel === 'add' ? 'create' : 'edit';
-
-        return {
-            actionType: typeModal,
-            login: obj.login.value,
-            group: selectElem.options[selectElem.options.selectedIndex].value,
-            userName: obj.userName.value,
-            password: md5js(obj.passwordTwo.value).toString()
-        };
-    }
-}
-
-/***/ }),
-
-/***/ 8:
-/***/ (function(module, exports, __webpack_require__) {
-
-;(function (root, factory) {
-	if (true) {
-		// CommonJS
-		module.exports = exports = factory(__webpack_require__(9));
-	}
-	else if (typeof define === "function" && define.amd) {
-		// AMD
-		define(["./core"], factory);
-	}
-	else {
-		// Global (browser)
-		factory(root.CryptoJS);
-	}
-}(this, function (CryptoJS) {
-
-	(function (Math) {
-	    // Shortcuts
-	    var C = CryptoJS;
-	    var C_lib = C.lib;
-	    var WordArray = C_lib.WordArray;
-	    var Hasher = C_lib.Hasher;
-	    var C_algo = C.algo;
-
-	    // Constants table
-	    var T = [];
-
-	    // Compute constants
-	    (function () {
-	        for (var i = 0; i < 64; i++) {
-	            T[i] = (Math.abs(Math.sin(i + 1)) * 0x100000000) | 0;
-	        }
-	    }());
-
-	    /**
-	     * MD5 hash algorithm.
-	     */
-	    var MD5 = C_algo.MD5 = Hasher.extend({
-	        _doReset: function () {
-	            this._hash = new WordArray.init([
-	                0x67452301, 0xefcdab89,
-	                0x98badcfe, 0x10325476
-	            ]);
-	        },
-
-	        _doProcessBlock: function (M, offset) {
-	            // Swap endian
-	            for (var i = 0; i < 16; i++) {
-	                // Shortcuts
-	                var offset_i = offset + i;
-	                var M_offset_i = M[offset_i];
-
-	                M[offset_i] = (
-	                    (((M_offset_i << 8)  | (M_offset_i >>> 24)) & 0x00ff00ff) |
-	                    (((M_offset_i << 24) | (M_offset_i >>> 8))  & 0xff00ff00)
-	                );
-	            }
-
-	            // Shortcuts
-	            var H = this._hash.words;
-
-	            var M_offset_0  = M[offset + 0];
-	            var M_offset_1  = M[offset + 1];
-	            var M_offset_2  = M[offset + 2];
-	            var M_offset_3  = M[offset + 3];
-	            var M_offset_4  = M[offset + 4];
-	            var M_offset_5  = M[offset + 5];
-	            var M_offset_6  = M[offset + 6];
-	            var M_offset_7  = M[offset + 7];
-	            var M_offset_8  = M[offset + 8];
-	            var M_offset_9  = M[offset + 9];
-	            var M_offset_10 = M[offset + 10];
-	            var M_offset_11 = M[offset + 11];
-	            var M_offset_12 = M[offset + 12];
-	            var M_offset_13 = M[offset + 13];
-	            var M_offset_14 = M[offset + 14];
-	            var M_offset_15 = M[offset + 15];
-
-	            // Working varialbes
-	            var a = H[0];
-	            var b = H[1];
-	            var c = H[2];
-	            var d = H[3];
-
-	            // Computation
-	            a = FF(a, b, c, d, M_offset_0,  7,  T[0]);
-	            d = FF(d, a, b, c, M_offset_1,  12, T[1]);
-	            c = FF(c, d, a, b, M_offset_2,  17, T[2]);
-	            b = FF(b, c, d, a, M_offset_3,  22, T[3]);
-	            a = FF(a, b, c, d, M_offset_4,  7,  T[4]);
-	            d = FF(d, a, b, c, M_offset_5,  12, T[5]);
-	            c = FF(c, d, a, b, M_offset_6,  17, T[6]);
-	            b = FF(b, c, d, a, M_offset_7,  22, T[7]);
-	            a = FF(a, b, c, d, M_offset_8,  7,  T[8]);
-	            d = FF(d, a, b, c, M_offset_9,  12, T[9]);
-	            c = FF(c, d, a, b, M_offset_10, 17, T[10]);
-	            b = FF(b, c, d, a, M_offset_11, 22, T[11]);
-	            a = FF(a, b, c, d, M_offset_12, 7,  T[12]);
-	            d = FF(d, a, b, c, M_offset_13, 12, T[13]);
-	            c = FF(c, d, a, b, M_offset_14, 17, T[14]);
-	            b = FF(b, c, d, a, M_offset_15, 22, T[15]);
-
-	            a = GG(a, b, c, d, M_offset_1,  5,  T[16]);
-	            d = GG(d, a, b, c, M_offset_6,  9,  T[17]);
-	            c = GG(c, d, a, b, M_offset_11, 14, T[18]);
-	            b = GG(b, c, d, a, M_offset_0,  20, T[19]);
-	            a = GG(a, b, c, d, M_offset_5,  5,  T[20]);
-	            d = GG(d, a, b, c, M_offset_10, 9,  T[21]);
-	            c = GG(c, d, a, b, M_offset_15, 14, T[22]);
-	            b = GG(b, c, d, a, M_offset_4,  20, T[23]);
-	            a = GG(a, b, c, d, M_offset_9,  5,  T[24]);
-	            d = GG(d, a, b, c, M_offset_14, 9,  T[25]);
-	            c = GG(c, d, a, b, M_offset_3,  14, T[26]);
-	            b = GG(b, c, d, a, M_offset_8,  20, T[27]);
-	            a = GG(a, b, c, d, M_offset_13, 5,  T[28]);
-	            d = GG(d, a, b, c, M_offset_2,  9,  T[29]);
-	            c = GG(c, d, a, b, M_offset_7,  14, T[30]);
-	            b = GG(b, c, d, a, M_offset_12, 20, T[31]);
-
-	            a = HH(a, b, c, d, M_offset_5,  4,  T[32]);
-	            d = HH(d, a, b, c, M_offset_8,  11, T[33]);
-	            c = HH(c, d, a, b, M_offset_11, 16, T[34]);
-	            b = HH(b, c, d, a, M_offset_14, 23, T[35]);
-	            a = HH(a, b, c, d, M_offset_1,  4,  T[36]);
-	            d = HH(d, a, b, c, M_offset_4,  11, T[37]);
-	            c = HH(c, d, a, b, M_offset_7,  16, T[38]);
-	            b = HH(b, c, d, a, M_offset_10, 23, T[39]);
-	            a = HH(a, b, c, d, M_offset_13, 4,  T[40]);
-	            d = HH(d, a, b, c, M_offset_0,  11, T[41]);
-	            c = HH(c, d, a, b, M_offset_3,  16, T[42]);
-	            b = HH(b, c, d, a, M_offset_6,  23, T[43]);
-	            a = HH(a, b, c, d, M_offset_9,  4,  T[44]);
-	            d = HH(d, a, b, c, M_offset_12, 11, T[45]);
-	            c = HH(c, d, a, b, M_offset_15, 16, T[46]);
-	            b = HH(b, c, d, a, M_offset_2,  23, T[47]);
-
-	            a = II(a, b, c, d, M_offset_0,  6,  T[48]);
-	            d = II(d, a, b, c, M_offset_7,  10, T[49]);
-	            c = II(c, d, a, b, M_offset_14, 15, T[50]);
-	            b = II(b, c, d, a, M_offset_5,  21, T[51]);
-	            a = II(a, b, c, d, M_offset_12, 6,  T[52]);
-	            d = II(d, a, b, c, M_offset_3,  10, T[53]);
-	            c = II(c, d, a, b, M_offset_10, 15, T[54]);
-	            b = II(b, c, d, a, M_offset_1,  21, T[55]);
-	            a = II(a, b, c, d, M_offset_8,  6,  T[56]);
-	            d = II(d, a, b, c, M_offset_15, 10, T[57]);
-	            c = II(c, d, a, b, M_offset_6,  15, T[58]);
-	            b = II(b, c, d, a, M_offset_13, 21, T[59]);
-	            a = II(a, b, c, d, M_offset_4,  6,  T[60]);
-	            d = II(d, a, b, c, M_offset_11, 10, T[61]);
-	            c = II(c, d, a, b, M_offset_2,  15, T[62]);
-	            b = II(b, c, d, a, M_offset_9,  21, T[63]);
-
-	            // Intermediate hash value
-	            H[0] = (H[0] + a) | 0;
-	            H[1] = (H[1] + b) | 0;
-	            H[2] = (H[2] + c) | 0;
-	            H[3] = (H[3] + d) | 0;
-	        },
-
-	        _doFinalize: function () {
-	            // Shortcuts
-	            var data = this._data;
-	            var dataWords = data.words;
-
-	            var nBitsTotal = this._nDataBytes * 8;
-	            var nBitsLeft = data.sigBytes * 8;
-
-	            // Add padding
-	            dataWords[nBitsLeft >>> 5] |= 0x80 << (24 - nBitsLeft % 32);
-
-	            var nBitsTotalH = Math.floor(nBitsTotal / 0x100000000);
-	            var nBitsTotalL = nBitsTotal;
-	            dataWords[(((nBitsLeft + 64) >>> 9) << 4) + 15] = (
-	                (((nBitsTotalH << 8)  | (nBitsTotalH >>> 24)) & 0x00ff00ff) |
-	                (((nBitsTotalH << 24) | (nBitsTotalH >>> 8))  & 0xff00ff00)
-	            );
-	            dataWords[(((nBitsLeft + 64) >>> 9) << 4) + 14] = (
-	                (((nBitsTotalL << 8)  | (nBitsTotalL >>> 24)) & 0x00ff00ff) |
-	                (((nBitsTotalL << 24) | (nBitsTotalL >>> 8))  & 0xff00ff00)
-	            );
-
-	            data.sigBytes = (dataWords.length + 1) * 4;
-
-	            // Hash final blocks
-	            this._process();
-
-	            // Shortcuts
-	            var hash = this._hash;
-	            var H = hash.words;
-
-	            // Swap endian
-	            for (var i = 0; i < 4; i++) {
-	                // Shortcut
-	                var H_i = H[i];
-
-	                H[i] = (((H_i << 8)  | (H_i >>> 24)) & 0x00ff00ff) |
-	                       (((H_i << 24) | (H_i >>> 8))  & 0xff00ff00);
-	            }
-
-	            // Return final computed hash
-	            return hash;
-	        },
-
-	        clone: function () {
-	            var clone = Hasher.clone.call(this);
-	            clone._hash = this._hash.clone();
-
-	            return clone;
-	        }
-	    });
-
-	    function FF(a, b, c, d, x, s, t) {
-	        var n = a + ((b & c) | (~b & d)) + x + t;
-	        return ((n << s) | (n >>> (32 - s))) + b;
-	    }
-
-	    function GG(a, b, c, d, x, s, t) {
-	        var n = a + ((b & d) | (c & ~d)) + x + t;
-	        return ((n << s) | (n >>> (32 - s))) + b;
-	    }
-
-	    function HH(a, b, c, d, x, s, t) {
-	        var n = a + (b ^ c ^ d) + x + t;
-	        return ((n << s) | (n >>> (32 - s))) + b;
-	    }
-
-	    function II(a, b, c, d, x, s, t) {
-	        var n = a + (c ^ (b | ~d)) + x + t;
-	        return ((n << s) | (n >>> (32 - s))) + b;
-	    }
-
-	    /**
-	     * Shortcut function to the hasher's object interface.
-	     *
-	     * @param {WordArray|string} message The message to hash.
-	     *
-	     * @return {WordArray} The hash.
-	     *
-	     * @static
-	     *
-	     * @example
-	     *
-	     *     var hash = CryptoJS.MD5('message');
-	     *     var hash = CryptoJS.MD5(wordArray);
-	     */
-	    C.MD5 = Hasher._createHelper(MD5);
-
-	    /**
-	     * Shortcut function to the HMAC's object interface.
-	     *
-	     * @param {WordArray|string} message The message to hash.
-	     * @param {WordArray|string} key The secret key.
-	     *
-	     * @return {WordArray} The HMAC.
-	     *
-	     * @static
-	     *
-	     * @example
-	     *
-	     *     var hmac = CryptoJS.HmacMD5(message, key);
-	     */
-	    C.HmacMD5 = Hasher._createHmacHelper(MD5);
-	}(Math));
-
-
-	return CryptoJS.MD5;
-
-}));
-
-/***/ }),
-
-/***/ 9:
+/***/ 10:
 /***/ (function(module, exports, __webpack_require__) {
 
 ;(function (root, factory) {
@@ -1398,6 +789,615 @@ function openModalWindowAddEditUser() {
 
 
 	return CryptoJS;
+
+}));
+
+/***/ }),
+
+/***/ 22:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = getFormElements;
+/**
+ * Объект с элементами формы
+ */
+
+
+
+function getFormElements() {
+    return {
+        login: document.getElementsByName('login')[0],
+        passwordOne: document.getElementById('passwordOne'),
+        passwordTwo: document.getElementById('passwordTwo'),
+        userName: document.getElementsByName('userName')[0]
+    };
+}
+
+/***/ }),
+
+/***/ 7:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
+/**
+ * Модуль изменения иконки при проверки полей ввода
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+let managementIcon = {
+    showIcon(elements, trigger) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        if (!trigger) {
+            elem.parentNode.classList.add('has-error');
+            elem.parentNode.classList.remove('has-success');
+            span.classList.add('glyphicon-remove');
+            span.classList.remove('glyphicon-ok');
+        } else {
+            elem.parentNode.classList.add('has-success');
+            elem.parentNode.classList.remove('has-error');
+            span.classList.add('glyphicon-ok');
+            span.classList.remove('glyphicon-remove');
+        }
+    },
+
+    removeIcon(elements) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        elem.parentNode.classList.remove('has-success');
+        span.classList.remove('glyphicon-ok');
+        elem.parentNode.classList.remove('has-error');
+        span.classList.remove('glyphicon-remove');
+    }
+};
+
+
+
+/***/ }),
+
+/***/ 73:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__setting_users_page_getFormElements__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__ = __webpack_require__(74);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_users_page_openModalWindowAddEditUser__ = __webpack_require__(75);
+
+
+
+
+
+
+
+
+(function () {
+    socket.on('notify information', function (data) {
+        let obj = JSON.parse(data.notify);
+        Object(__WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__["a" /* showNotify */])(obj.type, obj.message);
+
+        if (obj.type === 'info') {
+            setTimeout(function () {
+                window.location.reload();
+            }, 5000);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        //обработчик на кнопку добавить пользователя
+        (function () {
+            let buttonAddUser = document.getElementById('addUserButton');
+            if (buttonAddUser !== null) {
+                buttonAddUser.addEventListener('click', __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__["a" /* default */].bind(null, 'addUser'));
+            }
+        })();
+
+        //обработчик на кнопки редактирование информации о пользователе
+        (function () {
+            let editUserButtons = document.querySelectorAll('#main-content [name="editUserButton"]');
+            editUserButtons.forEach(elementButton => {
+                elementButton.addEventListener('click', __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__["a" /* default */].bind(null, 'editUser'));
+            });
+        })();
+
+        //обработчик на кнопки удаления пользователей
+        (function () {
+            let delUserButtons = document.querySelectorAll('#main-content [name="delUserButton"]');
+            delUserButtons.forEach(elementButton => {
+                elementButton.addEventListener('click', __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__["a" /* default */].bind(null, 'delUser'));
+            });
+        })();
+
+        //обработчик на поля ввода информации в модальном окне
+        (function () {
+            //проверка по регулярным выражениям
+            function checkFieldRegexp(event) {
+                if (event === 'undefined' || event.target === 'undefined') return;
+
+                let elem = event.target;
+                let pattern = '';
+                if (elem.name === 'login') pattern = /\b^[a-zA-Z0-9]{4,}$\b/;
+                if (elem.name === 'userName') pattern = /^[а-яё\s]+$/i;
+
+                if (!pattern.test(elem.value)) __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(elem, false);else __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(elem, true);
+            }
+
+            //сравнение паролей
+            function checkPassword() {
+                let obj = Object(__WEBPACK_IMPORTED_MODULE_2__setting_users_page_getFormElements__["a" /* default */])();
+                let passwordOne = obj.passwordOne;
+                let passwordTwo = obj.passwordTwo;
+                let checkPasswordRegexp = /(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/.test(passwordTwo.value);
+                if (passwordOne.value !== passwordTwo.value || !checkPasswordRegexp) {
+                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordOne, false);
+                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordTwo, false);
+                } else {
+                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordOne, true);
+                    __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__["a" /* managementIcon */].showIcon(passwordTwo, true);
+                }
+            }
+
+            document.querySelector('#modalAddEditUser [name="login"]').addEventListener('change', checkFieldRegexp);
+            document.querySelector('#modalAddEditUser [name="userName"]').addEventListener('change', checkFieldRegexp);
+
+            document.getElementById('passwordTwo').addEventListener('change', checkPassword);
+        })();
+
+        //обработчик на кнопку 'отправить' для модального окна
+        (function () {
+            let submitElementModalWindow = document.querySelector('#modalAddEditUser [type="submit"]');
+            submitElementModalWindow.addEventListener('click', __WEBPACK_IMPORTED_MODULE_4__setting_users_page_openModalWindowAddEditUser__["a" /* default */]);
+        })();
+
+        //обработчик на кнопку 'удалить' модального окна подтверждения удаления
+        (function () {
+            document.querySelector('#modalDelete .btn-primary').addEventListener('click', () => {
+                let login = document.querySelector('#modalDelete strong').innerHTML;
+
+                socket.emit('delete user', { processingType: 'deleteUser', login: login });
+                $('#modalDelete').modal('hide');
+            });
+        })();
+    });
+})();
+
+/***/ }),
+
+/***/ 74:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindow;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(22);
+/**
+ * Модуль формирования и открытия модального окна
+ * 
+ * @param {тип окна} typeWindow 
+ * @param {элемент источник события} event 
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+
+
+
+function openModalWindow(typeWindow, event) {
+    let obj = Object(__WEBPACK_IMPORTED_MODULE_1__getFormElements__["a" /* default */])();
+
+    //чистим поле password
+    obj.passwordOne.value = '';
+    obj.passwordTwo.value = '';
+
+    //убираем значки успешного и неуспешного ввода
+    for (let key in obj) {
+        __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__["a" /* managementIcon */].removeIcon(obj[key]);
+    }
+
+    let arraySelectOptions = document.querySelectorAll('option');
+    arraySelectOptions[0].parentNode.removeAttribute('disabled');
+
+    //сформировать список
+    function setSelected(group) {
+        for (let i = 0; i < arraySelectOptions.length; i++) {
+            arraySelectOptions[i].removeAttribute('selected');
+            if (arraySelectOptions[i].value === group) arraySelectOptions[i].setAttribute('selected', '');
+        }
+    }
+
+    let myModalLabel = document.getElementById('myModalLabel');
+    if (typeWindow === 'addUser') {
+        myModalLabel.innerText = 'Добавить пользователя';
+        myModalLabel.setAttribute('data-type-window', 'add');
+        obj.login.value = '';
+        obj.login.removeAttribute('readonly');
+        obj.userName.value = '';
+        setSelected('administrator');
+
+        $('#modalAddEditUser').modal('show');
+    } else {
+        let userInformation = function (elem) {
+            if (elem.target.tagName === 'BUTTON' && elem.target.dataset.userInformation !== 'undefined') {
+                return elem.target.dataset.userInformation;
+            }
+            let currentElement = elem.target;
+            while (currentElement !== null) {
+                if (currentElement !== 'undefined' && currentElement.tagName === 'BUTTON' && currentElement.dataset.userInformation !== 'undefined') {
+                    return currentElement.dataset.userInformation;
+                }
+                currentElement = currentElement.parentElement;
+            }
+        }(event);
+
+        if (typeWindow === 'editUser') {
+            let [login, group, userName] = userInformation.split('|');
+
+            myModalLabel.innerText = 'Редактировать информацию о пользователе';
+            myModalLabel.setAttribute('data-type-window', 'edit');
+            obj.login.value = login;
+            obj.login.setAttribute('readonly', '');
+            obj.userName.value = userName;
+
+            //для администратора возможность изменения группы выключена
+            if (login === 'administrator') {
+                arraySelectOptions[0].parentNode.setAttribute('disabled', 'disabled');
+            }
+            setSelected(group);
+
+            $('#modalAddEditUser').modal('show');
+        }
+        if (typeWindow === 'delUser') {
+            let login = userInformation;
+            document.querySelector('#modalLabelDelete .modal-title').innerHTML = 'Удаление';
+            let modalBody = document.querySelector('#modalDelete .modal-body');
+            modalBody.innerHTML = `<p>Действительно удалить пользователя <strong>${login}</strong>?</p>`;
+
+            $('#modalDelete').modal('show');
+        }
+    }
+}
+
+/***/ }),
+
+/***/ 75:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindowAddEditUser;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__getFormElements__ = __webpack_require__(22);
+/**
+ * Модуль вызова модального окна для добавления пользователя
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+const md5js = __webpack_require__(9);
+
+
+
+function openModalWindowAddEditUser() {
+    let obj = Object(__WEBPACK_IMPORTED_MODULE_0__getFormElements__["a" /* default */])();
+    let arrayElement = [obj.login, obj.passwordOne, obj.passwordTwo, obj.userName];
+
+    let processingTrigger = arrayElement.every(function (elem) {
+        if (elem.value.length === 0) return false;else return true;
+    });
+
+    let loginIsTrue = /\b^[a-zA-Z0-9]{4,}$\b/.test(obj.login.value);
+    let userNameIsTrue = /^[а-яё\s]+$/i.test(obj.userName.value);
+    let checkPassword = obj.passwordOne.value === obj.passwordTwo.value;
+    let checkPasswordRegexp = /(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/.test(obj.passwordTwo.value);
+
+    if (processingTrigger && checkPassword && checkPasswordRegexp) {
+        if (loginIsTrue && userNameIsTrue) {
+            let objInformationUser = createObjInformationUser();
+
+            socket.emit('add or edit user', objInformationUser);
+            $('#modalAddEditUser').modal('hide');
+        }
+    }
+
+    //формирование объекта с информацией о пользователе
+    function createObjInformationUser() {
+        let obj = Object(__WEBPACK_IMPORTED_MODULE_0__getFormElements__["a" /* default */])();
+        let myModalLabel = document.getElementById('myModalLabel').getAttribute('data-type-window');
+        let selectElem = document.getElementsByName('itemGroups')[0];
+        let typeModal = myModalLabel === 'add' ? 'create' : 'edit';
+
+        return {
+            actionType: typeModal,
+            login: obj.login.value,
+            group: selectElem.options[selectElem.options.selectedIndex].value,
+            userName: obj.userName.value,
+            password: md5js(obj.passwordTwo.value).toString()
+        };
+    }
+}
+
+/***/ }),
+
+/***/ 9:
+/***/ (function(module, exports, __webpack_require__) {
+
+;(function (root, factory) {
+	if (true) {
+		// CommonJS
+		module.exports = exports = factory(__webpack_require__(10));
+	}
+	else if (typeof define === "function" && define.amd) {
+		// AMD
+		define(["./core"], factory);
+	}
+	else {
+		// Global (browser)
+		factory(root.CryptoJS);
+	}
+}(this, function (CryptoJS) {
+
+	(function (Math) {
+	    // Shortcuts
+	    var C = CryptoJS;
+	    var C_lib = C.lib;
+	    var WordArray = C_lib.WordArray;
+	    var Hasher = C_lib.Hasher;
+	    var C_algo = C.algo;
+
+	    // Constants table
+	    var T = [];
+
+	    // Compute constants
+	    (function () {
+	        for (var i = 0; i < 64; i++) {
+	            T[i] = (Math.abs(Math.sin(i + 1)) * 0x100000000) | 0;
+	        }
+	    }());
+
+	    /**
+	     * MD5 hash algorithm.
+	     */
+	    var MD5 = C_algo.MD5 = Hasher.extend({
+	        _doReset: function () {
+	            this._hash = new WordArray.init([
+	                0x67452301, 0xefcdab89,
+	                0x98badcfe, 0x10325476
+	            ]);
+	        },
+
+	        _doProcessBlock: function (M, offset) {
+	            // Swap endian
+	            for (var i = 0; i < 16; i++) {
+	                // Shortcuts
+	                var offset_i = offset + i;
+	                var M_offset_i = M[offset_i];
+
+	                M[offset_i] = (
+	                    (((M_offset_i << 8)  | (M_offset_i >>> 24)) & 0x00ff00ff) |
+	                    (((M_offset_i << 24) | (M_offset_i >>> 8))  & 0xff00ff00)
+	                );
+	            }
+
+	            // Shortcuts
+	            var H = this._hash.words;
+
+	            var M_offset_0  = M[offset + 0];
+	            var M_offset_1  = M[offset + 1];
+	            var M_offset_2  = M[offset + 2];
+	            var M_offset_3  = M[offset + 3];
+	            var M_offset_4  = M[offset + 4];
+	            var M_offset_5  = M[offset + 5];
+	            var M_offset_6  = M[offset + 6];
+	            var M_offset_7  = M[offset + 7];
+	            var M_offset_8  = M[offset + 8];
+	            var M_offset_9  = M[offset + 9];
+	            var M_offset_10 = M[offset + 10];
+	            var M_offset_11 = M[offset + 11];
+	            var M_offset_12 = M[offset + 12];
+	            var M_offset_13 = M[offset + 13];
+	            var M_offset_14 = M[offset + 14];
+	            var M_offset_15 = M[offset + 15];
+
+	            // Working varialbes
+	            var a = H[0];
+	            var b = H[1];
+	            var c = H[2];
+	            var d = H[3];
+
+	            // Computation
+	            a = FF(a, b, c, d, M_offset_0,  7,  T[0]);
+	            d = FF(d, a, b, c, M_offset_1,  12, T[1]);
+	            c = FF(c, d, a, b, M_offset_2,  17, T[2]);
+	            b = FF(b, c, d, a, M_offset_3,  22, T[3]);
+	            a = FF(a, b, c, d, M_offset_4,  7,  T[4]);
+	            d = FF(d, a, b, c, M_offset_5,  12, T[5]);
+	            c = FF(c, d, a, b, M_offset_6,  17, T[6]);
+	            b = FF(b, c, d, a, M_offset_7,  22, T[7]);
+	            a = FF(a, b, c, d, M_offset_8,  7,  T[8]);
+	            d = FF(d, a, b, c, M_offset_9,  12, T[9]);
+	            c = FF(c, d, a, b, M_offset_10, 17, T[10]);
+	            b = FF(b, c, d, a, M_offset_11, 22, T[11]);
+	            a = FF(a, b, c, d, M_offset_12, 7,  T[12]);
+	            d = FF(d, a, b, c, M_offset_13, 12, T[13]);
+	            c = FF(c, d, a, b, M_offset_14, 17, T[14]);
+	            b = FF(b, c, d, a, M_offset_15, 22, T[15]);
+
+	            a = GG(a, b, c, d, M_offset_1,  5,  T[16]);
+	            d = GG(d, a, b, c, M_offset_6,  9,  T[17]);
+	            c = GG(c, d, a, b, M_offset_11, 14, T[18]);
+	            b = GG(b, c, d, a, M_offset_0,  20, T[19]);
+	            a = GG(a, b, c, d, M_offset_5,  5,  T[20]);
+	            d = GG(d, a, b, c, M_offset_10, 9,  T[21]);
+	            c = GG(c, d, a, b, M_offset_15, 14, T[22]);
+	            b = GG(b, c, d, a, M_offset_4,  20, T[23]);
+	            a = GG(a, b, c, d, M_offset_9,  5,  T[24]);
+	            d = GG(d, a, b, c, M_offset_14, 9,  T[25]);
+	            c = GG(c, d, a, b, M_offset_3,  14, T[26]);
+	            b = GG(b, c, d, a, M_offset_8,  20, T[27]);
+	            a = GG(a, b, c, d, M_offset_13, 5,  T[28]);
+	            d = GG(d, a, b, c, M_offset_2,  9,  T[29]);
+	            c = GG(c, d, a, b, M_offset_7,  14, T[30]);
+	            b = GG(b, c, d, a, M_offset_12, 20, T[31]);
+
+	            a = HH(a, b, c, d, M_offset_5,  4,  T[32]);
+	            d = HH(d, a, b, c, M_offset_8,  11, T[33]);
+	            c = HH(c, d, a, b, M_offset_11, 16, T[34]);
+	            b = HH(b, c, d, a, M_offset_14, 23, T[35]);
+	            a = HH(a, b, c, d, M_offset_1,  4,  T[36]);
+	            d = HH(d, a, b, c, M_offset_4,  11, T[37]);
+	            c = HH(c, d, a, b, M_offset_7,  16, T[38]);
+	            b = HH(b, c, d, a, M_offset_10, 23, T[39]);
+	            a = HH(a, b, c, d, M_offset_13, 4,  T[40]);
+	            d = HH(d, a, b, c, M_offset_0,  11, T[41]);
+	            c = HH(c, d, a, b, M_offset_3,  16, T[42]);
+	            b = HH(b, c, d, a, M_offset_6,  23, T[43]);
+	            a = HH(a, b, c, d, M_offset_9,  4,  T[44]);
+	            d = HH(d, a, b, c, M_offset_12, 11, T[45]);
+	            c = HH(c, d, a, b, M_offset_15, 16, T[46]);
+	            b = HH(b, c, d, a, M_offset_2,  23, T[47]);
+
+	            a = II(a, b, c, d, M_offset_0,  6,  T[48]);
+	            d = II(d, a, b, c, M_offset_7,  10, T[49]);
+	            c = II(c, d, a, b, M_offset_14, 15, T[50]);
+	            b = II(b, c, d, a, M_offset_5,  21, T[51]);
+	            a = II(a, b, c, d, M_offset_12, 6,  T[52]);
+	            d = II(d, a, b, c, M_offset_3,  10, T[53]);
+	            c = II(c, d, a, b, M_offset_10, 15, T[54]);
+	            b = II(b, c, d, a, M_offset_1,  21, T[55]);
+	            a = II(a, b, c, d, M_offset_8,  6,  T[56]);
+	            d = II(d, a, b, c, M_offset_15, 10, T[57]);
+	            c = II(c, d, a, b, M_offset_6,  15, T[58]);
+	            b = II(b, c, d, a, M_offset_13, 21, T[59]);
+	            a = II(a, b, c, d, M_offset_4,  6,  T[60]);
+	            d = II(d, a, b, c, M_offset_11, 10, T[61]);
+	            c = II(c, d, a, b, M_offset_2,  15, T[62]);
+	            b = II(b, c, d, a, M_offset_9,  21, T[63]);
+
+	            // Intermediate hash value
+	            H[0] = (H[0] + a) | 0;
+	            H[1] = (H[1] + b) | 0;
+	            H[2] = (H[2] + c) | 0;
+	            H[3] = (H[3] + d) | 0;
+	        },
+
+	        _doFinalize: function () {
+	            // Shortcuts
+	            var data = this._data;
+	            var dataWords = data.words;
+
+	            var nBitsTotal = this._nDataBytes * 8;
+	            var nBitsLeft = data.sigBytes * 8;
+
+	            // Add padding
+	            dataWords[nBitsLeft >>> 5] |= 0x80 << (24 - nBitsLeft % 32);
+
+	            var nBitsTotalH = Math.floor(nBitsTotal / 0x100000000);
+	            var nBitsTotalL = nBitsTotal;
+	            dataWords[(((nBitsLeft + 64) >>> 9) << 4) + 15] = (
+	                (((nBitsTotalH << 8)  | (nBitsTotalH >>> 24)) & 0x00ff00ff) |
+	                (((nBitsTotalH << 24) | (nBitsTotalH >>> 8))  & 0xff00ff00)
+	            );
+	            dataWords[(((nBitsLeft + 64) >>> 9) << 4) + 14] = (
+	                (((nBitsTotalL << 8)  | (nBitsTotalL >>> 24)) & 0x00ff00ff) |
+	                (((nBitsTotalL << 24) | (nBitsTotalL >>> 8))  & 0xff00ff00)
+	            );
+
+	            data.sigBytes = (dataWords.length + 1) * 4;
+
+	            // Hash final blocks
+	            this._process();
+
+	            // Shortcuts
+	            var hash = this._hash;
+	            var H = hash.words;
+
+	            // Swap endian
+	            for (var i = 0; i < 4; i++) {
+	                // Shortcut
+	                var H_i = H[i];
+
+	                H[i] = (((H_i << 8)  | (H_i >>> 24)) & 0x00ff00ff) |
+	                       (((H_i << 24) | (H_i >>> 8))  & 0xff00ff00);
+	            }
+
+	            // Return final computed hash
+	            return hash;
+	        },
+
+	        clone: function () {
+	            var clone = Hasher.clone.call(this);
+	            clone._hash = this._hash.clone();
+
+	            return clone;
+	        }
+	    });
+
+	    function FF(a, b, c, d, x, s, t) {
+	        var n = a + ((b & c) | (~b & d)) + x + t;
+	        return ((n << s) | (n >>> (32 - s))) + b;
+	    }
+
+	    function GG(a, b, c, d, x, s, t) {
+	        var n = a + ((b & d) | (c & ~d)) + x + t;
+	        return ((n << s) | (n >>> (32 - s))) + b;
+	    }
+
+	    function HH(a, b, c, d, x, s, t) {
+	        var n = a + (b ^ c ^ d) + x + t;
+	        return ((n << s) | (n >>> (32 - s))) + b;
+	    }
+
+	    function II(a, b, c, d, x, s, t) {
+	        var n = a + (c ^ (b | ~d)) + x + t;
+	        return ((n << s) | (n >>> (32 - s))) + b;
+	    }
+
+	    /**
+	     * Shortcut function to the hasher's object interface.
+	     *
+	     * @param {WordArray|string} message The message to hash.
+	     *
+	     * @return {WordArray} The hash.
+	     *
+	     * @static
+	     *
+	     * @example
+	     *
+	     *     var hash = CryptoJS.MD5('message');
+	     *     var hash = CryptoJS.MD5(wordArray);
+	     */
+	    C.MD5 = Hasher._createHelper(MD5);
+
+	    /**
+	     * Shortcut function to the HMAC's object interface.
+	     *
+	     * @param {WordArray|string} message The message to hash.
+	     * @param {WordArray|string} key The secret key.
+	     *
+	     * @return {WordArray} The HMAC.
+	     *
+	     * @static
+	     *
+	     * @example
+	     *
+	     *     var hmac = CryptoJS.HmacMD5(message, key);
+	     */
+	    C.HmacMD5 = Hasher._createHmacHelper(MD5);
+	}(Math));
+
+
+	return CryptoJS.MD5;
 
 }));
 

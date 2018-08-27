@@ -151,6 +151,9 @@
 
                                 let serialNumber = 1;
                                 for(let taskIndex in tableContent){
+
+console.log(tableContent[taskIndex]);
+
                                     let x = (new Date()).getTimezoneOffset() * 60000;
                                     let dateTimeStartUploadFiles = (new Date((+tableContent[taskIndex].dateTimeStartUploadFiles - x)).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, ''));
 

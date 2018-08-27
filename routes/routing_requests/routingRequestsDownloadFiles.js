@@ -21,7 +21,7 @@ const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPag
 const getCountFilesUploadNotConsidered = require('../../libs/getCountFilesUploadNotConsidered');
 const preparingVisualizationDownloadFiles = require('../processing_socketio/preparingVisualizationDownloadFiles');
 
-module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
+module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notifyMessage }) {
     let objTypeRequest = {
         'cancel': requestCancel,
         'ready': requestTypeReady,
@@ -35,6 +35,8 @@ module.exports = function({ redis, socketIoS, req, sourceID, notifyMessage }) {
     debug(req);
     debug('*****************************************************');
 */
+
+    //debug(sourceID);
 
     if ((typeof req.info === 'undefined') || (typeof req.info.taskIndex === 'undefined')) {
 

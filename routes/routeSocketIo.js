@@ -96,7 +96,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             writeLogFile.writeLog('\tError: ' + err.toString());
             showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
         });
-    }
+    };
 
     let obj = {
         'pong': function() {
@@ -176,6 +176,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             }
         },
         'download files': function() {
+
+            debug(`remoteHostId = ${remoteHostId}`);
+
             routingRequestDownloadFiles({
                 redis: redis,
                 socketIoS: socketIoS,

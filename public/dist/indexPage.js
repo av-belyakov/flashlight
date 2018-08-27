@@ -129,7 +129,7 @@ let helpers = {
 
 /***/ }),
 
-/***/ 11:
+/***/ 12:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -451,10 +451,10 @@ function createModalWindowFilterResults(obj, objectTimers) {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__index_page_checkChangeAdminPassword__ = __webpack_require__(51);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__index_page_createWidgetVisualizationFiltration__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__ = __webpack_require__(54);
@@ -1365,6 +1365,10 @@ function formingPanelFiltering(objInformation) {
         $('#dateTimeEnd').datetimepicker({
             locale: 'ru'
         });
+        /*
+                $('#dateTimeStart').datetimepicker();
+                 $('#dateTimeEnd').datetimepicker();
+                */
     });
 
     $('#ipaddress').on('tokenfield:createdtoken', function (e) {

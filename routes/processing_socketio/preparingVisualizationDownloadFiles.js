@@ -11,6 +11,8 @@ const async = require('async');
 const globalObject = require('../../configure/globalObject');
 const writeLogFile = require('../../libs/writeLogFile');
 
+const debug = require('debug')('preparingVisualizationDownloadFiles');
+
 //подготовка данных необходимых для визуализации добавления в очередь задачи на выгрузку файлов
 module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, sourceID, cb) {
     getShortSourcesInformationTurn(redis, taskIndex, sourceID, (err, obj) => {
@@ -42,6 +44,10 @@ module.exports.preparingVisualizationStartExecute = function(redis, taskIndex, s
 //подготовка данных для визуализации прогресса
 module.exports.preparingVisualizationUpdateProgress = function(redis, taskIndex, sourceID, cb) {
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
+
+    //debug(infoDownloadFile);
+    //debug(`sourceID: ${sourceID}`);
+
     if ((infoDownloadFile === null) || (typeof infoDownloadFile === 'undefined')) {
         writeLogFile.writeLog('\tError: not found a temporary object \'downloadFilesTmp\' to store information about the download file');
 
@@ -96,10 +102,12 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
     redis.lrange('task_implementation_downloading_files', [0, -1], (err, arrayResult) => {
         if (err) return done(err);
 
-        let isExistTaskIndex = arrayResult.some((item) => item === taskIndex);
+        let isExistTaskIndex = arrayResult.some(item => item === `${sourceID}:${taskIndex}`);
 
-        console.log('preparingVisualizationDownloadFiles.js');
-        console.log('isExistTaskIndex = ' + isExistTaskIndex);
+        debug('preparingVisualizationDownloadFiles.js');
+        debug('isExistTaskIndex = ' + isExistTaskIndex + ', ');
+        debug(`${sourceID}:${taskIndex}`);
+        debug(arrayResult);
 
         //если идентификатор задачи не был найден
         if (!isExistTaskIndex) return done(null, {});
@@ -130,10 +138,10 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
 
             results.counts.taskIndex = taskIndex;
             results.counts.sourceId = sourceID;
-            results.counts.shortName = results.shortNameSource.shortName;
+            results.counts.shortName = results.shortNameSource;
 
-            console.log('finaly result');
-            console.log(results);
+            debug('finaly result');
+            debug(results);
 
             done(null, results.counts);
         });
@@ -165,7 +173,7 @@ function getShortSourcesInformationTurn(redis, taskIndex, sourceID, done) {
 
                     console.log('---- table ' + tableNameTask + ' task ID = ' + item);
 
-                    if (~item.indexOf(':')) return (item === sourceID + ':' + taskIndex);
+                    if (~item.indexOf(':')) return (item === `${sourceID}:${taskIndex}`);
                     return false;
                 });
 
