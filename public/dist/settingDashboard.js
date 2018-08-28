@@ -1,39 +1,12 @@
 var settingDashboard =
 webpackJsonp_name_([11],{
 
-/***/ 0:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
-/**
- * Общий вид сообщений
- * 
- * Версия 0.1, дата релиза 23.11.2017
- */
-
-
-
-let showNotify = function (type, message) {
-    $.notify({
-        message: message
-    }, {
-        type: type,
-        placement: { from: 'top', align: 'right' },
-        offset: { x: 0, y: 60 }
-    });
-};
-
-
-
-/***/ }),
-
-/***/ 86:
+/***/ 184:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(2);
 
 
 
@@ -65,7 +38,34 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     });
 })();
 
+/***/ }),
+
+/***/ 2:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
+/**
+ * Общий вид сообщений
+ * 
+ * Версия 0.1, дата релиза 23.11.2017
+ */
+
+
+
+let showNotify = function (type, message) {
+    $.notify({
+        message: message
+    }, {
+        type: type,
+        placement: { from: 'top', align: 'right' },
+        offset: { x: 0, y: 60 }
+    });
+};
+
+
+
 /***/ })
 
-},[86]);
+},[184]);
 //# sourceMappingURL=settingDashboard.js.map

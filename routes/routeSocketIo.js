@@ -1,7 +1,7 @@
 /*
  * Модуль маршрутизации данных передаваемых через socket.io
  *
- * Версия 0.2, дата релиза 05.02.2018
+ * Версия 0.21, дата релиза 28.08.2018
  * */
 
 'use strict';
@@ -135,6 +135,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             }
 
             if (stringMessage.info.processing === 'execute') {
+
+                debug(`FILTERING FILES: remoteHostId = ${remoteHostId}`);
+
                 processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
                     if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                     else socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
@@ -176,9 +179,6 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             }
         },
         'download files': function() {
-
-            debug(`remoteHostId = ${remoteHostId}`);
-
             routingRequestDownloadFiles({
                 redis: redis,
                 socketIoS: socketIoS,

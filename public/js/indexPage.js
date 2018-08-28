@@ -177,11 +177,6 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод информации о прогрессе в загрузке файла
         socket.on('update the download progress', function(data) {
-
-            console.log('indexPage.js, event "update the download progress"');
-            console.log(data);
-
-
             if (timerId !== null) clearTimeout(timerId);
 
             if (document.getElementById('download:' + data.information.taskIndex) === null) {
@@ -243,6 +238,12 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
             setTimeout(deleteElementInformationFiltering.bind(null, 'download:' + data.information.taskIndex), 30000);
         });
+
+        //изменение статуса задачи по загрузки файлов
+        /*socket.on('change object status', function(data) {
+            console.log(data);
+
+        });*/
 
         //удаление задачи из очереди загрузок
         socket.on('task upload files cancel', function(data) {

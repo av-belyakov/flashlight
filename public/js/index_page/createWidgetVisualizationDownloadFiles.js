@@ -36,7 +36,7 @@ export default function(objData) {
     let divOne = document.createElement('div');
     divOne.setAttribute('style', 'margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer');
     divOne.setAttribute('id', 'download:' + objData.taskIndex);
-    divOne.setAttribute('data-source-id', objData.taskIndex.split(':')[1]);
+    divOne.setAttribute('data-source-id', objData.sourceId);
 
     divTwo.appendChild(divSourceNumber);
     divTwo.appendChild(divSourceShortName);

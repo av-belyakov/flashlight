@@ -257,15 +257,15 @@ function addHandlerConnection(objSetup) {
 
     objSetup.connection.on('message', (message) => {
         if (message.type === 'utf8') {
-            let stringMessage = getParseStringJSON(message);
+            let objData = getParseStringJSON(message);
 
-            routeWebsocket.route(stringMessage, objSetup.hostId, (err, notifyMessage) => {
+            routeWebsocket.route(objData, objSetup.hostId, (err, notifyMessage) => {
                 if (err) {
-                    /*
-                                        debug('---*** ERROR ***---');
-                                        debug(err);
-                                        debug('--------******--------');
-                    */
+
+                    debug('---*** ERROR ***---');
+                    debug(err);
+                    debug('--------******--------');
+
                     let errObj = {
                         'messageType': 'error',
                         'errorCode': 500,
@@ -274,7 +274,7 @@ function addHandlerConnection(objSetup) {
 
                     if ((typeof err.name !== 'undefined') && (typeof err.message !== 'undefined')) {
                         errObj.errorMessage = err.message;
-                        //writeLogFile.writeLog(`\tError: ${err.message}`);
+                        writeLogFile.writeLog(`\tError: ${err.message}`);
                     } else {
                         writeLogFile.writeLog(`\tError: ${err.toString()}`);
                     }
@@ -289,7 +289,7 @@ function addHandlerConnection(objSetup) {
 
                     }*/
 
-                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, stringMessage, notifyMessage);
+                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, objData, notifyMessage);
                 }
             });
         }
@@ -306,7 +306,7 @@ function addHandlerConnection(objSetup) {
             if ((infoDownloadFile === null) || (typeof infoDownloadFile === 'undefined')) {
                 writeLogFile.writeLog('\tError: not found a temporary object \'downloadFilesTmp\' to store information about the download file');
 
-                return routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.connection.remoteAddress, {
+                return routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, /*objSetup.connection.remoteAddress,*/ {
                     messageType: 'error',
                     errorCode: 501,
                     errorMessage: '',
@@ -332,13 +332,13 @@ function addHandlerConnection(objSetup) {
                 ]);
 
                 //генерируем событе прогресса загрузки файлов
-                routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.connection.remoteAddress, {
+                routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, {
                     'messageType': 'download files',
                     'info': {
                         'processing': 'update progress',
                         'taskIndex': infoDownloadFile.taskIndex
                     }
-                }, objSetup.hostId, '');
+                }, '');
             }
 
             let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${objSetup.connection.remoteAddress}`);

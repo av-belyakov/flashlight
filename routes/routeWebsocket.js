@@ -22,10 +22,10 @@ const processingListFilesFoundDuringFiltering = require('../libs/list_file_manag
  * роутинг websocket соединения
  * 
  * @param {*} objData 
- * @param {*} remoteHostId 
+ * @param {*} sourceID 
  * @param {*} callback 
  */
-module.exports.route = function(objData, remoteHostId, callback) {
+module.exports.route = function(objData, sourceID, callback) {
     let redis = controllers.connectRedis();
     let objRoutes = {
         'undefined': messageTypeUndefined,
@@ -39,12 +39,12 @@ module.exports.route = function(objData, remoteHostId, callback) {
     if (typeof objRoutes[objData.messageType] === 'undefined') return callback();
 
     process.nextTick(() => {
-        objRoutes[objData.messageType].call(objData, redis, remoteHostId, callback);
+        objRoutes[objData.messageType].call(objData, redis, sourceID, callback);
     });
 };
 
 //обработка ошибки возникающей при не найденном типе messageType
-let messageTypeUndefined = function(redis, remoteHostId, callback) {
+let messageTypeUndefined = function(redis, sourceID, callback) {
     return callback(new errorsType.errorRemoteHost('type messageType not found'));
 };
 
@@ -140,7 +140,7 @@ let messageTypeError = function(redis, sourceID, callback) {
 };
 
 //обработка messageType - pong, сравнение с настройками хоста хранящимися в БД
-let messagePong = function(redis, remoteHostId, func) {
+let messagePong = function(redis, sourceID, func) {
     let self = this;
 
     if (typeof self.info === 'undefined') {
@@ -149,7 +149,7 @@ let messagePong = function(redis, remoteHostId, func) {
 
     async.series([
         (callback) => {
-            redis.hmget('remote_host:settings:' + remoteHostId,
+            redis.hmget(`remote_host:settings:${sourceID}`,
                 'maxCountProcessFiltering',
                 (err, arrayResult) => {
                     if (err) return callback(err);
@@ -157,14 +157,14 @@ let messagePong = function(redis, remoteHostId, func) {
                     let maxCountProcessFilteringIsExist = parseInt(arrayResult[0]) === self.info.maxCountProcessFiltering;
 
                     if (!maxCountProcessFilteringIsExist) {
-                        callback(new errorsType.errorRemoteHost('some parameters for remote host ' + remoteHostId + ' is not installed'));
+                        callback(new errorsType.errorRemoteHost(`some parameters for remote host ${sourceID} is not installed`));
                     } else {
                         callback(null);
                     }
                 });
         },
         (callback) => {
-            redis.hset('remote_host:settings:' + remoteHostId, 'isAuthorization', true, function(err) {
+            redis.hset(`remote_host:settings:${sourceID}`, 'isAuthorization', true, err => {
                 if (err) callback(new errorsType.errorRedisDataBase('error Redis Data Base'));
                 else callback(null);
             });
@@ -176,7 +176,7 @@ let messagePong = function(redis, remoteHostId, func) {
 };
 
 //обработка информации о состоянии источника
-let messageTypeInformation = function(redis, remoteHostId, func) {
+let messageTypeInformation = function(redis, sourceID, func) {
     let self = this;
     let arrItemDataReceive = [
         ['diskSpace', 'object'],
@@ -192,7 +192,7 @@ let messageTypeInformation = function(redis, remoteHostId, func) {
         let nameParameter = arrItemDataReceive[i][0];
 
         if (typeof self.info[nameParameter] === 'undefined') {
-            return func(new errorsType.errorRemoteHost('some parameters for remote host ' + remoteHostId + ' is not installed'));
+            return func(new errorsType.errorRemoteHost(`some parameters for remote host ${sourceID} is not installed`));
         }
 
         if (arrItemDataReceive[i][1] === 'object') objResult[nameParameter] = JSON.stringify(self.info[nameParameter]);
@@ -200,13 +200,13 @@ let messageTypeInformation = function(redis, remoteHostId, func) {
     }
 
     new Promise((resolve, reject) => {
-        redis.hmset('remote_host:information:' + remoteHostId, objResult, (err) => {
+        redis.hmset(`remote_host:information:${sourceID}`, objResult, err => {
             if (err) reject(new errorsType.errorRedisDataBase('error Redis Data Base'));
             else resolve();
         });
     }).then(() => {
         return new Promise((resolve, reject) => {
-            redis.hset('remote_host:information:' + remoteHostId, 'dateTimeReceived', +new Date(), (err) => {
+            redis.hset(`remote_host:information:${sourceID}`, 'dateTimeReceived', +new Date(), err => {
                 if (err) reject(new errorsType.errorRedisDataBase('error Redis Data Base'));
                 else resolve();
             });
@@ -219,7 +219,7 @@ let messageTypeInformation = function(redis, remoteHostId, func) {
 };
 
 //обработка информации о ходе фильтрации
-let messageTypeFiltering = function(redis, remoteHostId, callback) {
+let messageTypeFiltering = function(redis, sourceID, callback) {
     let self = this;
 
     let triggerCheckUserData = checkUserData(self.info);
@@ -235,7 +235,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
         debug(self);
 
         //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
-        globalObject.setData('sources', remoteHostId, 'wasThereConnectionBreak', false);
+        globalObject.setData('sources', sourceID, 'wasThereConnectionBreak', false);
 
         //если фрагмент сообщения первый
         if (self.info.numberMessageParts[0] === 0) {
@@ -253,14 +253,14 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                     objectData.countFilesFiltering = self.info.countFilesFiltering;
                 }
 
-                redis.hmset('task_filtering_all_information:' + self.info.taskIndex, objectData, (err) => {
+                redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, objectData, (err) => {
                     if (err) reject(err);
                     else resolve(null);
                 });
             }).then(() => {
                 globalObject.setData('processingTasks', self.info.taskIndex, {
                     'taskType': 'filtering',
-                    'sourceId': remoteHostId,
+                    'sourceId': sourceID,
                     'status': 'execute',
                     'timestampStart': +new Date(),
                     'timestampModify': +new Date(),
@@ -268,7 +268,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 });
 
                 callback(null);
-            }).catch((err) => {
+            }).catch(err => {
                 callback(err);
             });
         } else {
@@ -276,7 +276,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 
             //создание списков task_filter_list_files:<ID source>:<ID task>:<path directory> содержащих файлы по которым будет вполнятся фильтрация
             processingListFilesForFiltering.createList({
-                sourceId: remoteHostId,
+                sourceId: sourceID,
                 taskIndex: self.info.taskIndex,
                 objFilesList: self.info.listFilesFilter
             }, redis).then(() => {
@@ -306,13 +306,13 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
         }
 
         async.parallel([
-            (callback) => {
+            callback => {
                 let taskIndexes = Object.keys(globalObject.getDataTaskFilter());
 
                 if (taskIndexes.length === 0) {
                     globalObject.setData('processingTasks', self.info.taskIndex, {
                         'taskType': 'filtering',
-                        'sourceId': remoteHostId,
+                        'sourceId': sourceID,
                         'status': 'execute',
                         'timestampStart': +new Date(),
                         'timestampModify': +new Date()
@@ -321,14 +321,14 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                     return callback(null);
                 }
                 let isExist = false;
-                taskIndexes.forEach((index) => {
+                taskIndexes.forEach(index => {
                     if (self.info.taskIndex === index) isExist = true;
                 });
 
                 if (!isExist) {
                     globalObject.setData('processingTasks', self.info.taskIndex, {
                         'taskType': 'filtering',
-                        'sourceId': remoteHostId,
+                        'sourceId': sourceID,
                         'status': 'execute',
                         'timestampStart': +new Date(),
                         'timestampModify': +new Date()
@@ -337,7 +337,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 callback(null);
             },
             //запись количества обработаннных файлов
-            (callback) => {
+            callback => {
                 //запись значения
                 redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                     'countFilesProcessed': self.info.countFilesProcessed,
@@ -345,23 +345,23 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                     'countCycleComplete': self.info.countCycleComplete,
                     'countFilesFound': self.info.countFilesFound,
                     'countFoundFilesSize': self.info.countFoundFilesSize
-                }, (err) => {
+                }, err => {
                     if (err) callback(err);
                     else callback(null);
                 });
             },
-            (callback) => {
+            callback => {
                 //редактирование списков task_filter_list_files:<ID source>:<ID task>:<path directory> содержащих файлы по которым будет вполнятся фильтрация
                 processingListFilesForFiltering.modifyList({
-                    sourceId: remoteHostId,
+                    sourceId: sourceID,
                     taskIndex: self.info.taskIndex,
                     infoProcessingFile: self.info.infoProcessingFile
-                }, redis, (err) => {
+                }, redis, err => {
                     if (err) callback(err);
                     else callback(null);
                 });
             }
-        ], (err) => {
+        ], err => {
             if (err) return callback(err);
 
             if (self.info.infoProcessingFile.statusProcessed) return callback(null);
@@ -387,14 +387,14 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 }
 
                 return new Promise((resolve, reject) => {
-                    redis.hset('task_filtering_all_information:' + self.info.taskIndex, 'listFilesUnprocessing', stringResultFilesUnprocessing, (err) => {
+                    redis.hset(`task_filtering_all_information:${self.info.taskIndex}`, 'listFilesUnprocessing', stringResultFilesUnprocessing, (err) => {
                         if (err) reject(err);
                         else resolve();
                     });
                 });
             }).then(() => {
                 callback(null);
-            }).catch((err) => {
+            }).catch(err => {
                 callback(err);
             });
         });
@@ -429,7 +429,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                             'countCycleComplete': self.info.countCycleComplete,
                             'countFilesFound': self.info.countFilesFound,
                             'countFoundFilesSize': self.info.countFoundFilesSize
-                        }, (err) => {
+                        }, err => {
                             if (err) throw (err);
 
                             globalObject.deleteData('processingTasks', self.info.taskIndex);
@@ -442,11 +442,11 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 
                             callback(null, true);
                         });
-                    }).catch((err) => {
+                    }).catch(err => {
                         callback(err);
                     });
                 },
-                (callback) => {
+                callback => {
                     debug('--- routeWebsocket (message COMPLETE): 222');
 
                     redis.lpush('task_filtering_index_processing_completed', self.info.taskIndex, function(err) {
@@ -454,7 +454,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                         else callback(null, true);
                     });
                 },
-                (callback) => {
+                callback => {
                     debug('--- routeWebsocket (message COMPLETE): 333');
 
                     globalObject.deleteData('processingTasks', self.info.taskIndex);
@@ -465,7 +465,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 if (err) return func(new errorsType.errorRedisDataBase('Error: redis data base'));
 
                 debug(result);
-                let isTrue = result.every((item) => item);
+                let isTrue = result.every(item => item);
 
                 if (isTrue) func(null);
                 else func(new errorsType.undefinedServerError('Error: undefined server error'));
@@ -476,12 +476,12 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
             debug('-------- processing SECOND part (MESSAGE TYPE COMPLETE)');
 
             processingListFilesFoundDuringFiltering.createList({
-                'sourceId': remoteHostId,
+                'sourceId': sourceID,
                 'taskIndex': self.info.taskIndex,
                 'filesList': self.info.listFilesFoundDuringFiltering
             }, redis).then(() => {
                 if (self.info.numberMessageParts[0] === self.info.numberMessageParts[1]) {
-                    redis.hlen(`task_list_files_found_during_filtering:${remoteHostId}:${self.info.taskIndex}`, (err, listLength) => {
+                    redis.hlen(`task_list_files_found_during_filtering:${sourceID}:${self.info.taskIndex}`, (err, listLength) => {
                         if (err) throw (err);
 
                         redis.hset(`task_filtering_all_information:${self.info.taskIndex}`, 'countFilesFound', listLength, (err) => {
@@ -492,7 +492,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
                 } else {
                     func(null);
                 }
-            }).catch((err) => {
+            }).catch(err => {
 
                 debug(err);
 
@@ -506,13 +506,13 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
 
         //первая часть сообщения
         if (self.info.numberMessageParts[0] === 0) {
-            processingFirstPart((err) => {
+            processingFirstPart(err => {
                 if (err) callback(err);
                 else callback(null);
             });
         } else {
             //последующие части
-            processingSecondPart((err) => {
+            processingSecondPart(err => {
                 if (err) callback(err);
             });
         }
@@ -523,7 +523,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
             redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                 'jobStatus': self.info.processing,
                 'dateTimeEndFilter': +new Date()
-            }, (err) => {
+            }, err => {
                 if (err) reject(err);
                 else resolve();
             });
@@ -531,7 +531,7 @@ let messageTypeFiltering = function(redis, remoteHostId, callback) {
             globalObject.deleteData('processingTasks', self.info.taskIndex);
 
             callback(null);
-        }).catch((err) => {
+        }).catch(err => {
             callback(err);
         });
     }
@@ -543,7 +543,6 @@ let messageTypeUpload = function(redis, sourceID, callback) {
 
     debug('messageTypeUpload');
     debug(this);
-    debug(`remoteID = ${sourceID}`);
 
     if (!new RegExp('^[a-zA-Z0-9:]').test(self.info.taskIndex)) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));

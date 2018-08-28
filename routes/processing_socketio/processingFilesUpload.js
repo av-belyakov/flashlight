@@ -133,7 +133,7 @@ module.exports.start = function(socketIo, data, cb) {
             });
 
             cb(null, sourceID);
-        }).catch((err) => {
+        }).catch(err => {
             cb(err);
         });
     });

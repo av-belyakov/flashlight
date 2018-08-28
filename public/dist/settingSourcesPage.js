@@ -1,247 +1,19 @@
 var settingSourcesPage =
 webpackJsonp_name_([4],{
 
-/***/ 0:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
-/**
- * Общий вид сообщений
- * 
- * Версия 0.1, дата релиза 23.11.2017
- */
-
-
-
-let showNotify = function (type, message) {
-    $.notify({
-        message: message
-    }, {
-        type: type,
-        placement: { from: 'top', align: 'right' },
-        offset: { x: 0, y: 60 }
-    });
-};
-
-
-
-/***/ }),
-
-/***/ 1:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return helpers; });
-
-
-let helpers = {
-    //настраивает высоту отступа для элемента выводящего загрузку сетевых интерфейсов
-    loadNetworkMarginTop() {
-        let arrayLoadNetwork = document.getElementsByName('loadNetwork');
-        if (arrayLoadNetwork.hasOwnProperty('length')) return;
-
-        for (let key in arrayLoadNetwork) {
-            let countElements = 0;
-            for (let i in arrayLoadNetwork[key].children) {
-                countElements++;
-            }
-            let num = (countElements - 4) / 3;
-            let px = '0px';
-            if (3 <= num && num <= 5) px = '35px';
-            if (1 <= num && num <= 3) px = '40px';
-
-            if (arrayLoadNetwork[key].nodeType === 1) {
-                arrayLoadNetwork[key].style.marginTop = px;
-            }
-        }
-    },
-
-    //конвертирование даты и времени из формата Unix в стандартный формат
-    getDate(dateUnix) {
-        let x = new Date().getTimezoneOffset() * 60000;
-        return new Date(+dateUnix - x).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, '');
-    },
-
-    //получить цвет значения
-    getColor(number) {
-        if (0 <= number && number <= 35) return 'color: #83B4D7;';
-        if (36 <= number && number <= 65) return 'color: #9FD783;';
-        if (66 <= number && number <= 85) return 'color: #E1E691;';
-        if (86 <= number) return 'color: #C78888;';
-    },
-
-    //преобразование числа в строку с пробелами после каждой третьей цифры 
-    intConvert(nLoad) {
-        let newString = nLoad.toString();
-        let interimArray = [];
-        let countCycles = Math.ceil(newString.length / 3);
-        let num = 0;
-        for (let i = 1; i <= countCycles; i++) {
-            interimArray.push(newString.charAt(newString.length - 3 - num) + newString.charAt(newString.length - 2 - num) + newString.charAt(newString.length - 1 - num));
-            num += 3;
-        }
-        interimArray.reverse();
-        return interimArray.join(' ');
-    },
-
-    //пересчет в Кбайты, Мбайты и Гбайты
-    changeByteSize(byte) {
-        if (3 >= byte.length) return '<strong>' + byte + '</strong> байт';else if (3 < byte.length && byte.length <= 6) return '<strong>' + (byte / 1000).toFixed(2) + '</strong> Кбайт';else if (6 < byte.length && byte.length <= 9) return '<strong>' + (byte / 1000000).toFixed(2) + '</strong> Мбайт';else return '<strong>' + (byte / 1000000000).toFixed(2) + '</strong> Гбайт';
-    },
-
-    //конвертирование даты и вермени
-    dateTimeConvert(dateUnixFormat) {
-        let x = new Date().getTimezoneOffset() * 60000;
-        return new Date(+dateUnixFormat - x).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, '');
-    },
-
-    //получить не повторяющиеся элементы двух массивов
-    getDifferenceArray(arrOne, arrTwo) {
-        if (arrOne.length === 0) return arrTwo;
-        if (arrTwo.length === 0) return arrOne;
-
-        let result = [];
-        if (arrOne.length === arrTwo.length) {
-            for (let i = 0; i < arrOne.length; i++) {
-                for (let j = 0; j < arrTwo.length; j++) {
-                    if (arrOne[i] === arrTwo[j]) {
-                        arrOne.splice(i, 1);
-                        arrTwo.splice(j, 1);
-                    }
-                }
-            }
-            result = arrOne.concat(arrTwo.join(','));
-        } else if (arrOne.length < arrTwo.length) {
-            let stringOne = arrOne.join(' ');
-            arrTwo.filter(item => {
-                return stringOne.indexOf(item.toString()) < 0;
-            });
-        } else {
-            let stringOne = arrTwo.join(' ');
-            arrOne.filter(item => {
-                return stringOne.indexOf(item.toString()) < 0;
-            });
-        }
-        return result;
-    },
-
-    //проверка данных полученных от пользователя
-    checkInputValidation(elem) {
-        let objSettings = {
-            'hostId': new RegExp('^[0-9]{1,7}$'),
-            'shortNameHost': new RegExp('^[a-zA-Z0-9_№"\\-\\s]{3,15}$'),
-            'fullNameHost': new RegExp('^[a-zA-Zа-яА-Яё0-9_№"\\-\\s\\.,]{5,}$'),
-            'ipaddress': new RegExp('^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)[.]){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$'),
-            'port': new RegExp('^[0-9]{1,5}$'),
-            'countProcess': new RegExp('^[0-9]{1}$'),
-            'intervalTransmission': new RegExp('^[0-9]{1,}$')
-        };
-        let pattern = objSettings[elem.name];
-
-        if (elem.name === 'port') {
-            if (!(0 <= elem.value && elem.value < 65536)) return false;
-        }
-        if (elem.name === 'intervalTransmission' && elem.value < 10) return false;
-        return !pattern.test(elem.value) ? false : true;
-    },
-
-    //генератор токена
-    tokenRand() {
-        return Math.random().toString(14).substr(2) + Math.random().toString(14).substr(2);
-    }
-};
-
-
-
-/***/ }),
-
-/***/ 23:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = getFormElements;
-/**
- * Модуль возвращающий объект с данными формы источника
- * 
- * Версия 0.1, дата релиза 06.12.2017
- */
-
-
-
-function getFormElements() {
-    return {
-        'hostId': document.getElementsByName('hostId')[0],
-        'shortNameHost': document.getElementsByName('shortNameHost')[0],
-        'fullNameHost': document.getElementsByName('fullNameHost')[0],
-        'ipaddress': document.getElementsByName('ipaddress')[0],
-        'port': document.getElementsByName('port')[0],
-        'countProcess': document.getElementsByName('countProcess')[0],
-        'token': document.getElementById('token')
-    };
-}
-
-/***/ }),
-
-/***/ 7:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
-/**
- * Модуль изменения иконки при проверки полей ввода
- * 
- * Версия 0.1, дата релиза 29.11.2017
- */
-
-
-
-let managementIcon = {
-    showIcon(elements, trigger) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        if (!trigger) {
-            elem.parentNode.classList.add('has-error');
-            elem.parentNode.classList.remove('has-success');
-            span.classList.add('glyphicon-remove');
-            span.classList.remove('glyphicon-ok');
-        } else {
-            elem.parentNode.classList.add('has-success');
-            elem.parentNode.classList.remove('has-error');
-            span.classList.add('glyphicon-ok');
-            span.classList.remove('glyphicon-remove');
-        }
-    },
-
-    removeIcon(elements) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        elem.parentNode.classList.remove('has-success');
-        span.classList.remove('glyphicon-ok');
-        elem.parentNode.classList.remove('has-error');
-        span.classList.remove('glyphicon-remove');
-    }
-};
-
-
-
-/***/ }),
-
-/***/ 79:
+/***/ 177:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_showNotify__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(80);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(81);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(82);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(84);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(85);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_showNotify__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(178);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(179);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(180);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(182);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(183);
 
 
 
@@ -399,7 +171,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 80:
+/***/ 178:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -449,7 +221,7 @@ function importXmlFile() {
 
 /***/ }),
 
-/***/ 81:
+/***/ 179:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -480,15 +252,15 @@ function exportXmlFile() {
 
 /***/ }),
 
-/***/ 82:
+/***/ 180:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = transmissionInformationSource;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__getFormElements__ = __webpack_require__(23);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(83);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__getFormElements__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(181);
 /**
  * Передача информации необходимой для добавления источника
  * 
@@ -530,13 +302,13 @@ function transmissionInformationSource() {
 
 /***/ }),
 
-/***/ 83:
+/***/ 181:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createObjectInformationSetting;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(55);
 /**
  * Модуль формирования объекта с введенной пользователем информации
  * 
@@ -565,13 +337,13 @@ function createObjectInformationSetting() {
 
 /***/ }),
 
-/***/ 84:
+/***/ 182:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = addEditSource;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(55);
 /**
  * Модуль формирования и открытия модального окна преднозначенного для создания
  * или редактирования источника
@@ -637,7 +409,7 @@ function addEditSource(typeWindow, sourceId, object) {
 
 /***/ }),
 
-/***/ 85:
+/***/ 183:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -713,7 +485,235 @@ function showAllInformation(sourceId, object) {
     $('#modalShowRemoteHosts').modal('show');
 }
 
+/***/ }),
+
+/***/ 2:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
+/**
+ * Общий вид сообщений
+ * 
+ * Версия 0.1, дата релиза 23.11.2017
+ */
+
+
+
+let showNotify = function (type, message) {
+    $.notify({
+        message: message
+    }, {
+        type: type,
+        placement: { from: 'top', align: 'right' },
+        offset: { x: 0, y: 60 }
+    });
+};
+
+
+
+/***/ }),
+
+/***/ 20:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
+/**
+ * Модуль изменения иконки при проверки полей ввода
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+let managementIcon = {
+    showIcon(elements, trigger) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        if (!trigger) {
+            elem.parentNode.classList.add('has-error');
+            elem.parentNode.classList.remove('has-success');
+            span.classList.add('glyphicon-remove');
+            span.classList.remove('glyphicon-ok');
+        } else {
+            elem.parentNode.classList.add('has-success');
+            elem.parentNode.classList.remove('has-error');
+            span.classList.add('glyphicon-ok');
+            span.classList.remove('glyphicon-remove');
+        }
+    },
+
+    removeIcon(elements) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        elem.parentNode.classList.remove('has-success');
+        span.classList.remove('glyphicon-ok');
+        elem.parentNode.classList.remove('has-error');
+        span.classList.remove('glyphicon-remove');
+    }
+};
+
+
+
+/***/ }),
+
+/***/ 4:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return helpers; });
+
+
+let helpers = {
+    //настраивает высоту отступа для элемента выводящего загрузку сетевых интерфейсов
+    loadNetworkMarginTop() {
+        let arrayLoadNetwork = document.getElementsByName('loadNetwork');
+        if (arrayLoadNetwork.hasOwnProperty('length')) return;
+
+        for (let key in arrayLoadNetwork) {
+            let countElements = 0;
+            for (let i in arrayLoadNetwork[key].children) {
+                countElements++;
+            }
+            let num = (countElements - 4) / 3;
+            let px = '0px';
+            if (3 <= num && num <= 5) px = '35px';
+            if (1 <= num && num <= 3) px = '40px';
+
+            if (arrayLoadNetwork[key].nodeType === 1) {
+                arrayLoadNetwork[key].style.marginTop = px;
+            }
+        }
+    },
+
+    //конвертирование даты и времени из формата Unix в стандартный формат
+    getDate(dateUnix) {
+        let x = new Date().getTimezoneOffset() * 60000;
+        return new Date(+dateUnix - x).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, '');
+    },
+
+    //получить цвет значения
+    getColor(number) {
+        if (0 <= number && number <= 35) return 'color: #83B4D7;';
+        if (36 <= number && number <= 65) return 'color: #9FD783;';
+        if (66 <= number && number <= 85) return 'color: #E1E691;';
+        if (86 <= number) return 'color: #C78888;';
+    },
+
+    //преобразование числа в строку с пробелами после каждой третьей цифры 
+    intConvert(nLoad) {
+        let newString = nLoad.toString();
+        let interimArray = [];
+        let countCycles = Math.ceil(newString.length / 3);
+        let num = 0;
+        for (let i = 1; i <= countCycles; i++) {
+            interimArray.push(newString.charAt(newString.length - 3 - num) + newString.charAt(newString.length - 2 - num) + newString.charAt(newString.length - 1 - num));
+            num += 3;
+        }
+        interimArray.reverse();
+        return interimArray.join(' ');
+    },
+
+    //пересчет в Кбайты, Мбайты и Гбайты
+    changeByteSize(byte) {
+        if (3 >= byte.length) return '<strong>' + byte + '</strong> байт';else if (3 < byte.length && byte.length <= 6) return '<strong>' + (byte / 1000).toFixed(2) + '</strong> Кбайт';else if (6 < byte.length && byte.length <= 9) return '<strong>' + (byte / 1000000).toFixed(2) + '</strong> Мбайт';else return '<strong>' + (byte / 1000000000).toFixed(2) + '</strong> Гбайт';
+    },
+
+    //конвертирование даты и вермени
+    dateTimeConvert(dateUnixFormat) {
+        let x = new Date().getTimezoneOffset() * 60000;
+        return new Date(+dateUnixFormat - x).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, '');
+    },
+
+    //получить не повторяющиеся элементы двух массивов
+    getDifferenceArray(arrOne, arrTwo) {
+        if (arrOne.length === 0) return arrTwo;
+        if (arrTwo.length === 0) return arrOne;
+
+        let result = [];
+        if (arrOne.length === arrTwo.length) {
+            for (let i = 0; i < arrOne.length; i++) {
+                for (let j = 0; j < arrTwo.length; j++) {
+                    if (arrOne[i] === arrTwo[j]) {
+                        arrOne.splice(i, 1);
+                        arrTwo.splice(j, 1);
+                    }
+                }
+            }
+            result = arrOne.concat(arrTwo.join(','));
+        } else if (arrOne.length < arrTwo.length) {
+            let stringOne = arrOne.join(' ');
+            arrTwo.filter(item => {
+                return stringOne.indexOf(item.toString()) < 0;
+            });
+        } else {
+            let stringOne = arrTwo.join(' ');
+            arrOne.filter(item => {
+                return stringOne.indexOf(item.toString()) < 0;
+            });
+        }
+        return result;
+    },
+
+    //проверка данных полученных от пользователя
+    checkInputValidation(elem) {
+        let objSettings = {
+            'hostId': new RegExp('^[0-9]{1,7}$'),
+            'shortNameHost': new RegExp('^[a-zA-Z0-9_№"\\-\\s]{3,15}$'),
+            'fullNameHost': new RegExp('^[a-zA-Zа-яА-Яё0-9_№"\\-\\s\\.,]{5,}$'),
+            'ipaddress': new RegExp('^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)[.]){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$'),
+            'port': new RegExp('^[0-9]{1,5}$'),
+            'countProcess': new RegExp('^[0-9]{1}$'),
+            'intervalTransmission': new RegExp('^[0-9]{1,}$')
+        };
+        let pattern = objSettings[elem.name];
+
+        if (elem.name === 'port') {
+            if (!(0 <= elem.value && elem.value < 65536)) return false;
+        }
+        if (elem.name === 'intervalTransmission' && elem.value < 10) return false;
+        return !pattern.test(elem.value) ? false : true;
+    },
+
+    //генератор токена
+    tokenRand() {
+        return Math.random().toString(14).substr(2) + Math.random().toString(14).substr(2);
+    }
+};
+
+
+
+/***/ }),
+
+/***/ 55:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = getFormElements;
+/**
+ * Модуль возвращающий объект с данными формы источника
+ * 
+ * Версия 0.1, дата релиза 06.12.2017
+ */
+
+
+
+function getFormElements() {
+    return {
+        'hostId': document.getElementsByName('hostId')[0],
+        'shortNameHost': document.getElementsByName('shortNameHost')[0],
+        'fullNameHost': document.getElementsByName('fullNameHost')[0],
+        'ipaddress': document.getElementsByName('ipaddress')[0],
+        'port': document.getElementsByName('port')[0],
+        'countProcess': document.getElementsByName('countProcess')[0],
+        'token': document.getElementById('token')
+    };
+}
+
 /***/ })
 
-},[79]);
+},[177]);
 //# sourceMappingURL=settingSourcesPage.js.map

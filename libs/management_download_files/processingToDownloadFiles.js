@@ -54,7 +54,11 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
 
     fs.access(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, fs.constants.R_OK, err => {
         if (!err) fs.unlink(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, err => {
-            if (err) debug(err);
+            if (err) {
+                debug(err);
+
+                writeLogFile.writeLog(`\t${err.toString()}`);
+            }
         });
     });
 
@@ -296,7 +300,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         wsConnection.sendUTF(JSON.stringify(objResponse));
 
         callback(null);
-    }).catch((err) => {
+    }).catch(err => {
         writeLogFile.writeLog('\t' + err.toString());
         objResponse.info.processing = 'cancel';
 

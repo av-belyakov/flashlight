@@ -9,7 +9,7 @@ require('bootstrap');
 require('bootstrapNotify');
 require('bootstrapToggle');
 require('bootstrapTokenfield');
-require('datetimepicker');
+require('bootstrapDatetimepicker');
 
 global.socket = io.connect();
 global.ss = require('socket.io-stream');

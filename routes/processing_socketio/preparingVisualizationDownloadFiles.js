@@ -45,9 +45,6 @@ module.exports.preparingVisualizationStartExecute = function(redis, taskIndex, s
 module.exports.preparingVisualizationUpdateProgress = function(redis, taskIndex, sourceID, cb) {
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
 
-    //debug(infoDownloadFile);
-    //debug(`sourceID: ${sourceID}`);
-
     if ((infoDownloadFile === null) || (typeof infoDownloadFile === 'undefined')) {
         writeLogFile.writeLog('\tError: not found a temporary object \'downloadFilesTmp\' to store information about the download file');
 
@@ -90,8 +87,14 @@ module.exports.preparingVisualizationComplete = function(redis, taskIndex, sourc
             if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
             else writeLogFile.writeLog('\tError: ' + err.message.toString());
 
+            debug(err);
+
             func(err);
         } else {
+
+            debug('DOWNLOAD COMPLETED');
+            debug(obj);
+
             func(null, obj);
         }
     });
@@ -103,11 +106,6 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
         if (err) return done(err);
 
         let isExistTaskIndex = arrayResult.some(item => item === `${sourceID}:${taskIndex}`);
-
-        debug('preparingVisualizationDownloadFiles.js');
-        debug('isExistTaskIndex = ' + isExistTaskIndex + ', ');
-        debug(`${sourceID}:${taskIndex}`);
-        debug(arrayResult);
 
         //если идентификатор задачи не был найден
         if (!isExistTaskIndex) return done(null, {});
@@ -140,9 +138,6 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
             results.counts.sourceId = sourceID;
             results.counts.shortName = results.shortNameSource;
 
-            debug('finaly result');
-            debug(results);
-
             done(null, results.counts);
         });
     });
@@ -169,10 +164,7 @@ function getShortSourcesInformationTurn(redis, taskIndex, sourceID, done) {
             redis.lrange(tableNameTask, [0, -1], (err, arrayResult) => {
                 if (err) return func(err);
 
-                let isExistTaskIndex = arrayResult.some((item) => {
-
-                    console.log('---- table ' + tableNameTask + ' task ID = ' + item);
-
+                let isExistTaskIndex = arrayResult.some(item => {
                     if (~item.indexOf(':')) return (item === `${sourceID}:${taskIndex}`);
                     return false;
                 });
@@ -204,7 +196,7 @@ function getShortSourcesInformationTurn(redis, taskIndex, sourceID, done) {
                 ], (err, obj, shortName) => {
                     if (err) return func(err);
 
-                    obj.taskIndex = sourceID + ':' + taskIndex;
+                    obj.taskIndex = taskIndex;
                     obj.sourceId = sourceID;
                     obj.shortName = shortName;
 
