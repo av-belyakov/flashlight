@@ -96,7 +96,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
             throw (err);
         });
     }).then((directoryFiltering) => {
-        let wsConnection = objWebsocket['remote_host:' + sourceID];
+        let wsConnection = objWebsocket[`remote_host:${sourceID}`];
 
         if (typeof wsConnection === 'undefined') {
             throw (new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
@@ -222,7 +222,7 @@ module.exports.resumeRequestDownloadFiles = function(redis, sourceID, taskIndex,
             });
         },
         function(userName, callback) {
-            redis.hmset('task_filtering_all_information:' + taskIndex, {
+            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
                 'uploadFiles': 'expect',
                 'userNameStartUploadFiles': userName,
                 'dateTimeStartUploadFiles': +new Date(),
@@ -234,7 +234,7 @@ module.exports.resumeRequestDownloadFiles = function(redis, sourceID, taskIndex,
             });
         },
         function(callback) {
-            redis.hmget('task_filtering_all_information:' + taskIndex, 'countFilesFound', 'directoryFiltering', (err, result) => {
+            redis.hmget(`task_filtering_all_information:${taskIndex}`, 'countFilesFound', 'directoryFiltering', (err, result) => {
                 if (err) callback(err);
                 else callback(null, {
                     'messageType': 'download files',

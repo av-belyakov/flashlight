@@ -82,7 +82,7 @@ module.exports.preparingVisualizationExecuteCompleted = function(redis, taskInde
 
 //подготовка данных для визуализации окончания загрузки
 module.exports.preparingVisualizationComplete = function(redis, taskIndex, sourceID, func) {
-    getShortSourcesInformationComplete(redis, taskIndex, function(err, obj) {
+    getShortSourcesInformationComplete(redis, taskIndex, sourceID, (err, obj) => {
         if (err) {
             if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
             else writeLogFile.writeLog('\tError: ' + err.message.toString());

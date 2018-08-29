@@ -94,7 +94,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             });
         }).catch((err) => {
             writeLogFile.writeLog('\tError: ' + err.toString());
-            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
+            showNotify(socketIoS, 'danger', `111 Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
         });
     };
 
@@ -404,7 +404,7 @@ module.exports.eventHandling = function(socketIo) {
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
             if (err) {
                 let errMsgLog = err.toString();
-                let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
+                let errMsg = `222 Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
                 if (err.name) {
                     errMsgLog = err.message;
                     errMsg = err.message;
@@ -424,7 +424,7 @@ module.exports.eventHandling = function(socketIo) {
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
             if (err) {
                 let errMsgLog = err.toString();
-                let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
+                let errMsg = `333 Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
                 if (err.name) {
                     errMsgLog = err.message;
                     errMsg = err.message;
@@ -449,7 +449,7 @@ module.exports.eventHandling = function(socketIo) {
 
                     //добавить задачу в очередь
                     preparingVisualizationDownloadFiles.preparingVisualizationAddTurn(redis, data.taskIndex, function(err, data) {
-                        if (err) return showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
+                        if (err) return showNotify(socketIo, 'danger', `444 Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
 
                         if (Object.keys(data).length > 0) {
                             showNotify(socketIo, 'info', `Задача на выгрузку сетевого трафика с источника №<strong>${sourceId}</strong> добавленна в очередь`);
@@ -493,7 +493,7 @@ module.exports.eventHandling = function(socketIo) {
                                 debug('----------------------');
                             }).catch((err) => {
                                 writeLogFile.writeLog('\tError: ' + err.toString());
-                                showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
+                                showNotify(socketIo, 'danger', `555 Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
                             });
                         }
                     });
@@ -551,7 +551,7 @@ module.exports.eventHandling = function(socketIo) {
                     debug('----------------------');
                 }).catch((err) => {
                     writeLogFile.writeLog('\tError: ' + err.toString());
-                    showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
+                    showNotify(socketIo, 'danger', `666 Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
                 });
             });
         });
@@ -606,7 +606,7 @@ module.exports.eventHandling = function(socketIo) {
                     debug('----------------------');
                 }).catch((err) => {
                     writeLogFile.writeLog('\tError: ' + err.toString());
-                    showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
+                    showNotify(socketIo, 'danger', `777 Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
                 });
             });
         });
@@ -678,7 +678,7 @@ module.exports.eventHandling = function(socketIo) {
                     });
                 }).catch((err) => {
                     writeLogFile.writeLog('\tError: ' + err.toString());
-                    showNotify(socketIo, 'danger', `Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
+                    showNotify(socketIo, 'danger', `888 Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
                 });
             });
         });

@@ -149,7 +149,7 @@ let messagePong = function(redis, sourceID, func) {
 
     async.series([
         (callback) => {
-            redis.hmget(`remote_host:settings:${sourceID}`,
+            redis.hget(`remote_host:settings:${sourceID}`,
                 'maxCountProcessFiltering',
                 (err, arrayResult) => {
                     if (err) return callback(err);

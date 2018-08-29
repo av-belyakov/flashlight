@@ -35,8 +35,12 @@ const actionWhenReceivingFileNotReceived = require('./actionWhenReceivingFileNot
  * @param {*} callback функция обратного вызова
  */
 module.exports.ready = function(redis, objData, sourceID, callback) {
-    let wsConnection = objWebsocket[`remote_host:${sourceID}`];
     let taskIndex = objData.info.taskIndex;
+
+    let wsConnection = objWebsocket[`remote_host:${sourceID}`];
+    if (typeof wsConnection === 'undefined') {
+        callback(new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
+    }
 
     let objResponse = {
         'messageType': 'download files',
@@ -183,9 +187,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
     //получить ресурс доступа к streamWrite
     let getStreamWrite = function(remoteAddress) {
-
-        debug('START function getStreamWrite...');
-
         let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}`);
 
         if ((typeof wsl !== 'undefined') && (wsl !== null)) return wsl;
@@ -197,14 +198,12 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}`, writeStream);
 
-        debug('------ создаем ресурс доступа к потоку на запись в файл -------');
-
         return writeStream;
     };
 
     let wsConnection = objWebsocket[`remote_host:${sourceID}`];
     if (typeof wsConnection === 'undefined') {
-        throw (new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
+        callback(new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${taskIndex} не существует`));
     }
 
     let objResponse = {
@@ -273,9 +272,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         //обработчик сбытия 'finish' при завершении записи в файл
         let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
         if ((wsl === null) || (typeof wsl === 'undefined')) {
-
-            debug('not found a stream for writing to a file');
-
             throw ('not found a stream for writing to a file');
         }
 
@@ -340,7 +336,6 @@ module.exports.executeCompleted = function(redis, self, sourceID, cb) {
 
         cb(null);
     });
-
 };
 
 //обработка пакета JSON полученного с источника и содержащего информацию о количестве успешно или неуспешно переданных файлов
@@ -348,6 +343,12 @@ module.exports.completed = function(redis, self, sourceID, cb) {
 
     debug('resived message type "completed"');
     debug(self);
+
+    let wsConnection = objWebsocket[`remote_host:${sourceID}`];
+
+    if (typeof wsConnection === 'undefined') {
+        return cb(new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${self.info.taskIndex} не существует`));
+    }
 
     actionWhenReceivingComplete(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID },
         (err, ...spread) => {
@@ -359,13 +360,10 @@ module.exports.completed = function(redis, self, sourceID, cb) {
             }
 
             //проверка очереди на выгрузку файлов (таблица task_turn_downloading_files)
-            checkQueueTaskDownloadFiles(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID }, (err, objTaskIndex) => {
+            checkQueueTaskDownloadFiles(redis, sourceID, (err, objTaskIndex) => {
                 if (err) return cb(err);
 
-                if (objTaskIndex !== false && (typeof objTaskIndex === 'object')) {
-
-                    debug(objTaskIndex);
-
+                if (Object.keys(objTaskIndex).length > 0) {
                     wsConnection.sendUTF(JSON.stringify(objTaskIndex));
                 }
 
@@ -472,13 +470,6 @@ function completeWriteBinaryData(redis, sourceID, cb) {
         return cb(new errorsType.receivedEmptyObject('Не найден ip адрес источника, невозможно контролировать загрузку файлов'));
     }
 
-    /*let ws = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
-    if ((ws === null) || (typeof ws === 'undefined')) {
-        writeLogFile.writeLog(`\tError: not found a stream for writing to a file (source ID ${sourceID})`);
-
-        return cb(new Error('не найден поток для записи в файл'));
-    }*/
-
     //удаляем ресурс для записи в файл
     globalObject.deleteData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
 
@@ -489,6 +480,8 @@ function completeWriteBinaryData(redis, sourceID, cb) {
         .then(() => {
             actionWhenReceivingFileReceived(redis, dfi.taskIndex, sourceID, err => {
                 if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+
+                writeLogFile.writeLog(`\tInfo: file ${dfi.fileName} resived successfy`);
 
                 wsConnection.sendUTF(JSON.stringify(objResponse));
                 cb(null);
@@ -503,6 +496,7 @@ function completeWriteBinaryData(redis, sourceID, cb) {
                 wsConnection.sendUTF(JSON.stringify(objResponse));
             });
 
+            writeLogFile.writeLog('\tError: ' + err.toString());
             cb(err);
         });
 }

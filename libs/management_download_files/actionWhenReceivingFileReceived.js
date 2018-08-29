@@ -18,7 +18,7 @@ module.exports = function(redis, taskIndex, sourceID, cb) {
         });
     }).then(countFilesLoaded => {
         return new Promise((resolve, reject) => {
-            redis.hset(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', ++countFilesLoaded, err => {
+            redis.hset(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', (+countFilesLoaded) + 1, err => {
                 if (err) reject(err);
                 else resolve();
             });
