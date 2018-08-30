@@ -217,13 +217,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
             if (document.getElementById('progress:' + data.information.taskIndex) !== null) {
                 let templateProgress = '<div class="progress" style="margin-top: 10px;">';
-                //templateProgress += '<div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.information.fileUploadedPercent + '%">' + data.information.fileUploadedPercent + '%</div></div>';
                 templateProgress += '<div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">0%</div></div>';
 
                 document.getElementById('progress:' + data.information.taskIndex).innerHTML = templateProgress;
             }
 
-            let templateFileInformation = `<span style="font-size: 16px;" data-toggle="tooltip" data-placement="bottom" title="файлов загружено"><strong>${data.information.countFilesLoaded}</strong></span> / `;
+            let templateFileInformation = `<span style="font-size: 16px;" data-toggle="tooltip" data-placement="bottom" title="файлов загружено">${data.information.countFilesLoaded}</span> / `;
             templateFileInformation += `<span style="font-size: 16px; color: #C78888;" data-toggle="tooltip" data-placement="bottom" title="файлов загружено с ошибкой">${data.information.countFilesLoadedError}</span> / `;
             templateFileInformation += `<span style="font-size: 16px; color: #9FD783;" data-toggle="tooltip" data-placement="bottom" title="всего файлов">${data.information.countFilesFound}</span>`;
 
@@ -519,14 +518,11 @@ function createElementInformationFiltering(objData) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers_js__ = __webpack_require__(4);
 /*
  * Модуль изменяющий виджет сенсора
  * 
  * Версия 0.1, дата релиза 16.11.2017
  * */
-
-
 
 
 

@@ -108,12 +108,32 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
     }
 
     function requestTypeExecuteCompleted() {
-        preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
-            if (err) return showNotify(socketIoS, 'danger', `2-2-2 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-
+        new Promise((resolve, reject) => {
+            redis.hget(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', (err, countFilesLoaded) => {
+                if (err) reject(err);
+                else resolve(+countFilesLoaded);
+            });
+        }).then(countFilesLoaded => {
+            return new Promise((resolve, reject) => {
+                redis.hset(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', ++countFilesLoaded, err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
+        }).then(() => {
+            return new Promise((resolve, reject) => {
+                preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
+                    if (err) reject(err);
+                    else resolve(data);
+                });
+            });
+        }).then((data) => {
             if (Object.keys(data).length > 0) {
                 socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
             }
+        }).catch(err => {
+            writeLogFile.writeLog(`\tError: ${err.toString()}`);
+            showNotify(socketIoS, 'danger', `2-2-2 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
         });
     }
 

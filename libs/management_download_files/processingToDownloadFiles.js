@@ -266,6 +266,16 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         getStreamWrite(wsConnection.remoteAddress);
     }).then(() => {
+        debug('EVENT "EXECUTE"');
+        debug('------>SEND SUCCESS MESSAGE TO MOTH_GO');
+        debug(objResponse);
+
+        objResponse.info.fileName = objData.info.fileName;
+
+        wsConnection.sendUTF(JSON.stringify(objResponse));
+
+        return;
+    }).then(() => {
 
         debug('5. добавляем обработчик на событие "finish"');
 
@@ -283,17 +293,9 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             writeLogFile.writeLog(`Info: получено событие 'finish для файла ${fileName}, готовимся отправить сообщение о готовности принять следующий файл'`);
 
             completeWriteBinaryData(redis, sourceID, (err) => {
-                if (err) return callback(err);
+                if (err) writeLogFile.writeLog('\t' + err.toString());
             });
         });
-    }).then(() => {
-        debug('EVENT "EXECUTE"');
-        debug('------>SEND SUCCESS MESSAGE TO MOTH_GO');
-        debug(objResponse);
-
-        objResponse.info.fileName = objData.info.fileName;
-
-        wsConnection.sendUTF(JSON.stringify(objResponse));
 
         callback(null);
     }).catch(err => {
@@ -308,6 +310,18 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         callback(err);
     });
+
+    /*.then(() => {
+            debug('EVENT "EXECUTE"');
+            debug('------>SEND SUCCESS MESSAGE TO MOTH_GO');
+            debug(objResponse);
+
+            objResponse.info.fileName = objData.info.fileName;
+
+            wsConnection.sendUTF(JSON.stringify(objResponse));
+
+            callback(null);
+        })*/
 };
 
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла

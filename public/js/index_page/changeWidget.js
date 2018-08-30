@@ -6,8 +6,6 @@
 
 'use strict';
 
-import { helpers } from '../common_helpers/helpers.js';
-
 export default {
     //изменить виджет при отключении сенсора
     changeWidgetForDisconnection(sourceId) {

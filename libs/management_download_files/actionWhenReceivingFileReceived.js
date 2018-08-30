@@ -1,7 +1,7 @@
 /*
  * Модуль вызываемый при удачном приеме загружаемого файла
  * 
- * Версия 0.2, дата релиза 13.08.2018
+ * Версия 0.2, дата релиза 30.08.2018
  * */
 
 'use strict';
@@ -12,23 +12,9 @@ module.exports = function(redis, taskIndex, sourceID, cb) {
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
 
     new Promise((resolve, reject) => {
-        redis.hget(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', (err, countFilesLoaded) => {
+        redis.hget(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, (err, result) => {
             if (err) reject(err);
-            else resolve(countFilesLoaded);
-        });
-    }).then(countFilesLoaded => {
-        return new Promise((resolve, reject) => {
-            redis.hset(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', (+countFilesLoaded) + 1, err => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-    }).then(() => {
-        return new Promise((resolve, reject) => {
-            redis.hget(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
+            else resolve(result);
         });
     }).then(fileInfo => {
         try {
@@ -49,7 +35,7 @@ module.exports = function(redis, taskIndex, sourceID, cb) {
         });
     }).then(() => {
         cb(null);
-    }).catch((err) => {
+    }).catch(err => {
         cb(err);
     });
 };

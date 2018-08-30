@@ -397,7 +397,7 @@ module.exports.eventHandling = function(socketIo) {
 
     /* скачать все файлы созданные в результате фильтрации */
     socketIo.on('download all files obtained result filtering', function(data) {
-        debug('REQUEST DOWNLOAD ALL FILES');
+        debug('REQUEST DOWNLOAD ---ALL--- FILES');
         debug(data);
 
         data.listFiles = [];
@@ -418,7 +418,7 @@ module.exports.eventHandling = function(socketIo) {
 
     /* скачать файлы выбранные пользователем и полученые в результате фильтрации */
     socketIo.on('download choose files obtained result filtering', function(data) {
-        debug('REQUEST DOWNLOAD CHOOSE FILES');
+        debug('REQUEST DOWNLOAD ---CHOOSE--- FILES');
         debug(data);
 
         preparingFileDownloadRequest(data, socketIo, redis, (err) => {
@@ -436,8 +436,26 @@ module.exports.eventHandling = function(socketIo) {
         });
     });
 
+    /* остановить загрузку файлов */
+    socketIo.on('stop download files', function(data) {
+        debug('REQUEST ---STOP--- DOWNLOAD FILES');
+        debug(data);
+    });
+
+    /* возобновить загрузку файлов */
+    socketIo.on('resume download files', function(data) {
+        debug('REQUEST ---RESUME--- DOWNLOAD FILES');
+        debug(data);
+    });
+
+    /* отменить задачу по загрузке файлов */
+    socketIo.on('cancel download files', function(data) {
+        debug('REQUEST ---CANCEL--- DOWNLOAD FILES');
+        debug(data);
+    });
+
     /* получить все найденные в результате выполнения задачи файлы */
-    socketIo.on('import all files obtained result filtering', function(data) {
+    /*socketIo.on('import all files obtained result filtering', function(data) {
         checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
             if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
 
@@ -503,7 +521,7 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* остановить загрузку файлов */
-    socketIo.on('stop download files', function(data) {
+    /*socketIo.on('stop download files', function(data) {
         checkAccessRights(socketIo, 'management_tasks_import', 'stop', function(trigger) {
             if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для останова загрузки найденных файлов');
 
@@ -558,7 +576,7 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* возобновить загрузку файлов */
-    socketIo.on('resume download files', function(data) {
+    /*socketIo.on('resume download files', function(data) {
         checkAccessRights(socketIo, 'management_tasks_import', 'resume', function(trigger) {
             if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для возобновления загрузки файлов');
 
@@ -613,7 +631,7 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* отменить задачу по загрузке файлов */
-    socketIo.on('cancel download files', function(data) {
+    /*socketIo.on('cancel download files', function(data) {
         checkAccessRights(socketIo, 'management_tasks_import', 'cancel', function(trigger) {
             if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для отмены загрузки файлов');
 

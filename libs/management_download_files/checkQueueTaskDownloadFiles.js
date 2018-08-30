@@ -12,36 +12,22 @@ const async = require('async');
 const errorsType = require('../../errors/errorsType');
 
 module.exports = function(redis, sourceID, callback) {
-
-    console.log('function checkQueueTaskDownloadFiles');
-
     new Promise((resolve, reject) => {
         redis.exists('task_turn_downloading_files', (err, result) => {
             if (err) reject(err);
             else resolve((result === 0));
         });
     }).then(isExist => {
-        console.log('isExist = ' + isExist);
-
         return new Promise((resolve, reject) => {
             if (isExist) return resolve([]);
 
             //проверяем таблицу с очередью
             redis.lrange('task_turn_downloading_files', [0, -1], (err, arrayTurn) => {
                 if (err) reject(err);
-                else {
-                    console.log('arrayTurn ==== ');
-                    console.log(arrayTurn);
-
-                    resolve(arrayTurn);
-                }
+                else resolve(arrayTurn);
             });
         });
     }).then(listTurnDownloadFiles => {
-
-        console.log('function checkQueueTaskDownloadFiles.js');
-        console.log(listTurnDownloadFiles);
-
         if (listTurnDownloadFiles.length === 0) return [];
 
         let arraySourceIdTurnIsExists = listTurnDownloadFiles.filter(item => item.split(':')[0] === sourceID);
