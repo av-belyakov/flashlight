@@ -10,14 +10,20 @@ const fs = require('fs');
 const async = require('async');
 const xml2js = require('xml2js');
 
+/**
+ * проверка количества загруженных файлов
+ * 
+ * @param {*} redis - дескриптор соединеия с БД
+ * @param {*} param1 { taskIndex - ID задачи, sourceID - ID источника }
+ * @param {*} cb - функция обратного вызова
+ */
 module.exports = function(redis, { taskIndex, sourceID }, cb) {
-    //проверяем количество загруженных файлов
-    new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         redis.hvals(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, (err, listValueFiles) => {
             if (err) reject(err);
             else resolve(listValueFiles);
         });
-    }).then((listValueFiles) => {
+    }).then(listValueFiles => {
         let fileIsDownloaded = listValueFiles.filter(item => {
             try {
                 let tmpObj = JSON.parse(item);
@@ -35,27 +41,45 @@ module.exports = function(redis, { taskIndex, sourceID }, cb) {
             countFilesDownloaded: fileIsDownloaded.length
         };
     }).then(({ countFilesAll, countFilesDownloaded }) => {
-        if (countFilesAll === countFilesDownloaded) {
-            taskFullyCompleted(redis, taskIndex, sourceID, err => {
-                if (err) cb(err);
-                else cb(null, { 'receivedIsSuccess': true });
-            });
-        } else {
-            taskNotFullCompleted(redis, taskIndex, sourceID, err => {
-                if (err) cb(err);
-                else cb(null, { 'receivedIsSuccess': false });
-            });
-        }
-    }).catch((err) => {
-        cb(err);
+        return new Promise((resolve, reject) => {
+            if (countFilesAll === countFilesDownloaded) {
+                taskFullyCompleted(redis, taskIndex, sourceID, err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            } else {
+                taskNotFullCompleted(redis, taskIndex, sourceID, err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            }
+        });
+    }).catch(err => {
+        throw (err);
     });
 };
 
 //когда не все файлы были загруженны
 function taskNotFullCompleted(redis, taskIndex, sourceID, feedBack) {
-    redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
+    async.parallel([
+        callback => {
+            redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
+                if (err) callback(err);
+                else callback(null);
+            });
+        },
+        callback => {
+            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
+                'uploadFiles': 'partially loaded',
+                'dateTimeEndUploadFiles': +new Date()
+            }, err => {
+                if (err) callback(err);
+                else callback(null);
+            });
+        }
+    ], err => {
         if (err) feedBack(err);
-        else feedBack(null, true);
+        else feedBack(null);
     });
 }
 
@@ -66,7 +90,7 @@ function taskFullyCompleted(redis, taskIndex, sourceID, feedBack) {
         function(callback) {
             redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
                 if (err) callback(err);
-                else callback(null, true);
+                else callback(null);
             });
         },
         function(callback) {
@@ -75,21 +99,21 @@ function taskFullyCompleted(redis, taskIndex, sourceID, feedBack) {
                 'dateTimeEndUploadFiles': +new Date()
             }, err => {
                 if (err) callback(err);
-                else callback(null, true);
+                else callback(null);
             });
         },
         //добавляем в таблицу task_filtering_upload_not_considered хеш задачи
         function(callback) {
             redis.zadd('task_filtering_upload_not_considered', +new Date(), `${sourceID}:${taskIndex}`, err => {
                 if (err) callback(err);
-                else callback(null, true);
+                else callback(null);
             });
         },
         //создаем файл в формате XML
         function(callback) {
             createFileXml(redis, taskIndex, sourceID, err => {
                 if (err) callback(err);
-                else callback(null, true);
+                else callback(null);
             });
         }
     ], function(err) {

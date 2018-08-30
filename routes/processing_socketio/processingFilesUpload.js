@@ -83,42 +83,6 @@ module.exports.start = function(socketIo, data, cb) {
         }
     ], function(err, sourceID, taskIsPerformed) {
         if (err) return cb(err);
-
-
-        //------------------ ДЛЯ ТЕСТОВ
-        async.series([
-            function(callback) {
-                redis.lrange('task_implementation_downloading_files', [0, -1], (err, result) => {
-                    if (err) return callback(err);
-
-                    debug('********* START **********');
-                    debug(' +++ task_implementation_downloading_files +++ ');
-                    debug(result);
-
-                    callback(null);
-                });
-            },
-            function(callback) {
-                redis.lrange('task_turn_downloading_files', [0, -1], (err, result) => {
-                    if (err) return callback(err);
-
-                    debug('********* START **********');
-                    debug(' *** task_turn_downloading_files *** ');
-                    debug(result);
-
-                    callback(null);
-                });
-            }
-        ], (err) => {
-            if (err) return debug(err);
-
-            debug('list files for filtering');
-            debug(data.listFiles);
-        });
-        //------------------ ДЛЯ ТЕСТОВ
-
-
-
         if (taskIsPerformed) return new errorsType.errorLoadingFile('Ошибка: в настоящее время задача с заданным ID уже выполняется');
 
         //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON

@@ -46,7 +46,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                 if (err) reject(err);
                 else resolve(userId);
             });
-        }).then((userID) => {
+        }).then(userID => {
             return new Promise((resolve, reject) => {
                 redis.hmget(`user_authntication:${userID}`, 'login', 'user_name', (err, user) => {
                     if (err) reject(err);
@@ -59,7 +59,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                 throw (err);
             });
         });
-    }).then((objResult) => {
+    }).then(objResult => {
         let { userLogin, userName } = objResult;
 
         //записываем логин пользователя инициировавшего загрузку в таблицу task_filtering_all_information:
@@ -95,7 +95,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
         }).catch((err) => {
             throw (err);
         });
-    }).then((directoryFiltering) => {
+    }).then(directoryFiltering => {
         let wsConnection = objWebsocket[`remote_host:${sourceID}`];
 
         if (typeof wsConnection === 'undefined') {
@@ -134,7 +134,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
         /** ДЛЯ ТЕСТА ВЫБРАННО ТОЛЬКО 3 файла в сообщении, УВЕЛИЧИТЬ ДО 30 */
 
         //если скачиваются ТОЛЬКО выбранные пользователем файлы
-        let { countChunk, list: newListFiles } = transformListIndexFiles(3, listFiles);
+        let { countChunk, list: newListFiles } = transformListIndexFiles(20, listFiles);
 
         debug(`count chunks = ${countChunk}`);
         debug(newListFiles);
@@ -168,7 +168,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
 
             wsConnection.sendUTF(JSON.stringify(objRequest));
         }
-    }).catch((err) => {
+    }).catch(err => {
         throw (err);
     });
 };
@@ -228,7 +228,7 @@ module.exports.resumeRequestDownloadFiles = function(redis, sourceID, taskIndex,
                 'dateTimeStartUploadFiles': +new Date(),
                 'userNameStopUploadFiles': 'null',
                 'dateTimeStopUploadFiles': 'null'
-            }, (err) => {
+            }, err => {
                 if (err) callback(err);
                 else callback(null);
             });
@@ -288,38 +288,38 @@ function changeTaskInListDownloadFiles(redis, obj, typeChange, cb) {
     if (typeChange === 'start') {
         //удаляем идентификатор задачи из таблицы task_turn_downloading_files и добавляем в таблицу task_implementation_downloading_files
         async.parallel([
-            (callback) => {
-                redis.lrem('task_turn_downloading_files', 0, hashId, (err) => {
+            callback => {
+                redis.lrem('task_turn_downloading_files', 0, hashId, err => {
                     if (err) callback(err);
                     else callback(null);
                 });
             },
-            (callback) => {
-                redis.lpush('task_implementation_downloading_files', hashId, (err) => {
+            callback => {
+                redis.lpush('task_implementation_downloading_files', hashId, err => {
                     if (err) callback(err);
                     else callback(null);
                 });
             }
-        ], (err) => {
+        ], err => {
             if (err) cb(err);
             else cb(null);
         });
     } else {
         //удаляем идентификатор задачи из таблицы task_implementation_downloading_files и добавляем в task_turn_downloading_files
         async.parallel([
-            (callback) => {
-                redis.lrem('task_implementation_downloading_files', 0, hashId, (err) => {
+            callback => {
+                redis.lrem('task_implementation_downloading_files', 0, hashId, err => {
                     if (err) callback(err);
                     else callback(null);
                 });
             },
-            (callback) => {
-                redis.lpush('task_turn_downloading_files', hashId, (err) => {
+            callback => {
+                redis.lpush('task_turn_downloading_files', hashId, err => {
                     if (err) callback(err);
                     else callback(null);
                 });
             }
-        ], (err) => {
+        ], err => {
             if (err) cb(err);
             else cb(null);
         });

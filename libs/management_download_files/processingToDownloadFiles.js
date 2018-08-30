@@ -310,18 +310,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         callback(err);
     });
-
-    /*.then(() => {
-            debug('EVENT "EXECUTE"');
-            debug('------>SEND SUCCESS MESSAGE TO MOTH_GO');
-            debug(objResponse);
-
-            objResponse.info.fileName = objData.info.fileName;
-
-            wsConnection.sendUTF(JSON.stringify(objResponse));
-
-            callback(null);
-        })*/
 };
 
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
@@ -364,27 +352,26 @@ module.exports.completed = function(redis, self, sourceID, cb) {
         return cb(new errorsType.taskIndexDoesNotExist(`Задачи с идентификатором ${self.info.taskIndex} не существует`));
     }
 
-    actionWhenReceivingComplete(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID },
-        (err, ...spread) => {
-            if (err) {
-                globalObject.deleteData('processingTasks', self.info.taskIndex);
-                globalObject.deleteData('downloadFilesTmp', sourceID);
-
-                return cb(err);
+    actionWhenReceivingComplete(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID })
+        .then(() => {
+            return new Promise((resolve, reject) => {
+                //проверка очереди на выгрузку файлов (таблица task_turn_downloading_files)
+                checkQueueTaskDownloadFiles(redis, sourceID, (err, objTaskIndex) => {
+                    if (err) reject(err);
+                    else resolve(objTaskIndex);
+                });
+            });
+        }).then(objTaskIndex => {
+            if (Object.keys(objTaskIndex).length > 0) {
+                wsConnection.sendUTF(JSON.stringify(objTaskIndex));
             }
 
-            //проверка очереди на выгрузку файлов (таблица task_turn_downloading_files)
-            checkQueueTaskDownloadFiles(redis, sourceID, (err, objTaskIndex) => {
-                if (err) return cb(err);
+            cb(null);
+        }).catch(err => {
+            globalObject.deleteData('processingTasks', self.info.taskIndex);
+            globalObject.deleteData('downloadFilesTmp', sourceID);
 
-                if (Object.keys(objTaskIndex).length > 0) {
-                    wsConnection.sendUTF(JSON.stringify(objTaskIndex));
-                }
-
-                if (typeof spread[0] === 'undefined') return cb(null);
-
-                cb(null, spread[0]);
-            });
+            cb(err);
         });
 };
 
