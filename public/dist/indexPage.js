@@ -1550,6 +1550,7 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'in line': 'в очереди',
                     'loaded': 'выполняется',
                     'suspended': 'приостановлен',
+                    'partially loaded': 'загружены частично',
                     'expect': 'ожидает',
                     'uploaded': 'выполнен'
                 };

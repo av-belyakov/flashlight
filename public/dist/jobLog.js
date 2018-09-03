@@ -50,7 +50,6 @@ __webpack_require__(14);
 (function () {
     //загрузка отфильтрованного сетевого трафика
     function importFiles(taskIndex) {
-        //socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
         socket.emit('get list all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
     }
 
@@ -411,6 +410,8 @@ function getSelectedList(obj) {
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createModalWindow;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
 /**
  * Создание модального окна содержащего информацию по найденным, в результате
  * фильтрации, файлам 
@@ -422,10 +423,14 @@ function getSelectedList(obj) {
 
 
 
+
 function createModalWindow(objData) {
     if (objData.information.length === 0) return;
 
     let modalTitle = document.querySelector('#modalLabelListDownloadFiles .modal-title');
+
+    modalTitle.dataset.number_message_parts = objData.numberMessageParts;
+
     modalTitle.innerHTML = `Источник №${objData.sourceId} (${objData.shortName}), ${objData.detailedDescription}`;
     modalTitle.style.textAlign = 'center';
 
@@ -440,6 +445,33 @@ function createModalWindow(objData) {
         let elementsByName = document.getElementsByName('sortColumns');
         elementsByName.forEach(function (item) {
             item.addEventListener('click', sortColumns);
+        });
+    })();
+
+    //обработчик на скролинк, для автоматической подгрузки списка файлов
+    (function () {
+        let previousScrollPosition = 0;
+        document.getElementById('modalListDownloadFiles').addEventListener('scroll', e => {
+            let currentScrollPosition = $(window).scrollTop() + $(window).height();
+            if (currentScrollPosition > previousScrollPosition) {
+
+                console.log('down');
+                console.log('сгенерировать событие для запроса следующей части файлов');
+
+                let taskIndex = document.getElementById('modalLabelListDownloadFiles').dataset.taskIndex;
+
+                let modalLabel = document.querySelector('#modalLabelListDownloadFiles .modal-title');
+                if (modalLabel.dataset.number_message_parts === null) return;
+                let nextChunk = modalLabel.dataset.number_message_parts;
+
+                socket.emit('next chunk files filter result', {
+                    processingType: 'importFiles',
+                    taskIndex: taskIndex,
+                    nextChunk: nextChunk
+                });
+            }
+
+            previousScrollPosition = currentScrollPosition;
         });
     })();
 
@@ -899,6 +931,7 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'in line': 'в очереди',
                     'loaded': 'выполняется',
                     'suspended': 'приостановлен',
+                    'partially loaded': 'загружены частично',
                     'expect': 'ожидает',
                     'uploaded': 'выполнен'
                 };
@@ -1058,6 +1091,7 @@ function createTableTaskResultFilter(objData) {
 
     let objLoadingStatus = {
         'not loaded': ['не выполнялся', '#989898'],
+        'partially loaded': ['загружены частично', '#989898'],
         'in line': ['в очереди', '#ffcc2f'],
         'loaded': ['выполняется', '#00acee'],
         'suspended': ['приостановлен', '#ef5734'],

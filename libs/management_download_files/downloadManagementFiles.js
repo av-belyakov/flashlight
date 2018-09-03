@@ -55,8 +55,6 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                         userName: user[1]
                     });
                 });
-            }).catch((err) => {
-                throw (err);
             });
         });
     }).then(objResult => {
@@ -73,28 +71,63 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                 if (err) reject(err);
                 else resolve();
             });
-        }).catch((err) => {
-            throw (err);
         });
     }).then(() => {
+        return new Promise((resolve, reject) => {
+            redis.hmget(`task_filtering_all_information:${taskIndex}`,
+                'countFilesFound',
+                'directoryFiltering',
+                (err, result) => {
+                    if (err) return reject(err);
+
+                    let countFilesUpload = (countDownloadSelectedFiles === 0) ? result[0] : countDownloadSelectedFiles;
+
+                    resolve({
+                        'countUploadFiles': countFilesUpload,
+                        'directoryFiltering': result[1]
+                    });
+                });
+        });
+    }).then((obj) => {
+        //если были выбранны все файлы необходимо отсеять уже загруженные
+        if (countDownloadSelectedFiles !== 0) return obj;
+
+        return new Promise((resolve, reject) => {
+            redis.hvals(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, (err, listValues) => {
+                if (err) return reject(err);
+
+                let countUploaded = 0;
+                for (let i = 0; i < listValues; i++) {
+                    let fileInfo = JSON.parse(listValues[i]);
+                    if (typeof fileInfo.fileDownloaded !== 'undefined' && fileInfo.fileDownloaded) countUploaded++;
+                }
+
+                obj.countUploadFiles -= countUploaded;
+
+                resolve(obj);
+            });
+        });
+    }).then(({ countUploadFiles, directoryFiltering }) => {
+        let filesSelectionType = (countDownloadSelectedFiles === 0) ? 'all files' : 'chosen files';
+
+        debug('*-*-*-*-*-*-*-*-*--*-*---*-*-*-*-**-*-*-');
+        debug(`count files upload = ${countUploadFiles}`);
+        debug('*-*-*-*-*-*-*-*-*--*-*---*-*-*-*-**-*-*-');
+
         //добавляем информацию о задаче в глобальный объект
         globalObject.setData('processingTasks', taskIndex, {
             'taskType': 'upload',
             'sourceId': sourceID,
             'status': 'expect',
             'timestampStart': +new Date(),
-            'timestampModify': +new Date()
+            'timestampModify': +new Date(),
+            'uploadInfo': {
+                'fileSelectionType': filesSelectionType,
+                'numberFilesUpload': countUploadFiles
+            }
         });
-    }).then(() => {
-        //получаем директорию в которую сохранялись отфильтрованные файлы
-        return new Promise((resolve, reject) => {
-            redis.hget(`task_filtering_all_information:${taskIndex}`, 'directoryFiltering', (err, directoryFiltering) => {
-                if (err) reject(err);
-                else resolve(directoryFiltering);
-            });
-        }).catch((err) => {
-            throw (err);
-        });
+
+        return directoryFiltering;
     }).then(directoryFiltering => {
         let wsConnection = objWebsocket[`remote_host:${sourceID}`];
 
@@ -110,7 +143,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
         });
 
         //формируем и отправляем запрос на скачивание файлов
-        if (listFiles.length === 0) {
+        if (countDownloadSelectedFiles === 0) {
             //если выбранны ВСЕ файлы
             let strRequest = JSON.stringify({
                 'messageType': 'download files',
@@ -130,8 +163,6 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
 
             return wsConnection.sendUTF(strRequest);
         }
-
-        /** ДЛЯ ТЕСТА ВЫБРАННО ТОЛЬКО 3 файла в сообщении, УВЕЛИЧИТЬ ДО 30 */
 
         //если скачиваются ТОЛЬКО выбранные пользователем файлы
         let { countChunk, list: newListFiles } = transformListIndexFiles(20, listFiles);

@@ -8,11 +8,15 @@
 'use strict';
 
 import { helpers } from '../common_helpers/helpers';
+import common from '../common';
 
 export default function createModalWindow(objData) {
     if (objData.information.length === 0) return;
 
     let modalTitle = document.querySelector('#modalLabelListDownloadFiles .modal-title');
+
+    modalTitle.dataset.number_message_parts = objData.numberMessageParts;
+
     modalTitle.innerHTML = `Источник №${objData.sourceId} (${objData.shortName}), ${objData.detailedDescription}`;
     modalTitle.style.textAlign = 'center';
 
@@ -27,6 +31,33 @@ export default function createModalWindow(objData) {
         let elementsByName = document.getElementsByName('sortColumns');
         elementsByName.forEach(function(item) {
             item.addEventListener('click', sortColumns);
+        });
+    })();
+
+    //обработчик на скролинк, для автоматической подгрузки списка файлов
+    (function() {
+        let previousScrollPosition = 0;
+        document.getElementById('modalListDownloadFiles').addEventListener('scroll', (e) => {
+            let currentScrollPosition = $(window).scrollTop() + $(window).height();
+            if (currentScrollPosition > previousScrollPosition) {
+
+                console.log('down');
+                console.log('сгенерировать событие для запроса следующей части файлов');
+
+                let taskIndex = document.getElementById('modalLabelListDownloadFiles').dataset.taskIndex;
+
+                let modalLabel = document.querySelector('#modalLabelListDownloadFiles .modal-title');
+                if (modalLabel.dataset.number_message_parts === null) return;
+                let nextChunk = modalLabel.dataset.number_message_parts;
+
+                socket.emit('next chunk files filter result', {
+                    processingType: 'importFiles',
+                    taskIndex: taskIndex,
+                    nextChunk: nextChunk
+                });
+            }
+
+            previousScrollPosition = currentScrollPosition;
         });
     })();
 

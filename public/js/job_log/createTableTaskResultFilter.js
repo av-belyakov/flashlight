@@ -51,6 +51,7 @@ export default function createTableTaskResultFilter(objData) {
 
     let objLoadingStatus = {
         'not loaded': ['не выполнялся', '#989898'],
+        'partially loaded': ['загружены частично', '#989898'],
         'in line': ['в очереди', '#ffcc2f'],
         'loaded': ['выполняется', '#00acee'],
         'suspended': ['приостановлен', '#ef5734'],

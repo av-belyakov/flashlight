@@ -27,6 +27,7 @@ const informationForPageLogError = require('../libs/management_log_error/informa
 const informationForPageLogFilter = require('../libs/management_log_filter/informationForPageLogFilter');
 const routingRequestDownloadFiles = require('./routing_requests/routingRequestsDownloadFiles');
 const preparingFileDownloadRequest = require('./processing_socketio/preparingFileDownloadRequest');
+const getNextChunkListFilteringFiles = require('../libs/management_download_files/getNextChunkListFilteringFiles');
 const informationForPageUploadedFiles = require('../libs/management_uploaded_files/informationForPageUploadedFiles');
 const preparingVisualizationDownloadFiles = require('./processing_socketio/preparingVisualizationDownloadFiles');
 const checkAccessRightsUsersMakeChangesTask = require('../libs/users_management/checkAccessRightsUsersMakeChangesTask');
@@ -454,6 +455,16 @@ module.exports.eventHandling = function(socketIo) {
         debug(data);
     });
 
+    /* запрос на следующий кусочек списка найденных в результате фильтрации файлов (для модального окна со списком найденных файлов) */
+    socketIo.on('next chunk files filter result', function(data) {
+        debug('REQUEST ---- NEXT CHUNK LIST FILES ----');
+        debug(data);
+
+        getNextChunkListFilteringFiles(data, socketIo, redis, (err) => {
+            if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+        });
+    });
+
     /* получить все найденные в результате выполнения задачи файлы */
     /*socketIo.on('import all files obtained result filtering', function(data) {
         checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
@@ -709,7 +720,6 @@ module.exports.eventHandling = function(socketIo) {
     socketIo.on('add start filter', function(data) {
         processingStartTaskFiltering(redis, data.filterTask, socketIo);
     });
-
 
     /* получить информацию по выбранной задачи фильтрации */
     socketIo.on('get all information for task index', function(data) {

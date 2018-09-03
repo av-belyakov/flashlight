@@ -63,12 +63,12 @@ let messageTypeError = function(redis, sourceID, callback) {
                 'table': ['jobStatus', 'rejected']
             },
             'upload': {
-                'table': ['uploadFiles', 'suspended']
+                'table': ['uploadFiles', 'partially loaded']
             }
         };
         if (typeof objChangeStatus[taskType] === 'undefined') return new errorsType.receivedIncorrectData(`incorrect type 'taskType' equal to ${taskType}`);
 
-        redis.hset(`task_filtering_all_information:${taskIndex}`, objChangeStatus[taskType].table[0], objChangeStatus[taskType].table[1], (err) => {
+        redis.hset(`task_filtering_all_information:${taskIndex}`, objChangeStatus[taskType].table[0], objChangeStatus[taskType].table[1], err => {
             if (err) return err;
         });
     }
@@ -84,12 +84,12 @@ let messageTypeError = function(redis, sourceID, callback) {
 
     if (this.taskId === null) return callback(null);
 
-    redis.zadd(`remote_host:errors:${sourceID}`, dateUnix, JSON.stringify(obj), function(err) {
+    redis.zadd(`remote_host:errors:${sourceID}`, dateUnix, JSON.stringify(obj), err => {
         if (err) return callback(err);
     });
     //ошибка авторизации на источнике
     if (+this.errorCode === 403) {
-        redis.hset(`remote_host:settings:${sourceID}`, 'isAuthorization', false, function(err) {
+        redis.hset(`remote_host:settings:${sourceID}`, 'isAuthorization', false, err => {
             if (err) return callback(err);
         });
     }
@@ -97,7 +97,7 @@ let messageTypeError = function(redis, sourceID, callback) {
     if ((+this.errorCode === 400) || (+this.errorCode === 406)) {
         let tasksIndex = globalObject.getData('processingTasks');
         for (let taskID in tasksIndex) {
-            if (taskID === this.taskId) changeStatusProcessingTask(this.taskId, tasksIndex[taskID].taskType)
+            if (taskID === this.taskId) changeStatusProcessingTask(this.taskId, tasksIndex[taskID].taskType);
         }
     }
 
@@ -108,11 +108,11 @@ let messageTypeError = function(redis, sourceID, callback) {
     if (+this.errorCode === 410 || +this.errorCode === 413 || +this.errorCode === 500) {
         let taskId = (~this.taskId.indexOf(':')) ? this.taskId.split(':')[1] : this.taskId;
 
-        redis.hget(`task_filtering_all_information:${taskId}`, 'jobStatus', function(err, jobStatus) {
+        redis.hget(`task_filtering_all_information:${taskId}`, 'jobStatus', (err, jobStatus) => {
             if (err) return callback(err);
 
             if (jobStatus === 'expect') {
-                redis.hset(`task_filtering_all_information:${taskId}`, 'jobStatus', 'rejected', function(err) {
+                redis.hset(`task_filtering_all_information:${taskId}`, 'jobStatus', 'rejected', err => {
                     if (err) return callback(err);
                 });
             }
@@ -131,7 +131,7 @@ let messageTypeError = function(redis, sourceID, callback) {
             'uploadFiles': 'loaded',
             'userNameStopUploadFiles': 'null',
             'dateTimeStopUploadFiles': 'null'
-        }, (err) => {
+        }, err => {
             if (err) return callback(err);
         });
     }

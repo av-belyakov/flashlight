@@ -367,7 +367,7 @@ function changeFieldUploadFiles(redis, sourceId, func) {
             if (!~name.indexOf(':')) return callbackEachOf(new Error('undefined source ID'));
 
             let taskIndex = name.split(':')[1];
-            redis.hset('task_filtering_all_information:' + taskIndex, 'uploadFiles', 'suspended', (err) => {
+            redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'partially loaded', err => {
                 if (err) callbackEachOf(err);
                 else callbackEachOf();
             });
@@ -388,7 +388,7 @@ function deleteSourceIdTablesDownloadFiles(redis, sourceId, func) {
                 if (err) return callback(err);
                 if (isExist !== 1) return callback(null, true);
 
-                redis.lrem('task_turn_downloading_files', 0, sourceId, (err) => {
+                redis.lrem('task_turn_downloading_files', 0, sourceId, err => {
                     if (err) callback(err);
                     else callback(null, true);
                 });

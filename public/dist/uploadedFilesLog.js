@@ -694,6 +694,7 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'in line': 'в очереди',
                     'loaded': 'выполняется',
                     'suspended': 'приостановлен',
+                    'partially loaded': 'загружены частично',
                     'expect': 'ожидает',
                     'uploaded': 'выполнен'
                 };
@@ -853,6 +854,7 @@ function createTableTaskResultFilter(objData) {
 
     let objLoadingStatus = {
         'not loaded': ['не выполнялся', '#989898'],
+        'partially loaded': ['загружены частично', '#989898'],
         'in line': ['в очереди', '#ffcc2f'],
         'loaded': ['выполняется', '#00acee'],
         'suspended': ['приостановлен', '#ef5734'],

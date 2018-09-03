@@ -40,6 +40,10 @@
  *     'status': <'expect' и 'execute' (для фильрации), 'expect', 'in line', 'loaded' (для загрузки файлов)>
  *     'timestampStart': <дата в формате unix>
  *     'timestampModify': <дата в формате unix>
+ *     'uploadInfo': {
+ *         'fileSelectionType': <отметка о загрузки всех файлов или выбранных только пользователем>,
+ *         'numberFilesUpload': <количество скачиваемых в задаче файлов>
+ *     } 
  *    }}
  *
  *  потоки для записи файлов

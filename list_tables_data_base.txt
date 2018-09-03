@@ -80,6 +80,7 @@ task_filtering_all_information:* (где * идентификатор задач
           expect - ожидает, 
           in line - в очереди,
           suspended - приостановлена,
+          partially loaded - загружены частично,
           uploaded - файлы загружены,
           loaded - выполняется )
 

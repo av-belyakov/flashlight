@@ -12,9 +12,7 @@
  * @param callback - функция обратного вызова
  */
 module.exports = function(redis, data, callback) {
-    let checkOddValue = (value) => {
-        return value % 2 === 0;
-    };
+    const MAX_SIZE_CHUNK = 25;
 
     new Promise((resolve, reject) => {
         redis.hget(`task_filtering_all_information:${data.taskIndex}`, 'sourceId', (err, sourceId) => {
@@ -31,31 +29,30 @@ module.exports = function(redis, data, callback) {
                 });
             });
         });
-    }).then((objectData) => {
-        let i = 1;
+    }).then(objectData => {
         let objResult = {};
-        let fileName = '';
 
+        let countFiles = Object.keys(objectData.listFiles).length;
+        let countChunk = getCountChunk(MAX_SIZE_CHUNK, countFiles);
+
+        let x = 0;
         for (let fn in objectData.listFiles) {
+            if (MAX_SIZE_CHUNK === x) break;
+
             let obj = {};
-            if (!checkOddValue(i)) {
-                obj[fileName] = fn;
-                fileName = fn;
-            } else {
-                try {
-                    let objTmp = JSON.parse(objectData.listFiles[fn]);
+            try {
+                let objTmp = JSON.parse(objectData.listFiles[fn]);
 
-                    obj.fileSize = objTmp.fileSize;
-                    obj.fileDownloaded = objTmp.fileDownloaded;
+                obj.fileSize = objTmp.fileSize;
+                obj.fileDownloaded = objTmp.fileDownloaded;
 
-                    objResult[fn] = obj;
-                } catch (err) {
-                    obj.fileSize = '';
-                    obj.fileDownloaded = '';
-                }
+                objResult[fn] = obj;
+            } catch (err) {
+                obj.fileSize = '';
+                obj.fileDownloaded = '';
             }
 
-            i++;
+            x++;
         }
 
         return new Promise((resolve, reject) => {
@@ -69,13 +66,23 @@ module.exports = function(redis, data, callback) {
                         'shortName': finalResult[0],
                         'detailedDescription': finalResult[1],
                         'taskIndex': data.taskIndex,
-                        'information': objResult
+                        'information': objResult,
+                        'numberMessageParts': [1, countChunk],
                     });
                 });
         });
-    }).then((resultObj) => {
+    }).then(resultObj => {
         callback(null, resultObj);
-    }).catch((err) => {
+    }).catch(err => {
         callback(err);
     });
 };
+
+//вернуть количество частей
+function getCountChunk(maxChunkSize, countList) {
+    let countChunk = Math.floor(countList / maxChunkSize);
+    let y = countList / maxChunkSize;
+    if ((y - countChunk) !== 0) countChunk++;
+
+    return countChunk;
+}
