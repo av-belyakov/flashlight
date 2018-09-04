@@ -165,7 +165,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
         }
 
         //если скачиваются ТОЛЬКО выбранные пользователем файлы
-        let { countChunk, list: newListFiles } = transformListIndexFiles(20, listFiles);
+        let { countChunk, list: newListFiles } = transformListIndexFiles(3, listFiles);
 
         debug(`count chunks = ${countChunk}`);
         debug(newListFiles);

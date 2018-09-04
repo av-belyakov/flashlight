@@ -32,13 +32,13 @@ module.exports = function(redis, data, callback) {
     }).then(objectData => {
         let objResult = {};
 
-        let countFiles = Object.keys(objectData.listFiles).length;
-        let countChunk = getCountChunk(MAX_SIZE_CHUNK, countFiles);
+        let listFiles = Object.keys(objectData.listFiles);
+        listFiles.sort();
 
-        let x = 0;
-        for (let fn in objectData.listFiles) {
-            if (MAX_SIZE_CHUNK === x) break;
+        let countChunk = getCountChunk(MAX_SIZE_CHUNK, listFiles.length);
+        let nextListChunk = listFiles.splice(0, MAX_SIZE_CHUNK);
 
+        nextListChunk.forEach(fn => {
             let obj = {};
             try {
                 let objTmp = JSON.parse(objectData.listFiles[fn]);
@@ -51,9 +51,7 @@ module.exports = function(redis, data, callback) {
                 obj.fileSize = '';
                 obj.fileDownloaded = '';
             }
-
-            x++;
-        }
+        });
 
         return new Promise((resolve, reject) => {
             redis.hmget(`remote_host:settings:${objectData.sourceId}`,
@@ -67,7 +65,7 @@ module.exports = function(redis, data, callback) {
                         'detailedDescription': finalResult[1],
                         'taskIndex': data.taskIndex,
                         'information': objResult,
-                        'numberMessageParts': [1, countChunk],
+                        'numberMessageParts': [1, countChunk, MAX_SIZE_CHUNK],
                     });
                 });
         });

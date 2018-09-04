@@ -9,12 +9,8 @@
 
 'use strict';
 
-const debug = require('debug')('routingRequestsDownloadFiles');
 
 const showNotify = require('../../libs/showNotify');
-const errorsType = require('../../errors/errorsType');
-const globalObject = require('../../configure/globalObject');
-const objWebsocket = require('../../configure/objWebsocket');
 const writeLogFile = require('../../libs/writeLogFile');
 const getListsTaskProcessing = require('../../libs/getListsTaskProcessing');
 const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPage');
@@ -32,11 +28,9 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
     };
 
     if ((typeof req.info === 'undefined') || (typeof req.info.taskIndex === 'undefined')) {
-
-        //debug('req.info or req.info.taskIndex not found');
         writeLogFile.writeLog('\tError, not found information about task ID (download files)');
 
-        return showNotify(socketIoS, 'danger', `11 11 - Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+        return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
     }
 
     let taskIndex = req.info.taskIndex;
@@ -48,10 +42,8 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
     }
 
     function requestTypeReady() {
-        debug('--- TASK TYPE READY');
-
         preparingVisualizationDownloadFiles.preparingVisualizationStartExecute(redis, taskIndex, sourceID, (err, data) => {
-            if (err) return showNotify(socketIoS, 'danger', `222-1 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+            if (err) return showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
 
             if (Object.keys(data).length > 0) {
                 showNotify(socketIoS, 'success', `Источник №<strong>${sourceID}</strong>, началась загрузка файлов`);
@@ -87,15 +79,13 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                     });
                 }).catch(err => {
                     writeLogFile.writeLog('\tError: ' + err.toString() + ', routingRequestDownloadFiles.js');
-                    showNotify(socketIoS, 'danger', `333-1 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+                    showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
                 });
             }
         });
     }
 
     function requestTypeExecute() {
-        debug('--- TASK TYPE EXECUTE');
-
         getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, result) => {
             if (err) return writeLogFile.writeLog('\tError: ' + err.toString());
 
@@ -133,7 +123,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
             }
         }).catch(err => {
             writeLogFile.writeLog(`\tError: ${err.toString()}`);
-            showNotify(socketIoS, 'danger', `2-2-2 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
         });
     }
 
@@ -155,7 +145,6 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
 
                     if (receivedIsSuccess && notifyMessage.receivedIsSuccess === true) {
                         getCountFilesUploadNotConsidered(redis, numberUploadedFiles => {
-                            //socketIoS.broadcast.emit('change number uploaded files', { 'numberUploadedFiles' : numberUploadedFiles });
                             socketIoS.emit('change number uploaded files', { 'numberUploadedFiles': numberUploadedFiles });
                         });
                     }
@@ -191,7 +180,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                 }).catch((err) => {
                     writeLogFile.writeLog('\tError: ' + err.toString() + ', routingRequestDownloadFiles.js');
                     writeLogFile.writeLog(`\t555-1 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-                    showNotify(socketIoS, 'danger', `555-1 Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+                    showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
                 });
             }
         });
@@ -199,7 +188,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
 
     function requestTypeUpdateProgress() {
         preparingVisualizationDownloadFiles.preparingVisualizationUpdateProgress(redis, taskIndex, sourceID, (err, data) => {
-            if (err) return showNotify(socketIoS, 'danger', '666-1 Неопределенная ошибка, контроль загрузки файлов не возможен');
+            if (err) return showNotify(socketIoS, 'danger', 'Неопределенная ошибка, контроль загрузки файлов не возможен');
 
             if (Object.keys(data).length > 0) {
                 socketIoS.emit('update the download progress', { processingType: 'showInformationDownload', information: data });

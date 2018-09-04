@@ -172,7 +172,7 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
             document.getElementById('progress:' + data.information.taskIndex).innerHTML = '<h4 class="text-center" style="color: #9FD783;">в очереди</h4>';
             document.getElementById('file_information:' + data.information.taskIndex).style.marginTop = '-10px';
-            document.getElementById('file_information:' + data.information.taskIndex).innerHTML = 'Найдено файлов: ' + data.information.countFilesFound;
+            document.getElementById('file_information:' + data.information.taskIndex).innerHTML = 'Выбрано файлов: ' + data.information.countFilesFound;
         });
 
         //вывод информации о прогрессе в загрузке файла

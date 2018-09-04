@@ -115,7 +115,7 @@ export default function createTableTaskResultFilter(objData) {
         tableBodyButton += '<span class="glyphicon glyphicon glyphicon-info-sign"></span></button>';
 
         let isJobStatusComplete = (informationTaskIndex[taskIndex].jobStatus === 'complete');
-        let isUploadFilesNotLoaded = (informationTaskIndex[taskIndex].uploadFiles === 'not loaded');
+        let isUploadFilesNotLoaded = ((informationTaskIndex[taskIndex].uploadFiles === 'not loaded') || (informationTaskIndex[taskIndex].uploadFiles === 'partially loaded'));
         let isGreaterZero = (informationTaskIndex[taskIndex].countFilesFound > 0);
 
         if (isJobStatusComplete && isUploadFilesNotLoaded && isGreaterZero) {

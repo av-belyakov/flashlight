@@ -13,6 +13,11 @@ import common from '../common';
 export default function createModalWindow(objData) {
     if (objData.information.length === 0) return;
 
+    let objFileDownload = {
+        'true': ['загружен', '#2baf2b'],
+        'false': ['не выгружался', '#ef5734']
+    };
+
     let modalTitle = document.querySelector('#modalLabelListDownloadFiles .modal-title');
 
     modalTitle.dataset.number_message_parts = objData.numberMessageParts;
@@ -20,7 +25,7 @@ export default function createModalWindow(objData) {
     modalTitle.innerHTML = `Источник №${objData.sourceId} (${objData.shortName}), ${objData.detailedDescription}`;
     modalTitle.style.textAlign = 'center';
 
-    document.getElementById('field_table').innerHTML = createTable(objData.information);
+    document.getElementById('field_table').innerHTML = createTable(objData.information, objFileDownload);
 
     let elementModalLabelListDownloadFiles = document.getElementById('modalLabelListDownloadFiles');
     elementModalLabelListDownloadFiles.dataset.taskIndex = objData.taskIndex;
@@ -36,39 +41,85 @@ export default function createModalWindow(objData) {
 
     //обработчик на скролинк, для автоматической подгрузки списка файлов
     (function() {
-        let previousScrollPosition = 0;
-        document.getElementById('modalListDownloadFiles').addEventListener('scroll', (e) => {
-            let currentScrollPosition = $(window).scrollTop() + $(window).height();
-            if (currentScrollPosition > previousScrollPosition) {
+        sendRequestNextListFiles();
+    })();
 
-                console.log('down');
-                console.log('сгенерировать событие для запроса следующей части файлов');
+    //обработчик на обновление списка найденных в результате фильтрации файлов
+    (function() {
+        socket.on('next list chunk files filter result', function(data) {
+            let mlldf = document.getElementById('modalLabelListDownloadFiles');
+            let taskIndex = mlldf.dataset.taskIndex;
 
-                let taskIndex = document.getElementById('modalLabelListDownloadFiles').dataset.taskIndex;
+            if (taskIndex !== data.taskIndex) return;
 
-                let modalLabel = document.querySelector('#modalLabelListDownloadFiles .modal-title');
-                if (modalLabel.dataset.number_message_parts === null) return;
-                let nextChunk = modalLabel.dataset.number_message_parts;
+            let modalTitle = document.querySelector('#modalLabelListDownloadFiles .modal-title');
+            modalTitle.dataset.number_message_parts = data.nextChunk;
 
-                socket.emit('next chunk files filter result', {
-                    processingType: 'importFiles',
-                    taskIndex: taskIndex,
-                    nextChunk: nextChunk
-                });
+            let tbody = document.querySelector('.table tbody');
+
+            let serialNumber = tbody.children.length;
+            let sn = Number(serialNumber);
+
+            for (let fn in data.listFileInformation) {
+                let fd, isChecked = '';
+                if (data.listFileInformation[fn].fileDownloaded) {
+                    fd = objFileDownload['true'];
+                } else {
+                    fd = objFileDownload['false'];
+                    isChecked = `<input type="checkbox" name="checkbox_setFileDownload" data-file-name="${fn}">`;
+                }
+
+                let tr = document.createElement('tr');
+                tr.setAttribute('data-toggle', 'tooltip');
+
+                if (!isNaN(sn)) sn++;
+
+                let table = `<td class="text-center" style="padding-top: 15px;">${sn}</td>
+                    <td class="text-left" style="padding-top: 15px;">${fn}</td>
+                    <td class="text-right" style="padding-top: 15px;" 
+                    data-file-size="${data.listFileInformation[fn].fileSize}">
+                    ${helpers.intConvert(data.listFileInformation[fn].fileSize)}</td>
+                    <td class="text-left" style="padding-top: 15px;"><span style="color: ${fd[1]}">${fd[0]}</span></td>
+                    <td class="text-right">${isChecked}</td>`;
+
+                tr.innerHTML = table;
+                tbody.appendChild(tr);
             }
-
-            previousScrollPosition = currentScrollPosition;
         });
     })();
 
     $('#modalListDownloadFiles').modal('show');
 }
 
-function createTable(data) {
-    let objFileDownload = {
-        'true': ['загружен', '#2baf2b'],
-        'false': ['не выгружался', '#ef5734']
-    };
+function sendRequestNextListFiles() {
+    function checkViewport(id) {
+        let myElement = document.getElementById(id),
+            landmark = myElement.getBoundingClientRect(),
+            visibility = landmark.top + myElement.scrollHeight > 0 && landmark.left + myElement.scrollWidth > 0 && landmark.bottom - myElement.scrollHeight < document.documentElement.clientHeight && landmark.right - myElement.scrollWidth < document.documentElement.clientWidth;
+        return visibility;
+    }
+
+    document.getElementById('modalListDownloadFiles').addEventListener('scroll', function(e) {
+        if (checkViewport('tableFinish')) {
+            let mlldf = document.getElementById('modalLabelListDownloadFiles');
+            let taskIndex = mlldf.dataset.taskIndex;
+            let sourceID = mlldf.dataset.sourceId;
+
+            let modalLabel = document.querySelector('#modalLabelListDownloadFiles .modal-title');
+            if (modalLabel.dataset.number_message_parts === null) return;
+            let nextChunk = modalLabel.dataset.number_message_parts;
+
+            socket.emit('next chunk files filter result', {
+                processingType: 'importFiles',
+                taskIndex: taskIndex,
+                sourceID: sourceID,
+                nextChunk: nextChunk
+            });
+        }
+    });
+}
+
+function createTable(data, objFileDownload) {
 
     let table = `<div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
         <table class="table table-striped table-hover table-sm">
@@ -104,6 +155,7 @@ function createTable(data) {
 
     table += `</tbody>
         </table>
+        <div id="tableFinish"></div>
         </div>`;
 
     return table;

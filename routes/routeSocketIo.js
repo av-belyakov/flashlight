@@ -385,7 +385,7 @@ module.exports.eventHandling = function(socketIo) {
      * УПРАВЛЕНИЕ ЗАДАЧАМИ ПО ЗАГРУЗКЕ НАЙДЕННЫХ ФАЙЛОВ
      * */
 
-    //получить список всех файлов найденных врезультате фильтрации 
+    //получить список всех файлов найденных в результате фильтрации 
     socketIo.on('get list all files obtained result filtering', (data) => {
         processingGetListFilesResultFiltering(redis, data, (err, resultObj) => {
             if (err) {
@@ -401,19 +401,23 @@ module.exports.eventHandling = function(socketIo) {
         debug('REQUEST DOWNLOAD ---ALL--- FILES');
         debug(data);
 
-        data.listFiles = [];
-        preparingFileDownloadRequest(data, socketIo, redis, (err) => {
-            if (err) {
-                let errMsgLog = err.toString();
-                let errMsg = `222 Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
-                if (err.name) {
-                    errMsgLog = err.message;
-                    errMsg = err.message;
-                }
+        checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
+            if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
 
-                writeLogFile.writeLog('\tError: ' + errMsgLog);
-                showNotify(socketIo, 'danger', errMsg);
-            }
+            data.listFiles = [];
+            preparingFileDownloadRequest(data, socketIo, redis, (err) => {
+                if (err) {
+                    let errMsgLog = err.toString();
+                    let errMsg = `222 Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
+                    if (err.name) {
+                        errMsgLog = err.message;
+                        errMsg = err.message;
+                    }
+
+                    writeLogFile.writeLog('\tError: ' + errMsgLog);
+                    showNotify(socketIo, 'danger', errMsg);
+                }
+            });
         });
     });
 
@@ -422,18 +426,22 @@ module.exports.eventHandling = function(socketIo) {
         debug('REQUEST DOWNLOAD ---CHOOSE--- FILES');
         debug(data);
 
-        preparingFileDownloadRequest(data, socketIo, redis, (err) => {
-            if (err) {
-                let errMsgLog = err.toString();
-                let errMsg = `333 Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
-                if (err.name) {
-                    errMsgLog = err.message;
-                    errMsg = err.message;
-                }
+        checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
+            if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
 
-                writeLogFile.writeLog('\tError: ' + errMsgLog);
-                showNotify(socketIo, 'danger', errMsg);
-            }
+            preparingFileDownloadRequest(data, socketIo, redis, (err) => {
+                if (err) {
+                    let errMsgLog = err.toString();
+                    let errMsg = `333 Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
+                    if (err.name) {
+                        errMsgLog = err.message;
+                        errMsg = err.message;
+                    }
+
+                    writeLogFile.writeLog('\tError: ' + errMsgLog);
+                    showNotify(socketIo, 'danger', errMsg);
+                }
+            });
         });
     });
 
@@ -441,6 +449,12 @@ module.exports.eventHandling = function(socketIo) {
     socketIo.on('stop download files', function(data) {
         debug('REQUEST ---STOP--- DOWNLOAD FILES');
         debug(data);
+
+        checkAccessRights(socketIo, 'management_tasks_filter', 'stop', function(trigger) {
+            if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
+
+
+        });
     });
 
     /* возобновить загрузку файлов */
@@ -453,6 +467,11 @@ module.exports.eventHandling = function(socketIo) {
     socketIo.on('cancel download files', function(data) {
         debug('REQUEST ---CANCEL--- DOWNLOAD FILES');
         debug(data);
+
+        checkAccessRights(socketIo, 'management_tasks_filter', 'cancel', function(trigger) {
+            if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
+
+        });
     });
 
     /* запрос на следующий кусочек списка найденных в результате фильтрации файлов (для модального окна со списком найденных файлов) */

@@ -35,7 +35,7 @@ module.exports = function(taskIndex, func) {
         },
         //проверка наличия хеша taskIndex
         function(callback) {
-            redis.exists(`task_filtering_all_information:${taskIndex}`, function(err, result) {
+            redis.exists(`task_filtering_all_information:${taskIndex}`, (err, result) => {
                 if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
                 if (result === 0) return callback(new errorsType.receivedIncorrectData('Ошибка: выгрузка сетевого трафика невозможна, получены некорректные данные'));
 
@@ -44,7 +44,7 @@ module.exports = function(taskIndex, func) {
         },
         //проверка статуса задачи на фильтрацию
         function(callback) {
-            redis.hget('task_filtering_all_information:' + taskIndex, 'jobStatus', function(err, jobStatus) {
+            redis.hget(`task_filtering_all_information:${taskIndex}`, 'jobStatus', (err, jobStatus) => {
                 if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
 
                 if (jobStatus !== 'complete') {
@@ -56,7 +56,7 @@ module.exports = function(taskIndex, func) {
         },
         //проверка количества найденных файлов
         function(callback) {
-            redis.hget('task_filtering_all_information:' + taskIndex, 'countFilesFound', function(err, count) {
+            redis.hget(`task_filtering_all_information:${taskIndex}`, 'countFilesFound', (err, count) => {
                 if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
                 if (+count === 0) {
                     callback(new errorsType.fieldCountFilesFoundIsZero('Ошибка: выгрузка сетевого трафика невозможна, по заданным параметрам фильтрации найдено 0 файлов'));
@@ -67,15 +67,15 @@ module.exports = function(taskIndex, func) {
         },
         //проверка статуса загрузки сетевого трафика
         function(callback) {
-            redis.hget('task_filtering_all_information:' + taskIndex, 'uploadFiles', function(err, status) {
+            redis.hget(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', (err, status) => {
                 if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-                if (status === 'not loaded') return callback(null, true);
+                if ((status === 'not loaded') || (status === 'partially loaded')) return callback(null, true);
                 else callback(new errorsType.fieldUploadFilesIsNotSuspendedOrNotLoaded('Ошибка: невозможно добавить задачу на выгрузку файлов, так как задача находится в очереди, выполняется загрузка или файлы уже были загружены'));
             });
         },
         //проверка статуса источника (подключен ли он)
         function(callback) {
-            getSourceIdToHex(redis, taskIndex, function(err, sourceId) {
+            getSourceIdToHex(redis, taskIndex, (err, sourceId) => {
                 if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
 
                 let connectionStatus = globalObject.getData('sources', sourceId, 'connectionStatus');
@@ -88,11 +88,7 @@ module.exports = function(taskIndex, func) {
             });
         }
     ], function(err) {
-        if (err) {
-            //if (err.name === 'ErrorRedisDataBase') writeLogFile.writeLog('\tError: ' + err.cause);
-            func(err, err.message);
-        } else {
-            func(null, true);
-        }
+        if (err) func(err, err.message);
+        else func(null, true);
     });
 };
