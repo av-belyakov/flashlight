@@ -110,41 +110,58 @@ function getShortSourcesInformationImplementation(redis, taskIndex, sourceID, do
         //если идентификатор задачи не был найден
         if (!isExistTaskIndex) return done(null, {});
 
-        async.parallel({
-            counts: function(callback) {
-                redis.hmget(`task_filtering_all_information:${taskIndex}`,
-                    'countFilesFound',
-                    'countFilesLoaded',
-                    'countFilesLoadedError',
-                    (err, arrayData) => {
-                        if (err) callback(err);
-                        else callback(null, {
-                            'countFilesFound': arrayData[0],
-                            'countFilesLoaded': arrayData[1],
-                            'countFilesLoadedError': arrayData[2]
-                        });
-                    });
-            },
-            shortNameSource: function(callback) {
-                redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortName) => {
-                    if (err) callback(err);
-                    else callback(null, shortName);
-                });
-            }
-        }, (err, results) => {
+        redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortName) => {
             if (err) return done(err);
 
-            results.counts.taskIndex = taskIndex;
-            results.counts.sourceId = sourceID;
-            results.counts.shortName = results.shortNameSource;
+            let objTaskInfo = globalObject.getData('processingTasks', taskIndex);
+            let obj = {
+                'taskIndex': taskIndex,
+                'sourceId': sourceID,
+                'shortName': shortName,
+                'countFilesFound': objTaskInfo.uploadInfo.numberFilesUpload,
+                'countFilesLoaded': objTaskInfo.uploadInfo.numberFilesUploaded,
+                'countFilesLoadedError': objTaskInfo.uploadInfo.numberFilesUploadedError
+            };
 
-            done(null, results.counts);
+            done(null, obj);
         });
     });
 }
 
 //получаем краткую информацию об источнике который находится в очереди
 function getShortSourcesInformationTurn(redis, taskIndex, sourceID, done) {
+    function getInformationForTask(tableNameTask, func) {
+        redis.lrange(tableNameTask, [0, -1], (err, arrayResult) => {
+            if (err) return func(err);
+
+            let isExistTaskIndex = arrayResult.some(item => {
+                if (~item.indexOf(':')) return (item === `${sourceID}:${taskIndex}`);
+                return false;
+            });
+
+            //если идентификатор задачи не был найден
+            if (!isExistTaskIndex) return func(null, {});
+
+            redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortName) => {
+                if (err) return func(err);
+
+                let objTaskInfo = globalObject.getData('processingTasks', taskIndex);
+
+                let obj = {
+                    'taskIndex': taskIndex,
+                    'sourceId': sourceID,
+                    'shortName': shortName,
+                    'countFilesFound': objTaskInfo.uploadInfo.numberFilesUpload,
+                    'countFilesLoaded': objTaskInfo.uploadInfo.numberFilesUploaded
+                };
+
+                debug(obj);
+
+                func(null, obj);
+            });
+        });
+    }
+
     redis.exists('task_turn_downloading_files', (err, isExists) => {
         if (err) return done(err);
 
@@ -157,51 +174,6 @@ function getShortSourcesInformationTurn(redis, taskIndex, sourceID, done) {
             getInformationForTask('task_turn_downloading_files', (err, obj) => {
                 if (err) done(err);
                 else done(null, obj);
-            });
-        }
-
-        function getInformationForTask(tableNameTask, func) {
-            redis.lrange(tableNameTask, [0, -1], (err, arrayResult) => {
-                if (err) return func(err);
-
-                let isExistTaskIndex = arrayResult.some(item => {
-                    if (~item.indexOf(':')) return (item === `${sourceID}:${taskIndex}`);
-                    return false;
-                });
-
-                //если идентификатор задачи не был найден
-                if (!isExistTaskIndex) return func(null, {});
-
-                async.waterfall([
-                    //получаем содержимое таблицы task_filtering_all_information:*
-                    function(callback) {
-                        redis.hmget(`task_filtering_all_information:${taskIndex}`,
-                            'countFilesFound',
-                            'countFilesLoaded',
-                            (err, arrayData) => {
-                                if (err) callback(err);
-                                else callback(null, sourceID, {
-                                    'countFilesFound': arrayData[0],
-                                    'countFilesLoaded': arrayData[1]
-                                });
-                            });
-                    },
-                    //получаем краткое название источника
-                    function(sourceID, obj, callback) {
-                        redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortName) => {
-                            if (err) callback(err);
-                            else callback(null, obj, shortName);
-                        });
-                    }
-                ], (err, obj, shortName) => {
-                    if (err) return func(err);
-
-                    obj.taskIndex = taskIndex;
-                    obj.sourceId = sourceID;
-                    obj.shortName = shortName;
-
-                    func(null, obj);
-                });
             });
         }
     });

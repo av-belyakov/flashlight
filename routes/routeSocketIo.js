@@ -20,7 +20,6 @@ const listParametersSearch = require('../libs/listParametersSearch');
 const importSetupHostFileXml = require('../libs/importSetupHostFileXml');
 const getListsTaskProcessing = require('../libs/getListsTaskProcessing');
 const informationForTaskIndex = require('../libs/informationForTaskIndex');
-const checkFileUploadSettings = require('../libs/checkFileUploadSettings');
 const getTaskStatusForJobLogPage = require('../libs/getTaskStatusForJobLogPage');
 const informationForChoiseSource = require('../libs/management_choise_source/informationForChoiseSource');
 const informationForPageLogError = require('../libs/management_log_error/informationForPageLogError');
@@ -29,14 +28,12 @@ const routingRequestDownloadFiles = require('./routing_requests/routingRequestsD
 const preparingFileDownloadRequest = require('./processing_socketio/preparingFileDownloadRequest');
 const getNextChunkListFilteringFiles = require('../libs/management_download_files/getNextChunkListFilteringFiles');
 const informationForPageUploadedFiles = require('../libs/management_uploaded_files/informationForPageUploadedFiles');
-const preparingVisualizationDownloadFiles = require('./processing_socketio/preparingVisualizationDownloadFiles');
 const checkAccessRightsUsersMakeChangesTask = require('../libs/users_management/checkAccessRightsUsersMakeChangesTask');
 
 const processingUser = require('./processing_socketio/processingUser');
 const processingGroup = require('./processing_socketio/processingGroup');
 const processingSource = require('./processing_socketio/processingSource');
 const processingDashboard = require('./processing_socketio/processingDashboard');
-const processingFilesUpload = require('./processing_socketio/processingFilesUpload');
 const processingChangeTaskStatus = require('./processing_socketio/processingChangeTaskStatus');
 const processingExecuteFiltering = require('./processing_socketio/processingExecuteFiltering');
 const processingStopTaskFiltering = require('./processing_socketio/processingStopTaskFiltering');
@@ -457,12 +454,6 @@ module.exports.eventHandling = function(socketIo) {
         });
     });
 
-    /* возобновить загрузку файлов */
-    socketIo.on('resume download files', function(data) {
-        debug('REQUEST ---RESUME--- DOWNLOAD FILES');
-        debug(data);
-    });
-
     /* отменить задачу по загрузке файлов */
     socketIo.on('cancel download files', function(data) {
         debug('REQUEST ---CANCEL--- DOWNLOAD FILES');
@@ -481,72 +472,6 @@ module.exports.eventHandling = function(socketIo) {
 
         getNextChunkListFilteringFiles(data, socketIo, redis, (err) => {
             if (err) writeLogFile.writeLog('\tError: ' + err.toString());
-        });
-    });
-
-    /* получить все найденные в результате выполнения задачи файлы */
-    /*socketIo.on('import all files obtained result filtering', function(data) {
-        checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
-            if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
-
-            checkFileUploadSettings(data.taskIndex, function(err) {
-                if (err) return showNotify(socketIo, 'danger', err.message);
-
-                processingFilesUpload.start(socketIo, data.taskIndex, function(err, sourceId) {
-                    if (err) return showNotify(socketIo, 'danger', err.message);
-
-                    //добавить задачу в очередь
-                    preparingVisualizationDownloadFiles.preparingVisualizationAddTurn(redis, data.taskIndex, function(err, data) {
-                        if (err) return showNotify(socketIo, 'danger', `444 Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
-
-                        if (Object.keys(data).length > 0) {
-                            showNotify(socketIo, 'info', `Задача на выгрузку сетевого трафика с источника №<strong>${sourceId}</strong> добавленна в очередь`);
-                            socketIo.broadcast.emit('task upload files added', { processingType: 'showInformationDownload', information: data });
-
-                            let taskIndex = (~data.taskIndex.indexOf(':')) ? data.taskIndex.split(':')[1] : data.taskIndex;
-                            //сообщения об изменении статуса задач
-                            new Promise((resolve, reject) => {
-                                getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', function(err, objTaskStatus) {
-                                    if (err) reject(err);
-                                    else resolve(objTaskStatus);
-                                });
-                            }).then((objTaskStatus) => {
-                                return new Promise((resolve, reject) => {
-                                    getListsTaskProcessing((err, objListsTaskProcessing) => {
-                                        if (err) reject(err);
-                                        else resolve({
-                                            status: objTaskStatus,
-                                            lists: objListsTaskProcessing
-                                        });
-                                    });
-                                });
-                            }).then((obj) => {
-                                //только для пользователя инициировавшего загрузку
-                                socketIo.emit('change object status', {
-                                    processingType: 'showChangeObject',
-                                    informationPageJobLog: obj.status,
-                                    informationPageAdmin: obj.lists
-                                });
-
-                                //для всех пользователей
-                                socketIo.broadcast.emit('change object status', {
-                                    processingType: 'showChangeObject',
-                                    informationPageJobLog: obj.status,
-                                    informationPageAdmin: obj.lists
-                                });
-
-                                debug('---------- START ---------');
-                                debug(obj.status);
-                                debug(obj.lists);
-                                debug('----------------------');
-                            }).catch((err) => {
-                                writeLogFile.writeLog('\tError: ' + err.toString());
-                                showNotify(socketIo, 'danger', `555 Неопределенная ошибка источника №<strong>${sourceId}</strong>, контроль загрузки файлов не возможен`);
-                            });
-                        }
-                    });
-                });
-            });
         });
     });
 

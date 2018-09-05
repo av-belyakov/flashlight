@@ -8,7 +8,7 @@ webpackJsonp_name_([4],{
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_showNotify__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(178);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(179);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(180);
@@ -258,7 +258,7 @@ function exportXmlFile() {
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = transmissionInformationSource;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__getFormElements__ = __webpack_require__(55);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(181);
 /**
@@ -342,7 +342,7 @@ function createObjectInformationSetting() {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = addEditSource;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(21);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(55);
 /**
  * Модуль формирования и открытия модального окна преднозначенного для создания
@@ -514,7 +514,7 @@ let showNotify = function (type, message) {
 
 /***/ }),
 
-/***/ 20:
+/***/ 21:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

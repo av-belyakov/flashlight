@@ -1,23 +1,29 @@
 /*
  * Модуль вызываемый при неудачном приеме загружаемого файла 
  *
- * Версия 0.3, дата релиза 30.08.2018
+ * Версия 0.4, дата релиза 05.09.2018
  * */
 
 'use strict';
 
-module.exports = function(redis, taskIndex, cb) {
-    redis.hget(`task_filtering_all_information:${taskIndex}`,
-        'countFilesLoadedError',
-        (err, countFilesLoadedError) => {
-            if (err) return cb(err);
+const globalObject = require('../../configure/globalObject');
 
-            redis.hset(`task_filtering_all_information:${taskIndex}`,
-                'countFilesLoadedError',
-                ++countFilesLoadedError,
-                err => {
-                    if (err) cb(err);
-                    else cb(null);
-                });
+/**
+ * 
+ * @param {*} redis дискриптор соединения с БД
+ * @param {*} taskIndex идентификатор задачи
+ * @param {*} cb функция обратного вызова
+ */
+module.exports = function(redis, taskIndex, cb) {
+    //увеличиваем на единицу количество загруженных с ошибками файлов
+    globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploadedError');
+
+    let obj = globalObject.getData('processingTasks', taskIndex);
+
+    redis.hset(`task_filtering_all_information:${taskIndex}`,
+        'countFilesLoadedError', obj.uploadInfo.numberFilesUploadedError,
+        err => {
+            if (err) cb(err);
+            else cb(null);
         });
 };

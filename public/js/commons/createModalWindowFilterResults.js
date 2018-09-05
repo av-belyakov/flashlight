@@ -237,11 +237,11 @@ export default function createModalWindowFilterResults(obj, objectTimers) {
 
                 //имя пользователя, время начала фильтрации и ее окончание
                 let uploadFiles = (obj.uploadFiles === 'null') ? '' : `импорт файлов: <strong>${objLoadingStatus[obj.uploadFiles]}</strong>`;
-                let stringUploadFiles = `<div class="col-sm-4 col-md-4 col-lg-4 text-left" style="padding-left: 40px;">${uploadFiles}</div>`;
+                let stringUploadFiles = `<div class="col-sm-5 col-md-5 col-lg-5 text-left" style="padding-left: 40px;">${uploadFiles}</div>`;
                 let userName = (obj.userNameStartUploadFiles === 'null') ? '' : 'пользователь: ' + obj.userNameStartUploadFiles;
                 if (obj.userNameStopUploadFiles !== 'null') userName = 'пользователь: ' + obj.userNameStartUploadFiles;
 
-                let stringUserNameStartDownload = `<div class="col-sm-8 col-md-8 col-lg-8 text-center">${userName}</div>`;
+                let stringUserNameStartDownload = `<div class="col-sm-7 col-md-7 col-lg-7 text-center">${userName}</div>`;
 
                 //дополнительная информация, имена пользователей остановивших и возобновивших загрузку, процент выполнения загрузки
                 let majorInformation = '',
@@ -287,11 +287,13 @@ export default function createModalWindowFilterResults(obj, objectTimers) {
                     disabledButtonStop = ((obj.userIsImport === true) && (obj.taskImportStop === true)) ? '' : 'disabled="disabled"';
 
                     buttonExecute = `<button type="submit" data-download="loaded" class="btn btn-danger" ${disabledButtonStop}>Остановить</button>`;
-                } else if (obj.uploadFiles === 'suspended') {
-                    disabledButtonStop = ((obj.userIsImport === true) && (obj.taskImportResume === true)) ? '' : 'disabled="disabled"';
+                }
+                /*else if (obj.uploadFiles === 'suspended') {
+                                   disabledButtonStop = ((obj.userIsImport === true) && (obj.taskImportResume === true)) ? '' : 'disabled="disabled"';
 
-                    buttonExecute = `<button type="submit" data-download="suspended" class="btn btn-danger" ${disabledButtonStop}>Возобновить</button>`;
-                } else if (obj.uploadFiles === 'in line') {
+                                   buttonExecute = `<button type="submit" data-download="suspended" class="btn btn-danger" ${disabledButtonStop}>Возобновить</button>`;
+                               }*/
+                else if (obj.uploadFiles === 'in line') {
                     disabledButtonStop = ((obj.userIsImport === true) && (obj.taskImportCancel === true)) ? '' : 'disabled="disabled"';
 
                     buttonExecute = `<button type="submit" data-download="in line" class="btn btn-danger" ${disabledButtonStop}>Отменить</button>`;

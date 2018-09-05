@@ -42,7 +42,9 @@
  *     'timestampModify': <дата в формате unix>
  *     'uploadInfo': {
  *         'fileSelectionType': <отметка о загрузки всех файлов или выбранных только пользователем>,
- *         'numberFilesUpload': <количество скачиваемых в задаче файлов>
+ *         'numberFilesUpload': <количество скачиваемых в задаче файлов>,
+ *         'numberFilesUploaded': <количество загруженных в результате выполнения данной задачи файлов>,
+ *         'numberFilesUploadedError': <количество загруженных файлов с ошибками >
  *     } 
  *    }}
  *
@@ -122,7 +124,12 @@ class GlobalObject {
     }
 
     /**
-     * дабавить данные по выбранному типу, ID группы и ключу
+     * дабавляет данные по выбранному типу, ID группы и ключу
+     * @param type тип модифицированного объекта ('sources', 'processingTasks', 'downloadFilesTmp', 'writeStreamLinks')
+     * @param group группа (может быть ID задачи  или источника)
+     * @param key имя устанавливаемого поля
+     * @param value значение устанавливаемого поля
+     * 
      * пример:
      *    globalObject.setData('processingTasks', taskIndex, {
      *        'taskType': 'upload',
@@ -147,7 +154,11 @@ class GlobalObject {
     }
 
     /**
-     * модифицируем информацию 
+     * модифицирует информацию по выбранному типу 
+     * @param type тип модифицированного объекта ('sources', 'processingTasks', 'downloadFilesTmp', 'writeStreamLinks')
+     * @param group группа (может быть ID задачи  или источника)
+     * @param arrayData массив с изменяемыми данными
+     * 
      * пример:
      *    globalObject.modufyData('processingType', taskIndex, [
      *          ['status', 'in line'],
@@ -164,6 +175,39 @@ class GlobalObject {
             }
         });
 
+        return true;
+    }
+
+    /**
+     * увеличивает на единицу количество загруженных или количество загруженных с ошибкой файлов
+     * @param taskIndex ID задачи
+     * @param field имя поля значение которого нужно увеличить на единицу
+     * 
+     * пример: 
+     *     globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
+     */
+    incrementNumberFiles(taskIndex, field) {
+        let processingTaskInfo = this.obj.processingTasks[taskIndex];
+
+        console.log('******************** globalObject.incrementNumberFiles() *******************');
+        console.log(`taskIndex = ${taskIndex}, field = ${field}`);
+        console.log(this.obj.processingTasks);
+        console.log('typeof processingTaskInfo === \'undefined\' ' + (typeof processingTaskInfo === 'undefined'));
+
+        if (typeof processingTaskInfo === 'undefined') return false;
+
+        console.log("(typeof processingTaskInfo.uploadInfo === 'undefined') " + (typeof processingTaskInfo.uploadInfo === 'undefined'));
+        console.log("(typeof processingTaskInfo.uploadInfo[field] === 'undefined') " + (typeof processingTaskInfo.uploadInfo[field] === 'undefined'));
+
+        if ((typeof processingTaskInfo.uploadInfo === 'undefined') || (typeof processingTaskInfo.uploadInfo[field] === 'undefined')) return false;
+
+        console.log(`++++++++++++++++++++++++++++++ ` + this.obj.processingTasks[taskIndex].uploadInfo[field]);
+
+        this.obj.processingTasks[taskIndex].uploadInfo[field]++;
+
+        console.log(this.obj.processingTasks);
+
+        return true;
     }
 
     //удалить данные по выбранному типу и ID группы

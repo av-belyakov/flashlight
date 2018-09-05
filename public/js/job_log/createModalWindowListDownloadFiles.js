@@ -8,7 +8,6 @@
 'use strict';
 
 import { helpers } from '../common_helpers/helpers';
-import common from '../common';
 
 export default function createModalWindow(objData) {
     if (objData.information.length === 0) return;
@@ -99,6 +98,34 @@ function sendRequestNextListFiles() {
         return visibility;
     }
 
+    function eventsList(element) {
+        console.log(element);
+
+        // В разных версиях jQuery список событий получается по-разному
+        var events = element.data('events');
+        console.log(events);
+        if (events !== undefined) return events;
+
+        events = $.data(element, 'events');
+        console.log(events);
+        if (events !== undefined) return events;
+
+        events = $._data(element, 'events');
+        console.log(events);
+        if (events !== undefined) return events;
+
+        events = $._data(element, 'events');
+        console.log(events);
+        if (events !== undefined) return events;
+
+        return false;
+    }
+
+    let eventIsExist = eventsList($("#modalListDownloadFiles"));
+    console.log(eventIsExist);
+
+    //if (eventIsExist) return;
+
     document.getElementById('modalListDownloadFiles').addEventListener('scroll', function(e) {
         if (checkViewport('tableFinish')) {
             let mlldf = document.getElementById('modalLabelListDownloadFiles');
@@ -108,6 +135,11 @@ function sendRequestNextListFiles() {
             let modalLabel = document.querySelector('#modalLabelListDownloadFiles .modal-title');
             if (modalLabel.dataset.number_message_parts === null) return;
             let nextChunk = modalLabel.dataset.number_message_parts;
+
+            let arrayNumberMessageParts = nextChunk.split(',');
+            if (arrayNumberMessageParts.length === 3) {
+                if (arrayNumberMessageParts[0] === arrayNumberMessageParts[1]) return;
+            }
 
             socket.emit('next chunk files filter result', {
                 processingType: 'importFiles',

@@ -70,10 +70,10 @@ task_filtering_all_information:* (где * идентификатор задач
      - dateTimeStartUploadFiles (дата начала загрузки файлов)
      - dateTimeStopUploadFiles (дата остановки загрузки файлов)
      - dateTimeContinueUploadFiles (дата возобновления загрузки файлов)
+     - countFilesLoaded (количетво загруженных файлов)
      - countFilesLoadedError (количество файлов загруженных с ошибкой)
      - userNameLookedThisTask (имя пользователя рассмотревшего задачу)
      - countDirectoryFiltering (количество директорий для фильтрации)
-     - countFilesLoaded (количетво загруженных файлов)
      - uploadDirectoryFiles (путь до директории содержащей загруженные файлы)
      - uploadFiles (статус задачи по загрузке файлов 
           not loaded - не загружалась, 

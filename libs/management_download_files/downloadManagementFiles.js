@@ -88,8 +88,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                     });
                 });
         });
-    }).then((obj) => {
-        //если были выбранны все файлы необходимо отсеять уже загруженные
+    }).then(obj => {
         if (countDownloadSelectedFiles !== 0) return obj;
 
         return new Promise((resolve, reject) => {
@@ -123,7 +122,9 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
             'timestampModify': +new Date(),
             'uploadInfo': {
                 'fileSelectionType': filesSelectionType,
-                'numberFilesUpload': countUploadFiles
+                'numberFilesUpload': countUploadFiles,
+                'numberFilesUploaded': 0,
+                'numberFilesUploadedError': 0
             }
         });
 
@@ -165,7 +166,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
         }
 
         //если скачиваются ТОЛЬКО выбранные пользователем файлы
-        let { countChunk, list: newListFiles } = transformListIndexFiles(3, listFiles);
+        let { countChunk, list: newListFiles } = transformListIndexFiles(20, listFiles);
 
         debug(`count chunks = ${countChunk}`);
         debug(newListFiles);
@@ -297,8 +298,13 @@ module.exports.resumeRequestDownloadFiles = function(redis, sourceID, taskIndex,
 function transformListIndexFiles(sizeChunk, listFiles) {
     let newListFiles = [];
 
-    if (listFiles.length === 0) return { countChunk: 0, list: [] };
-    if (listFiles.length < sizeChunk) return { countChunk: 1, list: listFiles };
+    if (listFiles.length === 0) return {
+        countChunk: 0,
+        list: [
+            []
+        ]
+    };
+    if (listFiles.length < sizeChunk) return { countChunk: 1, list: [listFiles] };
 
     let countChunk = Math.floor(listFiles.length / sizeChunk);
     let y = listFiles.length / sizeChunk;

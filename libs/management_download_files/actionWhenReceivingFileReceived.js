@@ -1,13 +1,20 @@
 /*
  * Модуль вызываемый при удачном приеме загружаемого файла
  * 
- * Версия 0.2, дата релиза 30.08.2018
+ * Версия 0.3, дата релиза 05.09.2018
  * */
 
 'use strict';
 
 const globalObject = require('../../configure/globalObject');
 
+/**
+ * 
+ * @param {*} redis дискриптор соединения с БД
+ * @param {*} taskIndex идентификатор задачи
+ * @param {*} sourceID идентификатор источника
+ * @param {*} cb функция обратного вызова
+ */
 module.exports = function(redis, taskIndex, sourceID, cb) {
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
 

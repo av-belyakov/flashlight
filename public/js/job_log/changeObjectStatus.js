@@ -7,6 +7,44 @@
 'use strict';
 
 export default function(data) {
+
+    console.log(data);
+
+    function addButtonImport() {
+        let taskInformation = divTaskIndex.querySelector('input[type="hidden"]').dataset.taskinformation;
+
+        if (~taskInformation.indexOf(':')) {
+            let tmpInformation = taskInformation.split(':');
+            let dataAccessRights = tmpInformation[0];
+            let countFilesUploaded = tmpInformation[1];
+
+            if (countFilesUploaded > 0) {
+                let buttonTrash = divTaskIndex.querySelector('.glyphicon-trash').parentElement;
+
+                if (buttonTrash === null) return;
+
+                let elemSpan = document.createElement('span');
+                elemSpan.setAttribute('class', 'glyphicon glyphicon-import');
+
+                let elemButton = document.createElement('button');
+                elemButton.setAttribute('type', 'button');
+                elemButton.setAttribute('class', 'btn btn-default btn-sm btn-file');
+                elemButton.setAttribute('title', 'загрузить сетевой трафик');
+                elemButton.setAttribute('style', 'margin-right: 4px;');
+
+                if (dataAccessRights === false) elemButton.setAttribute('disabled', 'disabled');
+
+                elemButton.appendChild(elemSpan);
+                elemButton.appendChild(document.createTextNode(' импорт'));
+
+                buttonTrash.parentElement.insertBefore(elemButton, buttonTrash);
+                elemButton.addEventListener('click', (function(taskIndex) {
+                    socket.emit('get list all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
+                }).bind(null, data.informationPageJobLog.idElement));
+            }
+        }
+    }
+
     let divTaskIndex = document.getElementById('task_' + data.informationPageJobLog.idElement);
 
     if (divTaskIndex === null) return;
@@ -47,6 +85,11 @@ export default function(data) {
             let parentElement = buttonImport.parentElement.parentElement;
             parentElement.removeChild(buttonImport.parentElement);
         }
+
+        //добавление кнопки 'импорт'
+        if (data.informationPageJobLog.newStatus === 'partially loaded') {
+            addButtonImport();
+        }
     } else if (data.informationPageJobLog.typeElement === 'jobStatus') {
 
         divTaskIndex.children[6].innerHTML = objJobStatus[data.informationPageJobLog.newStatus][0];
@@ -54,38 +97,7 @@ export default function(data) {
 
         //добавление кнопки 'импорт'
         if (data.informationPageJobLog.newStatus === 'complete') {
-            let taskInformation = divTaskIndex.querySelector('input[type="hidden"]').dataset.taskinformation;
-
-            if (~taskInformation.indexOf(':')) {
-                let tmpInformation = taskInformation.split(':');
-                let dataAccessRights = tmpInformation[0];
-                let countFilesUploaded = tmpInformation[1];
-
-                if (countFilesUploaded > 0) {
-                    let buttonTrash = divTaskIndex.querySelector('.glyphicon-trash').parentElement;
-
-                    if (buttonTrash === null) return;
-
-                    let elemSpan = document.createElement('span');
-                    elemSpan.setAttribute('class', 'glyphicon glyphicon-import');
-
-                    let elemButton = document.createElement('button');
-                    elemButton.setAttribute('type', 'button');
-                    elemButton.setAttribute('class', 'btn btn-default btn-sm btn-file');
-                    elemButton.setAttribute('title', 'загрузить сетевой трафик');
-                    elemButton.setAttribute('style', 'margin-right: 4px;');
-
-                    if (dataAccessRights === false) elemButton.setAttribute('disabled', 'disabled');
-
-                    elemButton.appendChild(elemSpan);
-                    elemButton.appendChild(document.createTextNode(' импорт'));
-
-                    buttonTrash.parentElement.insertBefore(elemButton, buttonTrash);
-                    elemButton.addEventListener('click', (function(taskIndex) {
-                        socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
-                    }).bind(null, data.informationPageJobLog.idElement));
-                }
-            }
+            addButtonImport();
         }
     }
 }

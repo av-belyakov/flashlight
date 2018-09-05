@@ -11,6 +11,7 @@
 
 
 const showNotify = require('../../libs/showNotify');
+const globalObject = require('../../configure/globalObject');
 const writeLogFile = require('../../libs/writeLogFile');
 const getListsTaskProcessing = require('../../libs/getListsTaskProcessing');
 const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPage');
@@ -98,18 +99,18 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
     }
 
     function requestTypeExecuteCompleted() {
+        //увеличиваем на единицу количество загруженных файлов
+        globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
+
         new Promise((resolve, reject) => {
-            redis.hget(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', (err, countFilesLoaded) => {
-                if (err) reject(err);
-                else resolve(+countFilesLoaded);
-            });
-        }).then(countFilesLoaded => {
-            return new Promise((resolve, reject) => {
-                redis.hset(`task_filtering_all_information:${taskIndex}`, 'countFilesLoaded', ++countFilesLoaded, err => {
+            let obj = globalObject.getData('processingTasks', taskIndex);
+
+            redis.hset(`task_filtering_all_information:${taskIndex}`,
+                'countFilesLoaded', obj.uploadInfo.numberFilesUploaded,
+                err => {
                     if (err) reject(err);
                     else resolve();
                 });
-            });
         }).then(() => {
             return new Promise((resolve, reject) => {
                 preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {

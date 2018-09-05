@@ -16,7 +16,7 @@ webpackJsonp_name_([2],{
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(19);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__upload_files_log_submitQuery__ = __webpack_require__(169);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__upload_files_log_sortColumns__ = __webpack_require__(170);
@@ -347,7 +347,34 @@ function sortColumns(event) {
 
 /***/ }),
 
-/***/ 19:
+/***/ 2:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
+/**
+ * Общий вид сообщений
+ * 
+ * Версия 0.1, дата релиза 23.11.2017
+ */
+
+
+
+let showNotify = function (type, message) {
+    $.notify({
+        message: message
+    }, {
+        type: type,
+        placement: { from: 'top', align: 'right' },
+        offset: { x: 0, y: 60 }
+    });
+};
+
+
+
+/***/ }),
+
+/***/ 20:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -428,40 +455,13 @@ function sortColumns(event) {
 
 /***/ }),
 
-/***/ 2:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
-/**
- * Общий вид сообщений
- * 
- * Версия 0.1, дата релиза 23.11.2017
- */
-
-
-
-let showNotify = function (type, message) {
-    $.notify({
-        message: message
-    }, {
-        type: type,
-        placement: { from: 'top', align: 'right' },
-        offset: { x: 0, y: 60 }
-    });
-};
-
-
-
-/***/ }),
-
 /***/ 28:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createModalWindowFilterResults;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(20);
 /**
  * Формирование модального окна с результатами фильтрации
  * 
@@ -701,11 +701,11 @@ function createModalWindowFilterResults(obj, objectTimers) {
 
                 //имя пользователя, время начала фильтрации и ее окончание
                 let uploadFiles = obj.uploadFiles === 'null' ? '' : `импорт файлов: <strong>${objLoadingStatus[obj.uploadFiles]}</strong>`;
-                let stringUploadFiles = `<div class="col-sm-4 col-md-4 col-lg-4 text-left" style="padding-left: 40px;">${uploadFiles}</div>`;
+                let stringUploadFiles = `<div class="col-sm-5 col-md-5 col-lg-5 text-left" style="padding-left: 40px;">${uploadFiles}</div>`;
                 let userName = obj.userNameStartUploadFiles === 'null' ? '' : 'пользователь: ' + obj.userNameStartUploadFiles;
                 if (obj.userNameStopUploadFiles !== 'null') userName = 'пользователь: ' + obj.userNameStartUploadFiles;
 
-                let stringUserNameStartDownload = `<div class="col-sm-8 col-md-8 col-lg-8 text-center">${userName}</div>`;
+                let stringUserNameStartDownload = `<div class="col-sm-7 col-md-7 col-lg-7 text-center">${userName}</div>`;
 
                 //дополнительная информация, имена пользователей остановивших и возобновивших загрузку, процент выполнения загрузки
                 let majorInformation = '',
@@ -752,15 +752,16 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     disabledButtonStop = obj.userIsImport === true && obj.taskImportStop === true ? '' : 'disabled="disabled"';
 
                     buttonExecute = `<button type="submit" data-download="loaded" class="btn btn-danger" ${disabledButtonStop}>Остановить</button>`;
-                } else if (obj.uploadFiles === 'suspended') {
-                    disabledButtonStop = obj.userIsImport === true && obj.taskImportResume === true ? '' : 'disabled="disabled"';
-
-                    buttonExecute = `<button type="submit" data-download="suspended" class="btn btn-danger" ${disabledButtonStop}>Возобновить</button>`;
-                } else if (obj.uploadFiles === 'in line') {
-                    disabledButtonStop = obj.userIsImport === true && obj.taskImportCancel === true ? '' : 'disabled="disabled"';
-
-                    buttonExecute = `<button type="submit" data-download="in line" class="btn btn-danger" ${disabledButtonStop}>Отменить</button>`;
                 }
+                /*else if (obj.uploadFiles === 'suspended') {
+                                   disabledButtonStop = ((obj.userIsImport === true) && (obj.taskImportResume === true)) ? '' : 'disabled="disabled"';
+                                    buttonExecute = `<button type="submit" data-download="suspended" class="btn btn-danger" ${disabledButtonStop}>Возобновить</button>`;
+                               }*/
+                else if (obj.uploadFiles === 'in line') {
+                        disabledButtonStop = obj.userIsImport === true && obj.taskImportCancel === true ? '' : 'disabled="disabled"';
+
+                        buttonExecute = `<button type="submit" data-download="in line" class="btn btn-danger" ${disabledButtonStop}>Отменить</button>`;
+                    }
 
                 let button = '<div class="col-sm-12 col-md-12 col-lg-12 text-right" style="margin-top: 10px;">' + buttonExecute + '</div>';
 
@@ -944,7 +945,6 @@ function createTableTaskResultFilter(objData) {
 
     //загрузка отфильтрованного сетевого трафика
     function importFiles(taskIndex) {
-        //socket.emit('import all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
         socket.emit('get list all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
     }
 
