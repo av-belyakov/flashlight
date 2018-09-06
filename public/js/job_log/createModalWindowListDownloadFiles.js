@@ -38,13 +38,10 @@ export default function createModalWindow(objData) {
         });
     })();
 
-    //обработчик на скролинк, для автоматической подгрузки списка файлов
-    (function() {
-        sendRequestNextListFiles();
-    })();
-
     //обработчик на обновление списка найденных в результате фильтрации файлов
     (function() {
+        if (document.getElementById('modalListDownloadFiles').hasAttribute('funcScroll')) return;
+
         socket.on('next list chunk files filter result', function(data) {
             let mlldf = document.getElementById('modalLabelListDownloadFiles');
             let taskIndex = mlldf.dataset.taskIndex;
@@ -87,6 +84,11 @@ export default function createModalWindow(objData) {
         });
     })();
 
+    //обработчик на скролинк, для автоматической подгрузки списка файлов
+    (function() {
+        sendRequestNextListFiles();
+    })();
+
     $('#modalListDownloadFiles').modal('show');
 }
 
@@ -95,38 +97,16 @@ function sendRequestNextListFiles() {
         let myElement = document.getElementById(id),
             landmark = myElement.getBoundingClientRect(),
             visibility = landmark.top + myElement.scrollHeight > 0 && landmark.left + myElement.scrollWidth > 0 && landmark.bottom - myElement.scrollHeight < document.documentElement.clientHeight && landmark.right - myElement.scrollWidth < document.documentElement.clientWidth;
+
         return visibility;
     }
 
-    function eventsList(element) {
-        console.log(element);
+    let mldfElement = document.getElementById('modalListDownloadFiles');
 
-        // В разных версиях jQuery список событий получается по-разному
-        var events = element.data('events');
-        console.log(events);
-        if (events !== undefined) return events;
+    if (mldfElement.hasAttribute('funcScroll')) return;
 
-        events = $.data(element, 'events');
-        console.log(events);
-        if (events !== undefined) return events;
-
-        events = $._data(element, 'events');
-        console.log(events);
-        if (events !== undefined) return events;
-
-        events = $._data(element, 'events');
-        console.log(events);
-        if (events !== undefined) return events;
-
-        return false;
-    }
-
-    let eventIsExist = eventsList($("#modalListDownloadFiles"));
-    console.log(eventIsExist);
-
-    //if (eventIsExist) return;
-
-    document.getElementById('modalListDownloadFiles').addEventListener('scroll', function(e) {
+    mldfElement.setAttribute('funcScroll', '');
+    mldfElement.addEventListener('scroll', function(e) {
         if (checkViewport('tableFinish')) {
             let mlldf = document.getElementById('modalLabelListDownloadFiles');
             let taskIndex = mlldf.dataset.taskIndex;
@@ -152,7 +132,6 @@ function sendRequestNextListFiles() {
 }
 
 function createTable(data, objFileDownload) {
-
     let table = `<div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
         <table class="table table-striped table-hover table-sm">
             <thead>

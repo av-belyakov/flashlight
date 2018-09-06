@@ -7,7 +7,7 @@ webpackJsonp_name_([3],{
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__index_page_checkChangeAdminPassword__ = __webpack_require__(149);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__commons_createModalWindowFilterResults__ = __webpack_require__(28);
@@ -18,7 +18,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__ = __webpack_require__(154);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__index_page_changeInfoMinWidget__ = __webpack_require__(155);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__index_page_modalWindowSourceControl__ = __webpack_require__(156);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__index_page_modalWindowFilterResults__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__index_page_modalWindowFilterResults__ = __webpack_require__(19);
 
 
 
@@ -160,14 +160,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
             if (divInformationWidget === null && elemMinWidget === null) return;
 
-            if (divInformationWidget !== null) {
-                if (divInformationWidget.style.display === 'none') {
-                    return divInformationWidget.parentElement.removeChild(divInformationWidget);
-                }
-                socket.emit('get all information for source id', { sourceId: data.sourceId });
-            } else {
-                socket.emit('get information for source id', { sourceId: data.sourceId });
+            if (divInformationWidget === null) {
+                return socket.emit('get information for source id', { sourceId: data.sourceId });
             }
+
+            if (divInformationWidget.style.display === 'none') {
+                return divInformationWidget.parentElement.removeChild(divInformationWidget);
+            }
+
+            socket.emit('get all information for source id', { sourceId: data.sourceId });
         });
 
         //вывод подробной информации об источнике и добавление задачи на фильтрацию
@@ -182,7 +183,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод информации о добавлении новой задачи для выгрузки файлов
         socket.on('task upload files added', function (data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 Object(__WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__["a" /* default */])(data.information);
             }
 
@@ -195,13 +196,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         socket.on('update the download progress', function (data) {
             if (timerId !== null) clearTimeout(timerId);
 
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 Object(__WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__["a" /* default */])(data.information);
             }
 
             if (document.getElementById('progress:' + data.information.taskIndex) !== null) {
                 let templateProgress = '<div class="progress" style="margin-top: 10px;">';
-                templateProgress += `<div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: ${data.information.fileUploadedPercent}%">${data.information.fileUploadedPercent}%</div></div>`;
+                templateProgress += `<div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 
+                ${data.information.fileUploadedPercent}%">${data.information.fileUploadedPercent}%</div></div>`;
 
                 document.getElementById('progress:' + data.information.taskIndex).innerHTML = templateProgress;
             }
@@ -211,7 +213,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод информации об успешной загрузке файла
         socket.on('file successfully downloaded', function (data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 Object(__WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__["a" /* default */])(data.information);
             }
 
@@ -234,7 +236,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод информации о повторной передачи файлов принятых с ошибкой
         socket.on('file execute retransmission', function (data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 Object(__WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__["a" /* default */])(data.information);
             }
 
@@ -244,14 +246,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод информации об успешной загрузке ВСЕХ файлов
         socket.on('all files successfully downloaded', function (data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 Object(__WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__["a" /* default */])(data.information);
             }
 
             document.getElementById('progress:' + data.information.taskIndex).innerHTML = '<h4 class="text-center" style="color: #9FD783;">загрузка завершена</h4>';
             document.getElementById('file_information:' + data.information.taskIndex).innerHTML = 'Загружено файлов: ' + data.information.countFilesLoaded;
 
-            setTimeout(__WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__["a" /* default */].bind(null, 'download:' + data.information.taskIndex), 30000);
+            setTimeout(__WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__["a" /* default */].bind(null, data.information.taskIndex), 30000);
         });
 
         //изменение статуса задачи по загрузки файлов
@@ -445,7 +447,7 @@ function createElementInformationFiltering(objData) {
     let divOne = document.createElement('div');
     divOne.setAttribute('style', 'margin-bottom: 5px; height: 95px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer');
     divOne.setAttribute('id', objData.taskIndex);
-    divOne.setAttribute('data-source-id', objData.taskIndex);
+    divOne.setAttribute('data-task-index', objData.taskIndex);
 
     divTwo.appendChild(divSourceNumber);
     divTwo.appendChild(divProgress);
@@ -499,8 +501,8 @@ function createElementInformationFiltering(objData) {
     //формируем основной div элемент
     let divOne = document.createElement('div');
     divOne.setAttribute('style', 'margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer');
-    divOne.setAttribute('id', 'download:' + objData.taskIndex);
-    divOne.setAttribute('data-source-id', objData.sourceId);
+    divOne.setAttribute('id', objData.taskIndex);
+    divOne.setAttribute('data-task-index', objData.taskIndex);
 
     divTwo.appendChild(divSourceNumber);
     divTwo.appendChild(divSourceShortName);
@@ -1230,7 +1232,7 @@ function IPv4_BinaryDotQuad(binaryString) {
 
 /***/ }),
 
-/***/ 20:
+/***/ 19:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1251,8 +1253,8 @@ function IPv4_BinaryDotQuad(binaryString) {
         let target = event.target;
 
         while (target !== divLeftContent) {
-            if (target.dataset.hasOwnProperty('sourceId')) {
-                let taskIndex = target.dataset.sourceId;
+            if (target.dataset.hasOwnProperty('taskIndex')) {
+                let taskIndex = target.dataset.taskIndex;
 
                 //генерируем событие (запрос всей информации)
                 socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
@@ -1317,7 +1319,7 @@ function IPv4_BinaryDotQuad(binaryString) {
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createModalWindowFilterResults;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(19);
 /**
  * Формирование модального окна с результатами фильтрации
  * 
@@ -1486,7 +1488,11 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'stop': 'остановлена'
                 };
 
+                console.log(obj);
+
                 let taskFilterSettings = JSON.parse(obj.filterSettings);
+
+                console.log(taskFilterSettings);
 
                 let ipaddress = taskFilterSettings.ipaddress + '';
                 let listIpaddress = ipaddress === 'null' ? '' : ipaddress.replace(new RegExp(',', 'g'), '<br>');

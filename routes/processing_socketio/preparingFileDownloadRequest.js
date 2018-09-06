@@ -46,7 +46,7 @@ module.exports = function(data, socketIo, redis, callback) {
                 resolve(sourceID);
             });
         });
-    }).then((sourceID) => {
+    }).then(sourceID => {
         //добавить задачу в очередь (визуализация выполнения задачи)
         return new Promise((resolve, reject) => {
             preparingVisualizationDownloadFiles.preparingVisualizationAddTurn(redis, data.taskIndex, sourceID, (err, data) => {
@@ -60,7 +60,7 @@ module.exports = function(data, socketIo, redis, callback) {
                 resolve(taskIndex);
             });
         });
-    }).then((taskIndex) => {
+    }).then(taskIndex => {
         //сообщения об изменении статуса задач
         return new Promise((resolve, reject) => {
             getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
@@ -68,7 +68,7 @@ module.exports = function(data, socketIo, redis, callback) {
                 else resolve(objTaskStatus);
             });
         });
-    }).then((objTaskStatus) => {
+    }).then(objTaskStatus => {
         return new Promise((resolve, reject) => {
             getListsTaskProcessing((err, objListsTaskProcessing) => {
                 if (err) reject(err);
@@ -78,7 +78,7 @@ module.exports = function(data, socketIo, redis, callback) {
                 });
             });
         });
-    }).then((obj) => {
+    }).then(obj => {
         //только для пользователя инициировавшего загрузку
         socketIo.emit('change object status', {
             processingType: 'showChangeObject',
@@ -94,7 +94,7 @@ module.exports = function(data, socketIo, redis, callback) {
         });
 
         callback(null);
-    }).catch((err) => {
+    }).catch(err => {
         callback(err);
     });
 };

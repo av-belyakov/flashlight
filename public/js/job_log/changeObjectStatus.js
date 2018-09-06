@@ -7,9 +7,6 @@
 'use strict';
 
 export default function(data) {
-
-    console.log(data);
-
     function addButtonImport() {
         let taskInformation = divTaskIndex.querySelector('input[type="hidden"]').dataset.taskinformation;
 

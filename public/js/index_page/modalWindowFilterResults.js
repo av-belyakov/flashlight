@@ -15,8 +15,8 @@ export default {
         let target = event.target;
 
         while (target !== divLeftContent) {
-            if (target.dataset.hasOwnProperty('sourceId')) {
-                let taskIndex = target.dataset.sourceId;
+            if (target.dataset.hasOwnProperty('taskIndex')) {
+                let taskIndex = target.dataset.taskIndex;
 
                 //генерируем событие (запрос всей информации)
                 socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });

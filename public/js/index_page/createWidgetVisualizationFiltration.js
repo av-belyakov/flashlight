@@ -69,7 +69,7 @@ function createElementInformationFiltering(objData) {
     let divOne = document.createElement('div');
     divOne.setAttribute('style', 'margin-bottom: 5px; height: 95px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer');
     divOne.setAttribute('id', objData.taskIndex);
-    divOne.setAttribute('data-source-id', objData.taskIndex);
+    divOne.setAttribute('data-task-index', objData.taskIndex);
 
     divTwo.appendChild(divSourceNumber);
     divTwo.appendChild(divProgress);

@@ -16,7 +16,7 @@ webpackJsonp_name_([2],{
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__upload_files_log_submitQuery__ = __webpack_require__(169);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__upload_files_log_sortColumns__ = __webpack_require__(170);
@@ -347,34 +347,7 @@ function sortColumns(event) {
 
 /***/ }),
 
-/***/ 2:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
-/**
- * Общий вид сообщений
- * 
- * Версия 0.1, дата релиза 23.11.2017
- */
-
-
-
-let showNotify = function (type, message) {
-    $.notify({
-        message: message
-    }, {
-        type: type,
-        placement: { from: 'top', align: 'right' },
-        offset: { x: 0, y: 60 }
-    });
-};
-
-
-
-/***/ }),
-
-/***/ 20:
+/***/ 19:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -395,8 +368,8 @@ let showNotify = function (type, message) {
         let target = event.target;
 
         while (target !== divLeftContent) {
-            if (target.dataset.hasOwnProperty('sourceId')) {
-                let taskIndex = target.dataset.sourceId;
+            if (target.dataset.hasOwnProperty('taskIndex')) {
+                let taskIndex = target.dataset.taskIndex;
 
                 //генерируем событие (запрос всей информации)
                 socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
@@ -455,13 +428,40 @@ let showNotify = function (type, message) {
 
 /***/ }),
 
+/***/ 2:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
+/**
+ * Общий вид сообщений
+ * 
+ * Версия 0.1, дата релиза 23.11.2017
+ */
+
+
+
+let showNotify = function (type, message) {
+    $.notify({
+        message: message
+    }, {
+        type: type,
+        placement: { from: 'top', align: 'right' },
+        offset: { x: 0, y: 60 }
+    });
+};
+
+
+
+/***/ }),
+
 /***/ 28:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createModalWindowFilterResults;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(19);
 /**
  * Формирование модального окна с результатами фильтрации
  * 
@@ -630,7 +630,11 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'stop': 'остановлена'
                 };
 
+                console.log(obj);
+
                 let taskFilterSettings = JSON.parse(obj.filterSettings);
+
+                console.log(taskFilterSettings);
 
                 let ipaddress = taskFilterSettings.ipaddress + '';
                 let listIpaddress = ipaddress === 'null' ? '' : ipaddress.replace(new RegExp(',', 'g'), '<br>');

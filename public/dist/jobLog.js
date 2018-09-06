@@ -16,7 +16,7 @@ webpackJsonp_name_([1],{
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__common__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__job_log_submitQuery__ = __webpack_require__(97);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__job_log_getSelectedList__ = __webpack_require__(159);
@@ -253,9 +253,6 @@ function getSelectedList(obj) {
 
 
 /* harmony default export */ __webpack_exports__["a"] = (function (data) {
-
-    console.log(data);
-
     function addButtonImport() {
         let taskInformation = divTaskIndex.querySelector('input[type="hidden"]').dataset.taskinformation;
 
@@ -462,13 +459,10 @@ function createModalWindow(objData) {
         });
     })();
 
-    //обработчик на скролинк, для автоматической подгрузки списка файлов
-    (function () {
-        sendRequestNextListFiles();
-    })();
-
     //обработчик на обновление списка найденных в результате фильтрации файлов
     (function () {
+        if (document.getElementById('modalListDownloadFiles').hasAttribute('funcScroll')) return;
+
         socket.on('next list chunk files filter result', function (data) {
             let mlldf = document.getElementById('modalLabelListDownloadFiles');
             let taskIndex = mlldf.dataset.taskIndex;
@@ -512,6 +506,11 @@ function createModalWindow(objData) {
         });
     })();
 
+    //обработчик на скролинк, для автоматической подгрузки списка файлов
+    (function () {
+        sendRequestNextListFiles();
+    })();
+
     $('#modalListDownloadFiles').modal('show');
 }
 
@@ -520,38 +519,16 @@ function sendRequestNextListFiles() {
         let myElement = document.getElementById(id),
             landmark = myElement.getBoundingClientRect(),
             visibility = landmark.top + myElement.scrollHeight > 0 && landmark.left + myElement.scrollWidth > 0 && landmark.bottom - myElement.scrollHeight < document.documentElement.clientHeight && landmark.right - myElement.scrollWidth < document.documentElement.clientWidth;
+
         return visibility;
     }
 
-    function eventsList(element) {
-        console.log(element);
+    let mldfElement = document.getElementById('modalListDownloadFiles');
 
-        // В разных версиях jQuery список событий получается по-разному
-        var events = element.data('events');
-        console.log(events);
-        if (events !== undefined) return events;
+    if (mldfElement.hasAttribute('funcScroll')) return;
 
-        events = $.data(element, 'events');
-        console.log(events);
-        if (events !== undefined) return events;
-
-        events = $._data(element, 'events');
-        console.log(events);
-        if (events !== undefined) return events;
-
-        events = $._data(element, 'events');
-        console.log(events);
-        if (events !== undefined) return events;
-
-        return false;
-    }
-
-    let eventIsExist = eventsList($("#modalListDownloadFiles"));
-    console.log(eventIsExist);
-
-    //if (eventIsExist) return;
-
-    document.getElementById('modalListDownloadFiles').addEventListener('scroll', function (e) {
+    mldfElement.setAttribute('funcScroll', '');
+    mldfElement.addEventListener('scroll', function (e) {
         if (checkViewport('tableFinish')) {
             let mlldf = document.getElementById('modalLabelListDownloadFiles');
             let taskIndex = mlldf.dataset.taskIndex;
@@ -577,7 +554,6 @@ function sendRequestNextListFiles() {
 }
 
 function createTable(data, objFileDownload) {
-
     let table = `<div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
         <table class="table table-striped table-hover table-sm">
             <thead>
@@ -679,34 +655,7 @@ function sortColumns(event) {
 
 /***/ }),
 
-/***/ 2:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
-/**
- * Общий вид сообщений
- * 
- * Версия 0.1, дата релиза 23.11.2017
- */
-
-
-
-let showNotify = function (type, message) {
-    $.notify({
-        message: message
-    }, {
-        type: type,
-        placement: { from: 'top', align: 'right' },
-        offset: { x: 0, y: 60 }
-    });
-};
-
-
-
-/***/ }),
-
-/***/ 20:
+/***/ 19:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -727,8 +676,8 @@ let showNotify = function (type, message) {
         let target = event.target;
 
         while (target !== divLeftContent) {
-            if (target.dataset.hasOwnProperty('sourceId')) {
-                let taskIndex = target.dataset.sourceId;
+            if (target.dataset.hasOwnProperty('taskIndex')) {
+                let taskIndex = target.dataset.taskIndex;
 
                 //генерируем событие (запрос всей информации)
                 socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
@@ -787,13 +736,40 @@ let showNotify = function (type, message) {
 
 /***/ }),
 
+/***/ 2:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
+/**
+ * Общий вид сообщений
+ * 
+ * Версия 0.1, дата релиза 23.11.2017
+ */
+
+
+
+let showNotify = function (type, message) {
+    $.notify({
+        message: message
+    }, {
+        type: type,
+        placement: { from: 'top', align: 'right' },
+        offset: { x: 0, y: 60 }
+    });
+};
+
+
+
+/***/ }),
+
 /***/ 28:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createModalWindowFilterResults;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__index_page_modalWindowFilterResults__ = __webpack_require__(19);
 /**
  * Формирование модального окна с результатами фильтрации
  * 
@@ -962,7 +938,11 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'stop': 'остановлена'
                 };
 
+                console.log(obj);
+
                 let taskFilterSettings = JSON.parse(obj.filterSettings);
+
+                console.log(taskFilterSettings);
 
                 let ipaddress = taskFilterSettings.ipaddress + '';
                 let listIpaddress = ipaddress === 'null' ? '' : ipaddress.replace(new RegExp(',', 'g'), '<br>');

@@ -144,14 +144,15 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
             if (divInformationWidget === null && elemMinWidget === null) return;
 
-            if (divInformationWidget !== null) {
-                if (divInformationWidget.style.display === 'none') {
-                    return divInformationWidget.parentElement.removeChild(divInformationWidget);
-                }
-                socket.emit('get all information for source id', { sourceId: data.sourceId });
-            } else {
-                socket.emit('get information for source id', { sourceId: data.sourceId });
+            if (divInformationWidget === null) {
+                return socket.emit('get information for source id', { sourceId: data.sourceId });
             }
+
+            if (divInformationWidget.style.display === 'none') {
+                return divInformationWidget.parentElement.removeChild(divInformationWidget);
+            }
+
+            socket.emit('get all information for source id', { sourceId: data.sourceId });
         });
 
         //вывод подробной информации об источнике и добавление задачи на фильтрацию
@@ -166,7 +167,7 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод информации о добавлении новой задачи для выгрузки файлов
         socket.on('task upload files added', function(data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }
 
@@ -179,13 +180,14 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
         socket.on('update the download progress', function(data) {
             if (timerId !== null) clearTimeout(timerId);
 
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }
 
             if (document.getElementById('progress:' + data.information.taskIndex) !== null) {
                 let templateProgress = '<div class="progress" style="margin-top: 10px;">';
-                templateProgress += `<div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: ${data.information.fileUploadedPercent}%">${data.information.fileUploadedPercent}%</div></div>`;
+                templateProgress += `<div class="progress-bar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 
+                ${data.information.fileUploadedPercent}%">${data.information.fileUploadedPercent}%</div></div>`;
 
                 document.getElementById('progress:' + data.information.taskIndex).innerHTML = templateProgress;
             }
@@ -195,7 +197,7 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод информации об успешной загрузке файла
         socket.on('file successfully downloaded', function(data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }
 
@@ -218,7 +220,7 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод информации о повторной передачи файлов принятых с ошибкой
         socket.on('file execute retransmission', function(data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }
 
@@ -228,14 +230,14 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод информации об успешной загрузке ВСЕХ файлов
         socket.on('all files successfully downloaded', function(data) {
-            if (document.getElementById('download:' + data.information.taskIndex) === null) {
+            if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }
 
             document.getElementById('progress:' + data.information.taskIndex).innerHTML = '<h4 class="text-center" style="color: #9FD783;">загрузка завершена</h4>';
             document.getElementById('file_information:' + data.information.taskIndex).innerHTML = 'Загружено файлов: ' + data.information.countFilesLoaded;
 
-            setTimeout(deleteElementInformationFiltering.bind(null, 'download:' + data.information.taskIndex), 30000);
+            setTimeout(deleteElementInformationFiltering.bind(null, data.information.taskIndex), 30000);
         });
 
         //изменение статуса задачи по загрузки файлов

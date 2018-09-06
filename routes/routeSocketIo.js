@@ -667,6 +667,10 @@ module.exports.eventHandling = function(socketIo) {
 
     /* получить информацию по выбранной задачи фильтрации */
     socketIo.on('get all information for task index', function(data) {
+
+        debug('EVENT "GET ALL INFORMATION FOR TASK INDEX"');
+        debug(data);
+
         checkAccessRights(socketIo, 'management_tasks_filter', 'read', function(trigger) {
             if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для просмотра полной информации');
 

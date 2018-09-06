@@ -89,7 +89,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                 });
         });
     }).then(obj => {
-        if (countDownloadSelectedFiles !== 0) return obj;
+        //if (countDownloadSelectedFiles !== 0) return obj;
 
         return new Promise((resolve, reject) => {
             redis.hvals(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, (err, listValues) => {

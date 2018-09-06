@@ -76,7 +76,7 @@ module.exports = {
             'jquery': path.join(__dirname, 'node_modules/jquery/src/jquery'),
             //jquery: 'jquery/dist/jquery.min.js',
             'socket.io-client': 'socket.io-client/dist/socket.io.js',
-            'socket.io-stream': 'socket.io-stream/socket.io-stream.js'
+            'socket.io-stream': 'socket.io-stream/socket.io-stream.js',
         }
     },
 
