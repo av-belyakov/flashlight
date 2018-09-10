@@ -106,7 +106,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
             let obj = globalObject.getData('processingTasks', taskIndex);
 
             redis.hset(`task_filtering_all_information:${taskIndex}`,
-                'countFilesLoaded', obj.uploadInfo.numberFilesUploaded,
+                'countFilesLoaded', obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles,
                 err => {
                     if (err) reject(err);
                     else resolve();

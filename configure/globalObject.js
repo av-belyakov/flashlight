@@ -45,6 +45,7 @@
  *         'numberFilesUpload': <количество скачиваемых в задаче файлов>,
  *         'numberFilesUploaded': <количество загруженных в результате выполнения данной задачи файлов>,
  *         'numberFilesUploadedError': <количество загруженных файлов с ошибками >
+ *         'numberPreviouslyDownloadedFiles': <количество файлов загруженных ранее>
  *     } 
  *    }}
  *

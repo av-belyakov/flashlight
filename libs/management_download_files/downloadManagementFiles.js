@@ -77,6 +77,7 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
             redis.hmget(`task_filtering_all_information:${taskIndex}`,
                 'countFilesFound',
                 'directoryFiltering',
+                'countFilesLoaded',
                 (err, result) => {
                     if (err) return reject(err);
 
@@ -84,29 +85,35 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
 
                     resolve({
                         'countUploadFiles': countFilesUpload,
-                        'directoryFiltering': result[1]
+                        'directoryFiltering': result[1],
+                        'countFilesLoaded': result[2]
                     });
                 });
         });
     }).then(obj => {
-        //if (countDownloadSelectedFiles !== 0) return obj;
+        if (countDownloadSelectedFiles > 0) return obj;
 
         return new Promise((resolve, reject) => {
             redis.hvals(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, (err, listValues) => {
                 if (err) return reject(err);
 
                 let countUploaded = 0;
-                for (let i = 0; i < listValues; i++) {
+                for (let i = 0; i < listValues.length; i++) {
                     let fileInfo = JSON.parse(listValues[i]);
-                    if (typeof fileInfo.fileDownloaded !== 'undefined' && fileInfo.fileDownloaded) countUploaded++;
+
+                    if ((typeof fileInfo.fileDownloaded !== 'undefined') && fileInfo.fileDownloaded) countUploaded++;
                 }
+
+                debug('---------------------');
+                debug(countUploaded);
+                debug('---------------------');
 
                 obj.countUploadFiles -= countUploaded;
 
                 resolve(obj);
             });
         });
-    }).then(({ countUploadFiles, directoryFiltering }) => {
+    }).then(({ countUploadFiles, directoryFiltering, countFilesLoaded }) => {
         let filesSelectionType = (countDownloadSelectedFiles === 0) ? 'all files' : 'chosen files';
 
         debug('*-*-*-*-*-*-*-*-*--*-*---*-*-*-*-**-*-*-');
@@ -124,7 +131,8 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                 'fileSelectionType': filesSelectionType,
                 'numberFilesUpload': countUploadFiles,
                 'numberFilesUploaded': 0,
-                'numberFilesUploadedError': 0
+                'numberFilesUploadedError': 0,
+                'numberPreviouslyDownloadedFiles': +countFilesLoaded
             }
         });
 

@@ -146,7 +146,6 @@ function getShortSourcesInformationTurn(redis, taskIndex, sourceID, done) {
                 if (err) return func(err);
 
                 let objTaskInfo = globalObject.getData('processingTasks', taskIndex);
-
                 let obj = {
                     'taskIndex': taskIndex,
                     'sourceId': sourceID,
