@@ -1,29 +1,27 @@
-/*
- * Выполняется при получении от источника сообщения
- * messageType: download_files
- * processing: cancel
- *
- * При этом удаляется информация из следующих таблиц
- * - task_turn_downloading_files
- * - task_implementation_downloading_files
- *
- * В таблице task_filtering_all_information:* изменяются следующие поля:
- * - uploadFiles,
- * - uploadDirectoryFiles,
- * - userNameStartUploadFiles,
- * - dateTimeStartUploadFiles
- *
- * Полностью удаляется таблица task_loading_files:*
- *
- * Версия 0.1, дата релиза 16.09.2016
- * */
+/**
+ * Модуль обработки отмены еще не выполняемой задачи по скачивания файлов
+ * 
+ * Версия 0.1, дата релиза 03.10.2018
+ */
 
 'use strict';
 
 const async = require('async');
 
-module.exports = function(redis, taskIndex, func) {
-    let taskIndexHash = (~taskIndex.indexOf(':')) ? taskIndex.split(':')[1] : taskIndex;
+/**
+ * 
+ * @param {*} taskIndex 
+ * @param {*} redis 
+ * @param {*} func 
+ */
+module.exports = function(taskIndex, redis, func) {
+
+    /* !!!! ЭТО ВСЕГО ЛИШЬ ШАБЛОН, НЕОБХОДИМА ДОРАБОТКА */
+
+    checkAccessRights(socketIo, 'management_tasks_import', 'cancel', function(trigger) {
+        if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
+
+    });
 
     async.parallel([
         //удаляем элемент из таблицы task_turn_downloading_files

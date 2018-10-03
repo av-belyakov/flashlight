@@ -20,7 +20,7 @@ const errorsType = require('../../errors/errorsType');
 const objWebsocket = require('../../configure/objWebsocket.js');
 const writeLogFile = require('../writeLogFile');
 const globalObject = require('../../configure/globalObject');
-const actionWhenReceivingCancel = require('./actionWhenReceivingCancel');
+const actionWhenReceivingStop = require('./actionWhenReceivingStop');
 const checkQueueTaskDownloadFiles = require('./checkQueueTaskDownloadFiles');
 const actionWhenReceivingComplete = require('./actionWhenReceivingComplete');
 const actionWhenReceivingFileReceived = require('./actionWhenReceivingFileReceived');
@@ -50,19 +50,17 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
         }
     };
 
-    debug('------------ RESIVED MESSAGE "ready" for Moth_go ---------------');
-    debug(objData);
+    /*
+        debug('------------ RESIVED MESSAGE "ready" for Moth_go ---------------');
+        debug(objData);
 
-    //удаляем временный файл если он есть
-    debug('1. удаляем временный файл если он есть');
+        //удаляем временный файл если он есть
+        debug('1. удаляем временный файл если он есть');
+    */
 
     fs.access(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, fs.constants.R_OK, err => {
         if (!err) fs.unlink(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, err => {
-            if (err) {
-                debug(err);
-
-                writeLogFile.writeLog(`\t${err.toString()}`);
-            }
+            if (err) writeLogFile.writeLog(`\t${err.toString()}`);
         });
     });
 
@@ -71,7 +69,7 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             //получаем краткое название источника
             function(cb) {
 
-                debug('2. получаем краткое название источника');
+                //                debug('2. получаем краткое название источника');
 
                 redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortSourceName) => {
                     if (err) cb(err);
@@ -81,8 +79,8 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             //формируем массив с данными о расположении загружаемых файлов
             function(shortSourceName, cb) {
 
-                debug(shortSourceName);
-                debug('3. формируем массив с данными о расположении загружаемых файлов');
+                //                debug(shortSourceName);
+                //                debug('3. формируем массив с данными о расположении загружаемых файлов');
 
                 let newArray = shortSourceName.split(' ');
                 let sourceIdShortName = newArray.join('_');
@@ -112,8 +110,8 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             //выполняем формирование директорий
             function(arrayDownloadDirectoryName, cb) {
 
-                debug(arrayDownloadDirectoryName);
-                debug('4. выполняем формирование директорий');
+                //                debug(arrayDownloadDirectoryName);
+                //                debug('4. выполняем формирование директорий');
 
                 let sourceId = arrayDownloadDirectoryName.splice(0, 1);
                 let mainDownloadDirectoryName = '/' + config.get('downloadDirectory:directoryName') + '/';
@@ -139,8 +137,8 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             //изменяем в таблице task_filtering_all_information:* ряд значений
             function(uploadDirectoryFiles, cb) {
 
-                debug(uploadDirectoryFiles);
-                debug('5. изменяем в таблице task_filtering_all_information:* ряд значений');
+                //                debug(uploadDirectoryFiles);
+                //                debug('5. изменяем в таблице task_filtering_all_information:* ряд значений');
 
                 redis.hmset(`task_filtering_all_information:${taskIndex}`, {
                     'uploadFiles': 'in line',
@@ -156,20 +154,24 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
         });
     }).then(() => {
 
-        debug('EVENT "READY"');
-        debug('SEND SUCCESS MESSAGE TO MOTH_GO');
-        debug(objResponse);
+        /*        
+                debug('EVENT "READY"');
+                debug('SEND SUCCESS MESSAGE TO MOTH_GO');
+                debug(objResponse);
+        */
 
         wsConnection.sendUTF(JSON.stringify(objResponse));
 
         callback(null);
-    }).catch((err) => {
+    }).catch(err => {
         writeLogFile.writeLog('\tError: ' + err.toString());
         objResponse.info.processing = 'cancel';
 
-        debug('EVENT "READY"');
-        debug('SEND ERROR MESSAGE TO MOTH_GO');
-        debug(objResponse);
+        /*
+                debug('EVENT "READY"');
+                debug('SEND ERROR MESSAGE TO MOTH_GO');
+                debug(objResponse);
+        */
 
         wsConnection.sendUTF(JSON.stringify(objResponse));
 
@@ -180,8 +182,10 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
 //обработка пакета JSON полученного с источника и содержащего имя отправляемого файла
 module.exports.execute = function(redis, objData, sourceID, callback) {
 
+    /*
     debug('EVENT EXECUTE');
     debug(objData);
+*/
 
     let taskIndex = objData.info.taskIndex;
 
@@ -216,7 +220,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
     new Promise((resolve, reject) => {
 
-        debug('1. изменяем статус uploadFiles в таблице task_filtering_all_information:');
+        //        debug('1. изменяем статус uploadFiles в таблице task_filtering_all_information:');
 
         redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'loaded', (err) => {
             if (err) reject(err);
@@ -224,7 +228,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         });
     }).then(() => {
 
-        debug('2. изменяем информацию о выполняемой задаче');
+        //        debug('2. изменяем информацию о выполняемой задаче');
 
         //изменяем информацию о выполняемой задаче (processingTask)
         globalObject.modifyData('processingTasks', taskIndex, [
@@ -232,8 +236,8 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             ['timestampModify', +new Date()]
         ]);
 
-        debug('globalObject.modifyData');
-        debug(globalObject.getData('processingTasks', taskIndex));
+        //        debug('globalObject.modifyData');
+        //        debug(globalObject.getData('processingTasks', taskIndex));
 
     }).then(() => {
         return new Promise((resolve, reject) => {
@@ -253,22 +257,27 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
                     'uploadDirectoryFiles': uploadDirectoryFiles //путь до директории в которой будут сохранятся файлы 
                 });
 
-                debug('3. добавляем информацию о загружаемом файле');
-                debug('globalObject.setData (downloadFilesTmp)');
-                debug(globalObject.getData('downloadFilesTmp', sourceID));
+                /*                
+                                debug('3. добавляем информацию о загружаемом файле');
+                                debug('globalObject.setData (downloadFilesTmp)');
+                                debug(globalObject.getData('downloadFilesTmp', sourceID));
+                */
 
                 resolve();
             });
         });
     }).then(() => {
 
-        debug('4. создание ресурса на запись в файл');
+        //        debug('4. создание ресурса на запись в файл');
 
         getStreamWrite(wsConnection.remoteAddress);
     }).then(() => {
-        debug('EVENT "EXECUTE"');
-        debug('------>SEND SUCCESS MESSAGE TO MOTH_GO');
-        debug(objResponse);
+
+        /*
+                debug('EVENT "EXECUTE"');
+                debug('------>SEND SUCCESS MESSAGE TO MOTH_GO');
+                debug(objResponse);
+        */
 
         objResponse.info.fileName = objData.info.fileName;
 
@@ -277,7 +286,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         return;
     }).then(() => {
 
-        debug('5. добавляем обработчик на событие "finish"');
+        //        debug('5. добавляем обработчик на событие "finish"');
 
         //обработчик сбытия 'finish' при завершении записи в файл
         let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
@@ -287,7 +296,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         wsl.once('finish', () => {
 
-            debug('--------- WRITE IS FINISH ------------');
+            //            debug('--------- WRITE IS FINISH ------------');
 
             let fileName = globalObject.getData('downloadFilesTmp', sourceID).fileName;
             writeLogFile.writeLog(`Info: получено событие 'finish для файла ${fileName}, готовимся отправить сообщение о готовности принять следующий файл'`);
@@ -302,9 +311,11 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         writeLogFile.writeLog('\t' + err.toString());
         objResponse.info.processing = 'cancel';
 
-        debug('EVENT "EXECUTE"');
-        debug('------->SEND ERROR MESSAGE TO MOTH_GO');
-        debug(err);
+        /*        
+                debug('EVENT "EXECUTE"');
+                debug('------->SEND ERROR MESSAGE TO MOTH_GO');
+                debug(err);
+        */
 
         wsConnection.sendUTF(JSON.stringify(objResponse));
 
@@ -315,9 +326,11 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
 module.exports.executeCompleted = function(redis, self, sourceID, cb) {
 
-    debug('EVENT EXECUTE COMPLETED');
-    debug(self);
-    debug('генерируем событие для закрытия дискриптора файла');
+    /*
+        debug('EVENT EXECUTE COMPLETED');
+        debug(self);
+        debug('генерируем событие для закрытия дискриптора файла');
+    */
 
     let source = globalObject.getData('sources', sourceID);
     if ((source === null) || (typeof source === 'undefined')) {
@@ -376,12 +389,12 @@ module.exports.completed = function(redis, self, sourceID, cb) {
 };
 
 //обработка пакета JSON полученного с источника и информирующего об отмене передачи файлов по причине ошибки
-module.exports.cancel = function(redis, self, sourceID, cb) {
+module.exports.stop = function(redis, self, sourceID, cb) {
 
-    debug('resived message type "CANCEL"');
+    debug('resived message type "STOP"');
     debug(self);
 
-    actionWhenReceivingCancel(redis, self.info.taskIndex, function(err) {
+    actionWhenReceivingStop(redis, self.info.taskIndex, sourceID, err => {
         if (err) {
             globalObject.deleteData('processingTasks', self.info.taskIndex);
             globalObject.deleteData('downloadFilesTmp', sourceID);
@@ -399,9 +412,8 @@ function fileRename(infoDownloadFile, fileTmp) {
         fs.lstat(fileTmp, (err, fileSettings) => {
             if (err) return reject(err);
 
-            //debug(fileSettings);
-            debug(`fileSettings.size (${fileSettings.size}) !== infoDownloadFile.fileFullSize( ${infoDownloadFile.fileFullSize} )`);
-            debug(fileSettings.size !== infoDownloadFile.fileFullSize);
+            //            debug(`fileSettings.size (${fileSettings.size}) !== infoDownloadFile.fileFullSize( ${infoDownloadFile.fileFullSize} )`);
+            //            debug(fileSettings.size !== infoDownloadFile.fileFullSize);
 
             if (fileSettings.size !== infoDownloadFile.fileFullSize) {
                 writeLogFile.writeLog(`\tError: the SIZE of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
@@ -416,8 +428,8 @@ function fileRename(infoDownloadFile, fileTmp) {
     }).then(hash => {
         return new Promise((resolve, reject) => {
 
-            debug(`infoDownloadFile.fileHash (${infoDownloadFile.fileHash}) !== hash (${hash})`);
-            debug(infoDownloadFile.fileHash !== hash);
+            //            debug(`infoDownloadFile.fileHash (${infoDownloadFile.fileHash}) !== hash (${hash})`);
+            //            debug(infoDownloadFile.fileHash !== hash);
 
             if (infoDownloadFile.fileHash !== hash) {
                 writeLogFile.writeLog(`\tError: the HEX of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
@@ -425,8 +437,8 @@ function fileRename(infoDownloadFile, fileTmp) {
                 return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", хеш сумма полученного файла не совпадает с ранее переданной`));
             }
 
-            debug(infoDownloadFile);
-            debug(`======== directory for copy file ${infoDownloadFile.uploadDirectoryFiles}`);
+            //            debug(infoDownloadFile);
+            //            debug(`======== directory for copy file ${infoDownloadFile.uploadDirectoryFiles}`);
 
             mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, err => {
                 if (err) reject(err);
@@ -444,9 +456,11 @@ function completeWriteBinaryData(redis, sourceID, cb) {
         return cb(new errorsType.receivedEmptyObject('Не найден ip адрес источника, невозможно контролировать загрузку файлов'));
     }
 
+    /*
     debug('**-*----*-*- START function completeWriteBinaryData *-*-*-*-*---');
     debug(`sourceID = ${sourceID}, taskIndex = ${dfi.taskIndex}, fileName = ${dfi.fileName}`);
     debug('**-*----*-*-*-*-*-*-*---');
+*/
 
     let objResponse = {
         'messageType': 'download files',
@@ -474,7 +488,7 @@ function completeWriteBinaryData(redis, sourceID, cb) {
     //удаляем ресурс для записи в файл
     globalObject.deleteData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}`);
 
-    debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
+    //    debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
 
     let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}.tmp`;
     fileRename(dfi, fileTmp)

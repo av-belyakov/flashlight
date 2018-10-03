@@ -8,44 +8,32 @@
 
 const async = require('async');
 
-module.exports = function(redis, taskIndex, func) {
-    let taskIndexHash = (~taskIndex.indexOf(':')) ? taskIndex.split(':')[1] : taskIndex;
-
-    /*async.parallel([
-        //удаляем элемент из таблицы task_turn_downloading_files
-        function(callback) {
-            redis.lrem('task_turn_downloading_files', 0, taskIndex, function(err) {
+/**
+ * 
+ * @param {*} redis - дескриптор соединения с БД
+ * @param {*} taskIndex - ID задачи
+ * @param {*} sourceID - ID источника
+ * @param {*} cb - функция обратного вызова
+ */
+module.exports = function(redis, taskIndex, sourceID, cb) {
+    async.parallel([
+        callback => {
+            redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
                 if (err) callback(err);
-                else callback(null, true);
+                else callback(null);
             });
         },
-        //удаляем элемент из таблицы task_implementation_downloading_files
-        function(callback) {
-            redis.lrem('task_implementation_downloading_files', 0, taskIndex, function(err) {
+        callback => {
+            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
+                'uploadFiles': 'partially loaded',
+                'dateTimeEndUploadFiles': +new Date()
+            }, err => {
                 if (err) callback(err);
-                else callback(null, true);
-            });
-        },
-        function(callback) {
-            redis.hmset('task_filtering_all_information:' + taskIndexHash, {
-                'uploadFiles': 'not loaded',
-                'uploadDirectoryFiles': 'null',
-                'userNameStartUploadFiles': 'null',
-                'dateTimeStartUploadFiles': 'null'
-            }, function(err) {
-                if (err) callback(err);
-                else callback(null, true);
-            });
-        },
-        //удаляем таблицу task_loading_files:*
-        function(callback) {
-            redis.del('task_loading_files:' + taskIndexHash, function(err) {
-                if (err) callback(err);
-                else callback(null, true);
+                else callback(null);
             });
         }
-    ], function(err) {
-        if (err) func(err);
-        else func();
-    });*/
+    ], err => {
+        if (err) cb(err);
+        else cb(null);
+    });
 };
