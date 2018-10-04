@@ -73,7 +73,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 if (err) reject(err);
                 else resolve(objTaskStatus);
             });
-        }).then((objTaskStatus) => {
+        }).then(objTaskStatus => {
             return new Promise((resolve, reject) => {
                 getListsTaskProcessing((err, objListsTaskProcessing) => {
                     if (err) reject(err);
@@ -83,7 +83,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     });
                 });
             });
-        }).then((obj) => {
+        }).then(obj => {
 
             debug(obj);
 
@@ -92,7 +92,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 informationPageJobLog: obj.status,
                 informationPageAdmin: obj.lists
             });
-        }).catch((err) => {
+        }).catch(err => {
             writeLogFile.writeLog('\tError: ' + err.toString());
             showNotify(socketIoS, 'danger', `111 Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
         });

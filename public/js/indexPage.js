@@ -180,6 +180,8 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
         socket.on('update the download progress', function(data) {
             if (timerId !== null) clearTimeout(timerId);
 
+            //if (typeof data.information.taskIndex === 'undefined') return;
+
             if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }

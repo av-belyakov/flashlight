@@ -51,10 +51,10 @@ let messageTypeUndefined = function(redis, sourceID, callback) {
 //обработка ошибок принимаемых от удаленных источников
 let messageTypeError = function(redis, sourceID, callback) {
 
-    /*
+
     debug('websocket RESIVED MESSAGE TYPE "ERROR"');
     debug(this);
-*/
+
 
     function changeStatusProcessingTask(taskIndex, taskType) {
 
@@ -555,8 +555,7 @@ let messageTypeUpload = function(redis, sourceID, callback) {
         'ready': processingToDownloadFiles.ready,
         'execute': processingToDownloadFiles.execute,
         'execute completed': processingToDownloadFiles.executeCompleted,
-        'completed': processingToDownloadFiles.completed,
-        'stop': processingToDownloadFiles.stop
+        'completed': processingToDownloadFiles.completed
     };
 
     objProcessing[self.info.processing](redis, self, sourceID, callback);

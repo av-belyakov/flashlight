@@ -388,24 +388,6 @@ module.exports.completed = function(redis, self, sourceID, cb) {
         });
 };
 
-//обработка пакета JSON полученного с источника и информирующего об отмене передачи файлов по причине ошибки
-module.exports.stop = function(redis, self, sourceID, cb) {
-
-    debug('resived message type "STOP"');
-    debug(self);
-
-    actionWhenReceivingStop(redis, self.info.taskIndex, sourceID, err => {
-        if (err) {
-            globalObject.deleteData('processingTasks', self.info.taskIndex);
-            globalObject.deleteData('downloadFilesTmp', sourceID);
-
-            cb(err);
-        } else {
-            cb(null);
-        }
-    });
-};
-
 //переименование временного файла /uploading_with_<ip_адрес> в текущий загружаемый файл
 function fileRename(infoDownloadFile, fileTmp) {
     return new Promise((resolve, reject) => {

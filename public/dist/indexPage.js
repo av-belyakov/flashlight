@@ -196,6 +196,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         socket.on('update the download progress', function (data) {
             if (timerId !== null) clearTimeout(timerId);
 
+            //if (typeof data.information.taskIndex === 'undefined') return;
+
             if (document.getElementById(data.information.taskIndex) === null) {
                 Object(__WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__["a" /* default */])(data.information);
             }
@@ -473,6 +475,9 @@ function createElementInformationFiltering(objData) {
 
 
 /* harmony default export */ __webpack_exports__["a"] = (function (objData) {
+
+    console.log(objData);
+
     //создаем заголовок с номером источника
     let divSourceNumber = document.createElement('div');
     divSourceNumber.appendChild(document.createTextNode('Источник №' + objData.sourceId));
@@ -1488,11 +1493,7 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'stop': 'остановлена'
                 };
 
-                console.log(obj);
-
                 let taskFilterSettings = JSON.parse(obj.filterSettings);
-
-                console.log(taskFilterSettings);
 
                 let ipaddress = taskFilterSettings.ipaddress + '';
                 let listIpaddress = ipaddress === 'null' ? '' : ipaddress.replace(new RegExp(',', 'g'), '<br>');

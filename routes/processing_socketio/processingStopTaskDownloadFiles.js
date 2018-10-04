@@ -6,6 +6,8 @@
 
 'use strict';
 
+const debug = require('debug')('processingStopTaskDownloadFiles');
+
 const errorsType = require('../../errors/errorsType.js');
 const objWebsocket = require('../../configure/objWebsocket');
 const globalObject = require('../../configure/globalObject');
@@ -20,12 +22,18 @@ const checkAccessRights = require('../../libs/users_management/checkAccessRights
  */
 module.exports = function(taskIndex, socketIo, redis, callback) {
     new Promise((resolve, reject) => {
+
+        debug('проверка прав доступа пользователя');
+
         //проверка прав доступа пользователя
         checkAccessRights(socketIo, 'management_tasks_import', 'stop', (trigger) => {
             if (!trigger) reject(new Error('Не достаточно прав доступа для останова задачи по загрузке найденных файлов'));
             else resolve();
         });
     }).then(() => {
+
+        debug('получаем ID источника');
+
         //получаем ID источника
         return new Promise((resolve, reject) => {
             redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', (err, sourceID) => {
@@ -34,6 +42,10 @@ module.exports = function(taskIndex, socketIo, redis, callback) {
             });
         });
     }).then(sourceID => {
+
+        debug('статус источника (подключен ли он)');
+
+        //статус источника (подключен ли он)
         let connectionStatus = globalObject.getData('sources', sourceID, 'connectionStatus');
 
         if ((connectionStatus === null) || (connectionStatus === 'disconnect')) {
@@ -51,6 +63,8 @@ module.exports = function(taskIndex, socketIo, redis, callback) {
                 taskIndex: taskIndex
             }
         }));
+
+        debug('SEND MESSAGE TYPE "STOP" TO MOTH');
 
         callback(null);
     }).catch(err => {

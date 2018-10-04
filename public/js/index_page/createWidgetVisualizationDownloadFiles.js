@@ -7,6 +7,9 @@
 'use strict';
 
 export default function(objData) {
+
+    console.log(objData);
+
     //создаем заголовок с номером источника
     let divSourceNumber = document.createElement('div');
     divSourceNumber.appendChild(document.createTextNode('Источник №' + objData.sourceId));

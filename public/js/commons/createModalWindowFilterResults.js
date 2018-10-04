@@ -166,11 +166,7 @@ export default function createModalWindowFilterResults(obj, objectTimers) {
                     'stop': 'остановлена'
                 };
 
-                console.log(obj);
-
                 let taskFilterSettings = JSON.parse(obj.filterSettings);
-
-                console.log(taskFilterSettings);
 
                 let ipaddress = taskFilterSettings.ipaddress + '';
                 let listIpaddress = (ipaddress === 'null') ? '' : ipaddress.replace(new RegExp(',', 'g'), '<br>');

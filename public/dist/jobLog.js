@@ -558,7 +558,7 @@ function createTable(data, objFileDownload) {
         <table class="table table-striped table-hover table-sm">
             <thead>
                 <tr>
-                <th class="text-center">№&nbsp;<span class="glyphicon glyphicon-triangle-bottom" name="sortColumns" style="cursor: pointer" data-element-order="0"></span></th>
+                <th class="text-center">№&nbsp;</th>
                 <th class="text-left">имя файла&nbsp;<span class="glyphicon glyphicon-triangle-bottom" name="sortColumns" style="cursor: pointer" data-element-order="1"></span></th>
                 <th class="text-right">размер (в байтах)&nbsp;<span class="glyphicon glyphicon-triangle-bottom" name="sortColumns" style="cursor: pointer" data-element-order="2"></span></th>
                 <th class="text-left">фаил загружен&nbsp;<span class="glyphicon glyphicon-triangle-bottom" name="sortColumns" style="cursor: pointer" data-element-order="3"></span></th>
@@ -614,6 +614,8 @@ function sortColumns(event) {
             valueID = Number(item.children[+numberElement].dataset.fileSize);
         }
 
+        item.children[0].innerText = "$$";
+
         arraySort.push({
             id: valueID,
             value: item.outerHTML
@@ -623,8 +625,10 @@ function sortColumns(event) {
     arraySort.sort(compare);
     if (!sortOrder) arraySort.reverse();
 
+    let num = 1;
     //формируем новое тело таблицы
     arraySort.forEach(function (item) {
+        item.value = item.value.replace('$$', num++);
         newTableBody += item.value.toString();
     });
 
@@ -938,11 +942,7 @@ function createModalWindowFilterResults(obj, objectTimers) {
                     'stop': 'остановлена'
                 };
 
-                console.log(obj);
-
                 let taskFilterSettings = JSON.parse(obj.filterSettings);
-
-                console.log(taskFilterSettings);
 
                 let ipaddress = taskFilterSettings.ipaddress + '';
                 let listIpaddress = ipaddress === 'null' ? '' : ipaddress.replace(new RegExp(',', 'g'), '<br>');

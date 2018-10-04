@@ -11,11 +11,9 @@ function CustomError(message, cause) {
     Error.captureStackTrace(this, CustomError);
     this.message = message;
     this.cause = cause;
-    if (Error.captureStackTrace) {
-        Error.captureStackTrace(this, this.constructor)
-    } else {
-        this.stack = (new Error()).stack;
-    }
+
+    if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
+    else this.stack = (new Error()).stack;
 }
 CustomError.prototype = Object.create(Error.prototype);
 CustomError.prototype.constructor = CustomError;

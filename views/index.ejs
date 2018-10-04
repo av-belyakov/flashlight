@@ -78,7 +78,7 @@
                     for(let taskIndex in leftContentTaskFilter){
                         let percent = Math.ceil((leftContentTaskFilter[taskIndex].countFilesProcessed * 100) / leftContentTaskFilter[taskIndex].countFilesFiltering) + '%';
                     %>
-                        <div id="<%= taskIndex %>" data-source-id="<%= taskIndex %>" style="margin-bottom: 5px; height: 95px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
+                        <div id="<%= taskIndex %>" data-task-index="<%= taskIndex %>" style="margin-bottom: 5px; height: 95px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
                             <div class="col-md-12" style="color: #ccd1d9;">
                                 <div class="text-center">Источник №<%= leftContentTaskFilter[taskIndex].sourceId %></div>
                                 <div class="progress" style="margin-top: 10px;">
