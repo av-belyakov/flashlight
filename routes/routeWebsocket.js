@@ -110,8 +110,15 @@ let messageTypeError = function(redis, sourceID, callback) {
     if (+this.errorCode === 410 || +this.errorCode === 413 || +this.errorCode === 500) {
         let taskId = (~this.taskId.indexOf(':')) ? this.taskId.split(':')[1] : this.taskId;
 
+        debug(`Resived Error MSG "410" or "413" or "500" for task ID ${taskId}`);
+
+        changingStatusReceiveErrorCode(redis, taskId, callback);
+
+        //изменяем состояние при фиьтрации
         redis.hget(`task_filtering_all_information:${taskId}`, 'jobStatus', (err, jobStatus) => {
             if (err) return callback(err);
+
+            debug(jobStatus);
 
             if (jobStatus === 'expect') {
                 redis.hset(`task_filtering_all_information:${taskId}`, 'jobStatus', 'rejected', err => {
@@ -119,6 +126,8 @@ let messageTypeError = function(redis, sourceID, callback) {
                 });
             }
         });
+
+        //изменяем состтояние при загрузки файлов
     }
 
     /*
@@ -689,4 +698,81 @@ function checkCountUserData(processingType, obj) {
 
         return objProcessingType[processingType].every((item) => (typeof obj.info[item] !== 'undefined'));
     }
+}
+
+//изменение состояний фильтрации и передачи файлов
+function changingStatusReceiveErrorCode(redis, taskID, cb) {
+    async.parallel([
+        //изменяем состояние при фильтрации
+        (parallelCallback) => {
+            new Promise((resolve, reject) => {
+                redis.hget(`task_filtering_all_information:${taskID}`, 'jobStatus', (err, jobStatus) => {
+                    if (err) reject(err);
+                    else resolve(jobStatus);
+                });
+            }).then(jobStatus => {
+                if (jobStatus !== 'expect') return;
+
+                return new Promise((resolve, reject) => {
+                    redis.hset(`task_filtering_all_information:${taskID}`, 'jobStatus', 'rejected', err => {
+                        if (err) reject(err);
+                        else resolve(null);
+                    });
+                });
+            }).then(() => {
+                parallelCallback(null);
+            }).catch(err => {
+                parallelCallback(err);
+            });
+        },
+        //изменяем состояние при загрузки файлов
+        (parallelCallback) => {
+            new Promise((resolve, reject) => {
+                redis.hmget(`task_filtering_all_information:${taskID}`, 'uploadFiles', 'sourceId', (err, result) => {
+                    if (err) reject(err);
+                    else resolve({ 'uploadFiles': result[0], 'sourceId': result[1] });
+                });
+            }).then(({ uploadFiles, sourceId }) => {
+                let arrStatus = ['expect', 'in line', 'suspended'];
+
+                let isExist = arrStatus.some(status => {
+                    return uploadFiles === status;
+                });
+
+                return {
+                    'isExist': isExist,
+                    'sourceID': sourceId
+                };
+            }).then(({ isExist, sourceID }) => {
+                if (!isExist) return;
+
+                return new Promise((resolve, reject) => {
+                    redis.hset(`task_filtering_all_information:${taskID}`,
+                        'uploadFiles',
+                        'partially loaded',
+                        err => {
+                            if (err) reject(err);
+                            else resolve();
+                        });
+                }).then(() => {
+                    let listTables = ['task_turn_downloading_files', 'task_implementation_downloading_files'];
+
+                    const promises = listTables.map(tableName => {
+                        redis.lrem(tableName, 1, `${sourceID}:${taskID}`, err => {
+                            if (err) throw (err);
+                        });
+                    });
+
+                    return Promise.all(promises);
+                });
+            }).then(() => {
+                parallelCallback(null);
+            }).catch(err => {
+                parallelCallback(err);
+            });
+        }
+    ], (err) => {
+        if (err) cb(err);
+        else cb(null);
+    });
 }

@@ -326,11 +326,11 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
 module.exports.executeCompleted = function(redis, self, sourceID, cb) {
 
-    /*
-        debug('EVENT EXECUTE COMPLETED');
-        debug(self);
-        debug('генерируем событие для закрытия дискриптора файла');
-    */
+
+    debug('EVENT EXECUTE COMPLETED');
+    debug(self);
+    debug('генерируем событие для закрытия дискриптора файла');
+
 
     let source = globalObject.getData('sources', sourceID);
     if ((source === null) || (typeof source === 'undefined')) {
