@@ -113,21 +113,6 @@ let messageTypeError = function(redis, sourceID, callback) {
         debug(`Resived Error MSG "410" or "413" or "500" for task ID ${taskId}`);
 
         changingStatusReceiveErrorCode(redis, taskId, callback);
-
-        //изменяем состояние при фиьтрации
-        redis.hget(`task_filtering_all_information:${taskId}`, 'jobStatus', (err, jobStatus) => {
-            if (err) return callback(err);
-
-            debug(jobStatus);
-
-            if (jobStatus === 'expect') {
-                redis.hset(`task_filtering_all_information:${taskId}`, 'jobStatus', 'rejected', err => {
-                    if (err) return callback(err);
-                });
-            }
-        });
-
-        //изменяем состтояние при загрузки файлов
     }
 
     /*

@@ -113,8 +113,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             socketIoS.emit('new information message', { sourceId: remoteHostId });
         },
         'filtering': function() {
-            if (stringMessage.info.processing === 'start') {
-
+            let filteringStatusStart = function() {
                 if ((typeof(stringMessage.info.numberMessageParts) === 'undefined')) return;
                 if (stringMessage.info.numberMessageParts[0] !== stringMessage.info.numberMessageParts[1]) return;
 
@@ -132,19 +131,18 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     //сообщения об изменении статуса задач
                     sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                 });
-            }
+            };
 
-            if (stringMessage.info.processing === 'execute') {
-
+            let filteringStatusExecute = function() {
                 debug(`FILTERING FILES: remoteHostId = ${remoteHostId}`);
 
                 processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
                     if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                     else socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
                 });
-            }
+            };
 
-            if (stringMessage.info.processing === 'complete') {
+            let filteringStatusComplete = function() {
                 processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
                     if (err) {
                         writeLogFile.writeLog('\tError: ' + err.toString());
@@ -160,9 +158,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     //сообщения об изменении статуса задач
                     sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                 });
-            }
+            };
 
-            if (stringMessage.info.processing === 'stop') {
+            let filteringStatusStop = function() {
                 processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
                     if (err) {
                         writeLogFile.writeLog('\tError: ' + err.toString());
@@ -176,7 +174,16 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                     //сообщения об изменении статуса задач
                     sendMessageChangeTaskStatus(stringMessage.info.taskIndex, 'filtering');
                 });
-            }
+            };
+
+            let filteringStatus = {
+                'start': filteringStatusStart,
+                'execute': filteringStatusExecute,
+                'complete': filteringStatusComplete,
+                'stop': filteringStatusStop
+            };
+
+            if (filteringStatus[stringMessage.info.processing]) filteringStatus[stringMessage.info.processing]();
         },
         'download files': function() {
             routingRequestDownloadFiles({

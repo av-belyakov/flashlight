@@ -259,6 +259,12 @@ function addHandlerConnection(objSetup) {
         if (message.type === 'utf8') {
             let objData = getParseStringJSON(message);
 
+            if (objData.messageType === 'download files') {
+                debug('+++++++++++++++++');
+                debug(objData);
+                debug('-----------------');
+            }
+
             routeWebsocket.route(objData, objSetup.hostId, (err, notifyMessage) => {
                 if (err) {
 
@@ -341,7 +347,9 @@ function addHandlerConnection(objSetup) {
                 }, '');
             }
 
-            let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${objSetup.connection.remoteAddress}`);
+            let fileName = globalObject.getData('downloadFilesTmp', objSetup.hostId).fileName;
+
+            let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${objSetup.connection.remoteAddress}_${fileName}`);
             if ((wsl === null) || (typeof wsl === 'undefined')) {
                 return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
             }

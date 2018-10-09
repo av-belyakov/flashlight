@@ -28,6 +28,7 @@ export default function(data) {
                 elemButton.setAttribute('class', 'btn btn-default btn-sm btn-file');
                 elemButton.setAttribute('title', 'загрузить сетевой трафик');
                 elemButton.setAttribute('style', 'margin-right: 4px;');
+                elemButton.setAttribute('name', 'buttonImport');
 
                 if (dataAccessRights === false) elemButton.setAttribute('disabled', 'disabled');
 
@@ -73,18 +74,19 @@ export default function(data) {
         let isUploaded = (data.informationPageJobLog.newStatus === 'uploaded');
         let isLoaded = (data.informationPageJobLog.newStatus === 'loaded');
 
+        let buttonImport = divTaskIndex.querySelector('button[name="buttonImport"]');
         //удаление кнопки 'импорт'
         if (isExpect || isUploaded || isLoaded) {
-            let buttonImport = divTaskIndex.querySelector('.glyphicon-import');
-
             if (buttonImport === null) return;
 
-            let parentElement = buttonImport.parentElement.parentElement;
-            parentElement.removeChild(buttonImport.parentElement);
+            let parentElement = buttonImport.parentElement;
+            parentElement.removeChild(buttonImport);
         }
 
         //добавление кнопки 'импорт'
         if (data.informationPageJobLog.newStatus === 'partially loaded') {
+            if (buttonImport) return;
+
             addButtonImport();
         }
     } else if (data.informationPageJobLog.typeElement === 'jobStatus') {
@@ -94,6 +96,10 @@ export default function(data) {
 
         //добавление кнопки 'импорт'
         if (data.informationPageJobLog.newStatus === 'complete') {
+            let buttonImport = divTaskIndex.querySelector('button[name="buttonImport"]');
+
+            if (buttonImport) return;
+
             addButtonImport();
         }
     }

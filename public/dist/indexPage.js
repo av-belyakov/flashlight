@@ -475,8 +475,7 @@ function createElementInformationFiltering(objData) {
 
 
 /* harmony default export */ __webpack_exports__["a"] = (function (objData) {
-
-    console.log(objData);
+    if (typeof objData.sourceId === 'undefined') return;
 
     //создаем заголовок с номером источника
     let divSourceNumber = document.createElement('div');
