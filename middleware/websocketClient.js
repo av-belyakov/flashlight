@@ -7,18 +7,14 @@
 
 'use strict';
 
-const fs = require('fs');
-const mv = require('mv');
 const async = require('async');
 const https = require('https');
-const md5File = require('md5-file/promise');
 const validator = require('validator');
 const webSocketClient = require('websocket').client;
 
 const debug = require('debug')('websocketClient.js');
 
 const config = require('../configure');
-const errorsType = require('../errors/errorsType');
 const controllers = require('../controllers');
 const globalObject = require('../configure/globalObject');
 const objWebsocket = require('../configure/objWebsocket');
@@ -352,6 +348,34 @@ function addHandlerConnection(objSetup) {
             let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${objSetup.connection.remoteAddress}_${fileName}`);
             if ((wsl === null) || (typeof wsl === 'undefined')) {
                 return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
+            }
+
+            //проверяем передан ли файл полностью
+            if ((message.binaryData.length === 8) && (message.binaryData.toString('utf8') === 'file_EOF')) {
+                debug('RESIVED BYTES LAST FILE');
+                debug('генерируем событие для закрытия дискриптора файла');
+
+
+                let source = globalObject.getData('sources', objSetup.hostId);
+                if ((source === null) || (typeof source === 'undefined')) {
+                    return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
+                }
+
+                process.nextTick(() => {
+                    let fileName = globalObject.getData('downloadFilesTmp', objSetup.hostId).fileName;
+                    let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${source.ipaddress}_${fileName}`);
+
+                    if ((wsl === null) || (typeof wsl === 'undefined')) {
+                        return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
+                    }
+
+                    writeLogFile.writeLog(`Info: закрываем дискриптор потока на запись в файл ${fileName}`);
+
+                    //закрываем дискриптор потока на запись в файл
+                    wsl.end();
+                });
+
+                return;
             }
 
             //пишем кусочки файлов в поток

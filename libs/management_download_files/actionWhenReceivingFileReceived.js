@@ -16,12 +16,26 @@ const globalObject = require('../../configure/globalObject');
  * @param {*} cb функция обратного вызова
  */
 module.exports = function(redis, taskIndex, sourceID, cb) {
+    //увеличиваем на единицу количество загруженных файлов
+    globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
+
+    let obj = globalObject.getData('processingTasks', taskIndex);
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
 
     new Promise((resolve, reject) => {
-        redis.hget(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, (err, result) => {
-            if (err) reject(err);
-            else resolve(result);
+        redis.hset(`task_filtering_all_information:${taskIndex}`,
+            'countFilesLoaded',
+            (obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles) - obj.uploadInfo.numberFilesUploadedError,
+            err => {
+                if (err) reject(err);
+                else resolve();
+            });
+    }).then(() => {
+        return new Promise((resolve, reject) => {
+            redis.hget(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+            });
         });
     }).then(fileInfo => {
         try {

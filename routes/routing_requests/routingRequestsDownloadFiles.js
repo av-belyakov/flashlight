@@ -9,6 +9,7 @@
 
 'use strict';
 
+const debug = require('debug')('routingRequestsDownloadFiles');
 
 const showNotify = require('../../libs/showNotify');
 const globalObject = require('../../configure/globalObject');
@@ -99,12 +100,29 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
     }
 
     function requestTypeExecuteCompleted() {
+        new Promise((resolve, reject) => {
+            preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
+                if (err) reject(err);
+                else resolve(data);
+            });
+        }).then(data => {
+            if (Object.keys(data).length > 0) {
+                socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
+            }
+        }).catch(err => {
+            writeLogFile.writeLog(`\tError: ${err.toString()}`);
+            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+        });
+
         //увеличиваем на единицу количество загруженных файлов
-        globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
+        /*globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
+
+        let obj = globalObject.getData('processingTasks', taskIndex);
+
+        debug('type execute complete - increment number files');
+        debug((obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles) - obj.uploadInfo.numberFilesUploadedError);
 
         new Promise((resolve, reject) => {
-            let obj = globalObject.getData('processingTasks', taskIndex);
-
             redis.hset(`task_filtering_all_information:${taskIndex}`,
                 'countFilesLoaded',
                 (obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles) - obj.uploadInfo.numberFilesUploadedError,
@@ -119,14 +137,14 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                     else resolve(data);
                 });
             });
-        }).then((data) => {
+        }).then(data => {
             if (Object.keys(data).length > 0) {
                 socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
             }
         }).catch(err => {
             writeLogFile.writeLog(`\tError: ${err.toString()}`);
             showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-        });
+        });*/
     }
 
     function requestTypeComplete() {

@@ -411,13 +411,6 @@ function sortColumns(event) {
         $('#modalWindowTaskFilter').modal('hide');
     },
 
-    //запрос на возобновление загрузки файлов
-    resumeDownloadFiles(taskIndex) {
-        socket.emit('resume download files', { processingType: 'taskDownload', taskIndex: taskIndex });
-        //закрыть модальное окно
-        $('#modalWindowTaskFilter').modal('hide');
-    },
-
     //запрос на отмену задачи по загрузки файлов
     cancelDownloadFiles(taskIndex) {
         socket.emit('cancel download files', { processingType: 'taskDownload', taskIndex: taskIndex });

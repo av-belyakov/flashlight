@@ -336,9 +336,9 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
 module.exports.executeCompleted = function(redis, self, sourceID, cb) {
+    cb(null);
 
-
-    debug('EVENT EXECUTE COMPLETED');
+    /*debug('EVENT EXECUTE COMPLETED');
     debug(self);
     debug('генерируем событие для закрытия дискриптора файла');
 
@@ -362,7 +362,7 @@ module.exports.executeCompleted = function(redis, self, sourceID, cb) {
         wsl.end();
 
         cb(null);
-    });
+    });*/
 };
 
 //обработка пакета JSON полученного с источника и содержащего информацию о количестве успешно или неуспешно переданных файлов
