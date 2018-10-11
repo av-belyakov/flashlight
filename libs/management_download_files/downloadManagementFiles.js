@@ -15,6 +15,7 @@
 const debug = require('debug')('downloadManagemetFiles');
 
 const async = require('async');
+const EventEmitter = require('events').EventEmitter;
 
 const getUserId = require('./../users_management/getUserId');
 const errorsType = require('../../errors/errorsType');
@@ -133,7 +134,8 @@ module.exports.startRequestDownloadFiles = function(redis, socketIo, objData) {
                 'numberFilesUploaded': 0,
                 'numberFilesUploadedError': 0,
                 'numberPreviouslyDownloadedFiles': +countFilesLoaded
-            }
+            },
+            'uploadEvents': new uploadEventEmitter()
         });
 
         return directoryFiltering;
@@ -235,73 +237,6 @@ module.exports.stopRequestDownloadFiles = function(sourceID, id, func) {
     }
 };
 
-/*
- Запрос на возобновление загрузки файлов
- формат запроса, JSON, со следующими параметрами:
- - messageType - тип запроса
- - processing - возобновление выгрузки файлов
- - taskIndex - уникальный идентификатор задачи,
- - countFilesFound - колличество найденнх файлов,
- - directoryFiltering - директория для результатов фильтрации
- - arrayNameReceivedFiles - массив имен уже переданных файлов
-
- 
-*/
-module.exports.resumeRequestDownloadFiles = function(redis, sourceID, taskIndex, arrayNameReceivedFiles, socketIo, cb) {
-    async.waterfall([
-        function(callback) {
-            getUserId.userId(redis, socketIo, (err, userId) => {
-                if (err) callback(new errorsType.receivedIncorrectData('Ошибка: невозможно выгрузить файлы, получены некорректные данные'));
-                else callback(null, userId);
-            });
-        },
-        function(userId, callback) {
-            redis.hget('user_authntication:' + userId, 'user_name', (err, userName) => {
-                if (err) callback(err);
-                else callback(null, userName);
-            });
-        },
-        function(userName, callback) {
-            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
-                'uploadFiles': 'expect',
-                'userNameStartUploadFiles': userName,
-                'dateTimeStartUploadFiles': +new Date(),
-                'userNameStopUploadFiles': 'null',
-                'dateTimeStopUploadFiles': 'null'
-            }, err => {
-                if (err) callback(err);
-                else callback(null);
-            });
-        },
-        function(callback) {
-            redis.hmget(`task_filtering_all_information:${taskIndex}`, 'countFilesFound', 'directoryFiltering', (err, result) => {
-                if (err) callback(err);
-                else callback(null, {
-                    'messageType': 'download files',
-                    'processing': 'resume',
-                    'taskIndex': sourceID + ':' + taskIndex,
-                    'countFilesFound': result[0],
-                    'directoryFiltering': result[1],
-                    'arrayNameReceivedFiles': arrayNameReceivedFiles
-                });
-            });
-        }
-    ], function(err, obj) {
-        if (err) {
-            if (err.name !== 'Error') return cb(err);
-            return cb(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
-        }
-
-        let wsConnection = objWebsocket['remote_host:' + sourceID];
-        if (typeof wsConnection === 'undefined') {
-            return cb(new errorsType.taskIndexDoesNotExist('Задачи с идентификатором ' + sourceId + ':' + taskIndex + ' не существует, или источник №<strong>' + sourceId + '</strong> не подключен'));
-        }
-
-        wsConnection.sendUTF(JSON.stringify(obj));
-        cb(null, sourceID);
-    });
-};
-
 //делим список файлов на фрагменты и считаем их количество
 function transformListIndexFiles(sizeChunk, listFiles) {
     let newListFiles = [];
@@ -368,5 +303,13 @@ function changeTaskInListDownloadFiles(redis, obj, typeChange, cb) {
             if (err) cb(err);
             else cb(null);
         });
+    }
+}
+
+//класс для генерации событий связанных с загрузкой сетевого трафика
+class uploadEventEmitter extends EventEmitter {
+    constructor() {
+        super();
+        this.emit('ready');
     }
 }

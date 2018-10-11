@@ -29,6 +29,29 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
         'update progress': requestTypeUpdateProgress
     };
 
+    let sendEventsUpload = data => {
+        switch (data.msgType) {
+            case 'update count':
+
+                debug('resived event "download information" type "update count"');
+
+                new Promise((resolve, reject) => {
+                    preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
+                        if (err) reject(err);
+                        else resolve(data);
+                    });
+                }).then(data => {
+                    if (Object.keys(data).length > 0) {
+                        socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
+                    }
+                }).catch(err => {
+                    writeLogFile.writeLog(`\tError: ${err.toString()}`);
+                    showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+                });
+                break;
+        }
+    };
+
     if ((typeof req.info === 'undefined') || (typeof req.info.taskIndex === 'undefined')) {
         writeLogFile.writeLog('\tError, not found information about task ID (download files)');
 
@@ -79,6 +102,9 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                         informationPageJobLog: obj.status,
                         informationPageAdmin: obj.lists
                     });
+
+                    let uploadEvents = globalObject.getData('processingTasks', taskIndex).uploadEvents;
+                    uploadEvents.on('download information', sendEventsUpload);
                 }).catch(err => {
                     writeLogFile.writeLog('\tError: ' + err.toString() + ', routingRequestDownloadFiles.js');
                     showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
@@ -100,7 +126,20 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
     }
 
     function requestTypeExecuteCompleted() {
-        new Promise((resolve, reject) => {
+        /*try {
+
+            debug('generation event "download information" type "update count"');
+
+            let uploadEvents = globalObject.getData('processingTasks', taskIndex).uploadEvents;
+            uploadEvents.emit('download information', {
+                msgType: 'update count'
+            });
+        } catch (err) {
+            writeLogFile.writeLog('\tError: ' + err.toString() + ', routingRequestDownloadFiles.js');
+            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+        }*/
+
+        /*new Promise((resolve, reject) => {
             preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
                 if (err) reject(err);
                 else resolve(data);
@@ -112,7 +151,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
         }).catch(err => {
             writeLogFile.writeLog(`\tError: ${err.toString()}`);
             showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-        });
+        });*/
 
         //увеличиваем на единицу количество загруженных файлов
         /*globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
@@ -192,6 +231,9 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                         });
                     });
                 }).then((obj) => {
+                    let uploadEvents = globalObject.getData('processingTasks', taskIndex).uploadEvents;
+                    uploadEvents.removeListener('download information', sendEventsUpload);
+
                     socketIoS.emit('change object status', {
                         processingType: 'showChangeObject',
                         informationPageJobLog: obj.status,

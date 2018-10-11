@@ -421,25 +421,6 @@ module.exports.eventHandling = function(socketIo) {
                 showNotify(socketIo, 'danger', errMsg);
             }
         });
-
-        /*checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
-            if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
-
-            data.listFiles = [];
-            preparingFileDownloadRequest(data, socketIo, redis, (err) => {
-                if (err) {
-                    let errMsgLog = err.toString();
-                    let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
-                    if (err.name) {
-                        errMsgLog = err.message;
-                        errMsg = err.message;
-                    }
-
-                    writeLogFile.writeLog('\tError: ' + errMsgLog);
-                    showNotify(socketIo, 'danger', errMsg);
-                }
-            });
-        });*/
     });
 
     /* скачать файлы выбранные пользователем и полученые в результате фильтрации */
@@ -460,24 +441,6 @@ module.exports.eventHandling = function(socketIo) {
                 showNotify(socketIo, 'danger', errMsg);
             }
         });
-
-        /*        checkAccessRights(socketIo, 'management_tasks_filter', 'import', function(trigger) {
-                    if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для загрузки найденных файлов');
-
-                    preparingFileDownloadRequest(data, socketIo, redis, (err) => {
-                        if (err) {
-                            let errMsgLog = err.toString();
-                            let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
-                            if (err.name) {
-                                errMsgLog = err.message;
-                                errMsg = err.message;
-                            }
-
-                            writeLogFile.writeLog('\tError: ' + errMsgLog);
-                            showNotify(socketIo, 'danger', errMsg);
-                        }
-                    });
-                });*/
     });
 
     /* остановить загрузку файлов */

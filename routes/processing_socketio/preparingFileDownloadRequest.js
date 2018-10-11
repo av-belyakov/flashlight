@@ -63,6 +63,11 @@ module.exports = function(data, socketIo, redis, callback) {
     }).then(taskIndex => {
         //сообщения об изменении статуса задач
         return new Promise((resolve, reject) => {
+
+            console.log('------------------');
+            console.log('сообщение об изменении статуса задачи');
+            console.log('------------------');
+
             getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
                 if (err) reject(err);
                 else resolve(objTaskStatus);
@@ -70,6 +75,11 @@ module.exports = function(data, socketIo, redis, callback) {
         });
     }).then(objTaskStatus => {
         return new Promise((resolve, reject) => {
+
+            console.log('------------------');
+            console.log('список выполняющихся процессов');
+            console.log('------------------');
+
             getListsTaskProcessing((err, objListsTaskProcessing) => {
                 if (err) reject(err);
                 else resolve({
@@ -79,6 +89,12 @@ module.exports = function(data, socketIo, redis, callback) {
             });
         });
     }).then(obj => {
+
+        console.log('------------------');
+        console.log('генерация событий');
+        console.log(obj);
+        console.log('------------------');
+
         //только для пользователя инициировавшего загрузку
         socketIo.emit('change object status', {
             processingType: 'showChangeObject',

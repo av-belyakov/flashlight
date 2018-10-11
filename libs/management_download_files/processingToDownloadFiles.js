@@ -500,6 +500,18 @@ function completeWriteBinaryData(redis, sourceID, cb) {
     let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}_${dfi.fileName}.tmp`;
     fileRename(dfi, fileTmp)
         .then(() => {
+            try {
+
+                debug('generation event "download information" type "update count"');
+
+                let uploadEvents = globalObject.getData('processingTasks', dfi.taskIndex).uploadEvents;
+                uploadEvents.emit('download information', {
+                    msgType: 'update count'
+                });
+            } catch (err) {
+                throw (err);
+            }
+        }).then(() => {
             actionWhenReceivingFileReceived(redis, dfi.taskIndex, sourceID, err => {
                 if (err) writeLogFile.writeLog('\tError: ' + err.toString());
 
