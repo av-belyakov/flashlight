@@ -167,6 +167,10 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод информации о добавлении новой задачи для выгрузки файлов
         socket.on('task upload files added', function(data) {
+
+            console.log('add new task to download files');
+            console.log(data);
+
             if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }
@@ -214,8 +218,17 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
             templateFileInformation += `<span style="font-size: 16px; color: #C78888;" data-toggle="tooltip" data-placement="bottom" title="файлов загружено с ошибкой">${data.information.countFilesLoadedError}</span> / `;
             templateFileInformation += `<span style="font-size: 16px; color: #9FD783;" data-toggle="tooltip" data-placement="bottom" title="всего файлов">${data.information.countFilesFound}</span>`;
 
-            document.getElementById('file_information:' + data.information.taskIndex).style.marginTop = '-10px;';
-            document.getElementById('file_information:' + data.information.taskIndex).innerHTML = templateFileInformation;
+
+            let fileInfo = document.getElementById('file_information:' + data.information.taskIndex);
+
+            console.log('MESSAGE: file successfully downloaded');
+            console.log(data);
+            console.log(fileInfo);
+
+            if (fileInfo === null) return;
+
+            fileInfo.style.marginTop = '-10px;';
+            fileInfo.innerHTML = templateFileInformation;
 
             common.toolTip();
         });
@@ -250,7 +263,11 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //удаление задачи из очереди загрузок
         socket.on('task upload files cancel', function(data) {
-            let divTaskIndex = document.getElementById('download:' + data.information.sourceId + ':' + data.information.taskIndex);
+
+            console.log('--- delete task ---');
+            console.log(data);
+
+            let divTaskIndex = document.getElementById(data.information.taskIndex);
 
             if (divTaskIndex === null) return;
 

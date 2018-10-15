@@ -22,6 +22,10 @@ module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, source
 
             cb(err);
         } else {
+
+            debug('task ID ' + taskIndex + ' visualization');
+            debug(obj);
+
             cb(null, obj);
         }
     });
@@ -145,16 +149,18 @@ function getShortSourcesInformationTurn(redis, taskIndex, sourceID, done) {
             redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortName) => {
                 if (err) return func(err);
 
-                let objTaskInfo = globalObject.getData('processingTasks', taskIndex);
                 let obj = {
                     'taskIndex': taskIndex,
                     'sourceId': sourceID,
                     'shortName': shortName,
-                    'countFilesFound': objTaskInfo.uploadInfo.numberFilesUpload,
-                    'countFilesLoaded': objTaskInfo.uploadInfo.numberFilesUploaded
+                    'countFilesFound': 0,
+                    'countFilesLoaded': 0
                 };
+                let objTaskInfo = globalObject.getData('processingTasks', taskIndex);
+                if (typeof objTaskInfo === 'undefined') return func(null, obj);
 
-                debug(obj);
+                obj.countFilesFound = objTaskInfo.uploadInfo.numberFilesUpload;
+                obj.countFilesLoaded = objTaskInfo.uploadInfo.numberFilesUploaded;
 
                 func(null, obj);
             });
