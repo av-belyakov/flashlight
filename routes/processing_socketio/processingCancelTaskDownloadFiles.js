@@ -13,6 +13,9 @@ const async = require('async');
 const showNotify = require('../../libs/showNotify');
 const globalObject = require('../../configure/globalObject');
 const checkAccessRights = require('../../libs/users_management/checkAccessRights');
+const getListsTaskProcessing = require('../../libs/getListsTaskProcessing');
+const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPage');
+
 
 /**
  * 
@@ -87,25 +90,61 @@ module.exports = function(taskIndex, socketIo, redis, cb) {
             }
         ], err => {
             if (err) throw (err);
-            else return sourceID;
+            else return;
         });
-    }).then(sourceID => {
+    }).then(() => {
+        return sendMsgChangeTaskStatus(redis, socketIo, taskIndex);
+    }).then(() => {
         //удаляем информацию о выполняемой задачи из объекта globalObject
         globalObject.deleteData('processingTasks', taskIndex);
 
         //генерируем событие информирующее о снятии задачи
-        showNotify(socketIo, 'success', `Отмена задачи по загрузки файлов с источника №${sourceID} выполнена успешно`);
+        showNotify(socketIo, 'success', `Отмена задачи по загрузки файлов выполнена успешно`);
+
+        let objFileInfo = {
+            'information': {
+                'taskIndex': taskIndex
+            }
+        };
 
         //генерируем событие удаляющее виджет визуализирующий загрузку файла
-        socketIo.emit('task upload files cancel', {
-            'information': {
-                'taskIndex': taskIndex,
-                'sourceId': sourceID
-            }
-        });
+        socketIo.emit('task upload files cancel', objFileInfo);
+        socketIo.broadcast.emit('task upload files cancel', objFileInfo);
 
         cb(null);
     }).catch(err => {
         cb(err);
     });
 };
+
+//сообщение об изменения статуса задач
+function sendMsgChangeTaskStatus(redis, socketIoS, taskIndex) {
+    //сообщения об изменении статуса задач
+    return new Promise((resolve, reject) => {
+        getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
+            if (err) reject(err);
+            else resolve(objTaskStatus);
+        });
+    }).then(objTaskStatus => {
+        return new Promise((resolve, reject) => {
+            getListsTaskProcessing((err, objListsTaskProcessing) => {
+                if (err) reject(err);
+                resolve({
+                    status: objTaskStatus,
+                    lists: objListsTaskProcessing
+                });
+            });
+        });
+    }).then(obj => {
+        let objStatus = {
+            processingType: 'showChangeObject',
+            informationPageJobLog: obj.status,
+            informationPageAdmin: obj.lists
+        };
+
+        socketIoS.emit('change object status', objStatus);
+        socketIoS.broadcast.emit('change object status', objStatus);
+    }).catch(err => {
+        throw (err);
+    });
+}

@@ -27,7 +27,7 @@ module.exports = function(socketIo, settingManagement, settingType, func) {
         if (typeof socketIo.request.headers === 'undefined') throw (new Error('socketIo,there is no title'));
         if (typeof socketIo.request.headers.cookie === 'undefined') throw (new Error('socketIo, missing the cookie'));
 
-        if (!(~socketIo.request.headers.cookie.indexOf(';'))) throw (new Error('1 - Error socketIo, incorrect cookie'));
+        if (!(~socketIo.request.headers.cookie.indexOf(';'))) throw (new Error('socketIo, incorrect cookie'));
         let cookie = socketIo.request.headers.cookie.split('; ');
 
         let index = -1;
@@ -38,7 +38,7 @@ module.exports = function(socketIo, settingManagement, settingType, func) {
             }
         }
 
-        if ((index === -1) || !(~cookie[index].indexOf('.'))) throw (new Error('2 - Error socketIo, incorrect cookie'));
+        if ((index === -1) || !(~cookie[index].indexOf('.'))) throw (new Error('socketIo, incorrect cookie'));
         let id = cookie[index].slice(16).split('.');
 
         async.waterfall([
@@ -49,9 +49,6 @@ module.exports = function(socketIo, settingManagement, settingType, func) {
                 });
             },
             function(user, callback) {
-
-                console.log(user);
-
                 redis.hget('user_authntication:' + user, 'group', function(err, group) {
                     if (err) callback(err);
                     else callback(null, group);
@@ -66,19 +63,15 @@ module.exports = function(socketIo, settingManagement, settingType, func) {
         ], function(err, result) {
             if (err) {
                 writeLogFile.writeLog('\tError: ' + err.toString());
-                func(false);
-            } else {
-                let obj = JSON.parse(result);
-
-                if (obj === null || !obj.hasOwnProperty('data')) func(false);
-                else func(obj.data[settingType][0]);
+                return func(false);
             }
+
+            let obj = JSON.parse(result);
+
+            if (obj === null || !obj.hasOwnProperty('data')) func(false);
+            else func(obj.data[settingType][0]);
         });
     } catch (err) {
-
-        console.log('ERROR ----');
-        console.log(err);
-
         writeLogFile.writeLog('\tError: ' + err.toString());
         func(false);
     }

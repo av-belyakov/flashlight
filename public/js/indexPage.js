@@ -167,10 +167,6 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //вывод информации о добавлении новой задачи для выгрузки файлов
         socket.on('task upload files added', function(data) {
-
-            console.log('add new task to download files');
-            console.log(data);
-
             if (document.getElementById(data.information.taskIndex) === null) {
                 createWidgetVisualizationDownloadFiles(data.information);
             }
@@ -221,10 +217,6 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
             let fileInfo = document.getElementById('file_information:' + data.information.taskIndex);
 
-            console.log('MESSAGE: file successfully downloaded');
-            console.log(data);
-            console.log(fileInfo);
-
             if (fileInfo === null) return;
 
             fileInfo.style.marginTop = '-10px;';
@@ -263,10 +255,6 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
         //удаление задачи из очереди загрузок
         socket.on('task upload files cancel', function(data) {
-
-            console.log('--- delete task ---');
-            console.log(data);
-
             let divTaskIndex = document.getElementById(data.information.taskIndex);
 
             if (divTaskIndex === null) return;

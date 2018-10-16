@@ -319,7 +319,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         callback(null);
     }).catch(err => {
-        writeLogFile.writeLog('\t' + err.toString());
+        writeLogFile.writeLog('\tError: ' + err.toString());
         objResponse.info.processing = 'cancel';
 
         /*        
@@ -337,35 +337,9 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 //обработка пакета JSON полученного с источника и подтверждающего об окончании передачи указанного файла
 module.exports.executeCompleted = function(redis, self, sourceID, cb) {
     cb(null);
-
-    /*debug('EVENT EXECUTE COMPLETED');
-    debug(self);
-    debug('генерируем событие для закрытия дискриптора файла');
-
-
-    let source = globalObject.getData('sources', sourceID);
-    if ((source === null) || (typeof source === 'undefined')) {
-        return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
-    }
-
-    process.nextTick(() => {
-        let fileName = globalObject.getData('downloadFilesTmp', sourceID).fileName;
-        let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${source.ipaddress}_${fileName}`);
-
-        if ((wsl === null) || (typeof wsl === 'undefined')) {
-            return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
-        }
-
-        writeLogFile.writeLog(`Info: закрываем дискриптор потока на запись в файл ${fileName}`);
-
-        //закрываем дискриптор потока на запись в файл
-        wsl.end();
-
-        cb(null);
-    });*/
 };
 
-//обработка пакета JSON полученного с источника и содержащего информацию о количестве успешно или неуспешно переданных файлов
+//вызывается при завершении задачи по загрузки файлов
 module.exports.completed = function(redis, self, sourceID, cb) {
 
     debug('resived message type "completed"');
@@ -455,7 +429,7 @@ function completeWriteBinaryData(redis, sourceID, cb) {
     let dfi = globalObject.getData('downloadFilesTmp', sourceID);
 
     if ((dfi === null) || (typeof dfi === 'undefined')) {
-        writeLogFile.writeLog('\t Error: Not found the ip address of the source is impossible to control the uploading of files (function processingToDownloadFiles.js)');
+        writeLogFile.writeLog('\tError: not found the ip address of the source is impossible to control the uploading of files (function processingToDownloadFiles.js)');
 
         return cb(new errorsType.receivedEmptyObject('Не найден ip адрес источника, невозможно контролировать загрузку файлов'));
     }

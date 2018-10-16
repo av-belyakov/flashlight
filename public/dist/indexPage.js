@@ -183,10 +183,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //вывод информации о добавлении новой задачи для выгрузки файлов
         socket.on('task upload files added', function (data) {
-
-            console.log('add new task to download files');
-            console.log(data);
-
             if (document.getElementById(data.information.taskIndex) === null) {
                 Object(__WEBPACK_IMPORTED_MODULE_6__index_page_createWidgetVisualizationDownloadFiles__["a" /* default */])(data.information);
             }
@@ -236,10 +232,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
             let fileInfo = document.getElementById('file_information:' + data.information.taskIndex);
 
-            console.log('MESSAGE: file successfully downloaded');
-            console.log(data);
-            console.log(fileInfo);
-
             if (fileInfo === null) return;
 
             fileInfo.style.marginTop = '-10px;';
@@ -277,10 +269,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         //удаление задачи из очереди загрузок
         socket.on('task upload files cancel', function (data) {
-
-            console.log('--- delete task ---');
-            console.log(data);
-
             let divTaskIndex = document.getElementById(data.information.taskIndex);
 
             if (divTaskIndex === null) return;

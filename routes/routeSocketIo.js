@@ -448,7 +448,7 @@ module.exports.eventHandling = function(socketIo) {
         debug('REQUEST ---STOP--- DOWNLOAD FILES');
         debug(data);
 
-        processingStopTaskDownloadFiles(data.taskIndex, socketIo, redis, (err) => {
+        processingStopTaskDownloadFiles(data.taskIndex, socketIo, redis, err => {
             if (err) {
                 let errMsgLog = err.toString();
                 let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, останов задачи по загрузке файлов не возможен`;

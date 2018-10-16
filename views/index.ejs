@@ -93,13 +93,15 @@
                     <!-- выполнение загрузки файлов -->
                     <%
                     
+console.log(leftContentImplementationTaskDownload);
+
                     for(let taskIndex in leftContentImplementationTaskDownload){
                         let percent = leftContentImplementationTaskDownload[taskIndex].fileUploadedPercent + '%';
                         let countFilesFound = leftContentImplementationTaskDownload[taskIndex].countFilesFound;
                         let countFilesLoaded = leftContentImplementationTaskDownload[taskIndex].countFilesLoaded;
                         let countFilesLoadedError = leftContentImplementationTaskDownload[taskIndex].countFilesLoadedError;
                     %>
-                        <div id="download:<%= taskIndex %>" data-source-id="<%= taskIndex.split(':')[1] %>" style="margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
+                        <div id="<%= taskIndex %>" data-task-index="<%= taskIndex %>" style="margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
                             <div class="col-md-12" style="color: #ccd1d9;">
                                 <div class="text-center">Источник №<%= leftContentImplementationTaskDownload[taskIndex].sourceId %></div>
                                 <div class="text-center"><%= leftContentImplementationTaskDownload[taskIndex].shortName %></div>
@@ -120,7 +122,7 @@
                     <%
                     for(let taskIndex in leftContentTurnTaskDownload){
                     %>
-                        <div id="download:<%= taskIndex %>" data-source-id="<%= taskIndex.split(':')[1] %>" style="margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
+                        <div id="<%= taskIndex %>" data-task-index="<%= taskIndex %>" style="margin-bottom: 5px; height: 110px; padding-top: 10px; background: white; box-shadow: 1px 1px 1px grey; cursor: pointer">
                             <div class="col-md-12" style="color: #ccd1d9;">
                                 <div class="text-center">Источник №<%= leftContentTurnTaskDownload[taskIndex].sourceId %></div>
                                 <div class="text-center"><%= leftContentTurnTaskDownload[taskIndex].shortName %></div>

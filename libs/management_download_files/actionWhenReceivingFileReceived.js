@@ -6,6 +6,7 @@
 
 'use strict';
 
+const writeLogFile = require('../../libs/writeLogFile');
 const globalObject = require('../../configure/globalObject');
 
 /**
@@ -21,6 +22,12 @@ module.exports = function(redis, taskIndex, sourceID, cb) {
 
     let obj = globalObject.getData('processingTasks', taskIndex);
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
+
+
+    console.log('---------- actionWhenReceivingFileReceived ------------');
+    console.log(obj);
+    console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+
 
     new Promise((resolve, reject) => {
         redis.hset(`task_filtering_all_information:${taskIndex}`,
@@ -51,10 +58,14 @@ module.exports = function(redis, taskIndex, sourceID, cb) {
         return new Promise((resolve, reject) => {
             redis.hset(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, fi, err => {
                 if (err) reject(err);
-                else resolve();
+                else resolve(infoDownloadFile.fileName);
             });
         });
-    }).then(() => {
+    }).then(fileName => {
+
+        writeLogFile.writeLog(`Debug: файл ${fileName}, успешно загружен'`);
+
+
         cb(null);
     }).catch(err => {
         cb(err);
