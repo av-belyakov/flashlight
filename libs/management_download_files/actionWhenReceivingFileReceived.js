@@ -1,7 +1,7 @@
 /*
  * Модуль вызываемый при удачном приеме загружаемого файла
  * 
- * Версия 0.3, дата релиза 05.09.2018
+ * Версия 0.4, дата релиза 17.10.2018
  * */
 
 'use strict';
@@ -17,54 +17,55 @@ const globalObject = require('../../configure/globalObject');
  * @param {*} cb функция обратного вызова
  */
 module.exports = function(redis, taskIndex, sourceID, cb) {
-    //увеличиваем на единицу количество загруженных файлов
-    globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
-
-    let obj = globalObject.getData('processingTasks', taskIndex);
     let infoDownloadFile = globalObject.getData('downloadFilesTmp', sourceID);
 
-
-    console.log('---------- actionWhenReceivingFileReceived ------------');
-    console.log(obj);
-    console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-
-
     new Promise((resolve, reject) => {
-        redis.hset(`task_filtering_all_information:${taskIndex}`,
-            'countFilesLoaded',
-            (obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles) - obj.uploadInfo.numberFilesUploadedError,
-            err => {
-                if (err) reject(err);
-                else resolve();
-            });
-    }).then(() => {
-        return new Promise((resolve, reject) => {
-            redis.hget(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
+        redis.hget(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, (err, result) => {
+            if (err) reject(err);
+            else resolve(result);
         });
     }).then(fileInfo => {
         try {
             let fi = JSON.parse(fileInfo);
 
-            fi.fileDownloaded = true;
+            if (!fi.fileDownloaded) {
+                //увеличиваем на единицу количество загруженных файлов
+                globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
+                fi.fileDownloaded = true;
 
-            return JSON.stringify(fi);
+                return JSON.stringify(fi);
+            }
+
+            return null;
         } catch (err) {
             throw err;
         }
     }).then(fi => {
+        if (fi === null) return;
+
         return new Promise((resolve, reject) => {
-            redis.hset(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, infoDownloadFile.fileName, fi, err => {
-                if (err) reject(err);
-                else resolve(infoDownloadFile.fileName);
-            });
+            redis.hset(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`,
+                infoDownloadFile.fileName,
+                fi,
+                err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
         });
-    }).then(fileName => {
+    }).then(() => {
+        let obj = globalObject.getData('processingTasks', taskIndex);
 
-        writeLogFile.writeLog(`Debug: файл ${fileName}, успешно загружен'`);
-
+        return new Promise((resolve, reject) => {
+            redis.hset(`task_filtering_all_information:${taskIndex}`,
+                'countFilesLoaded',
+                (obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles) - obj.uploadInfo.numberFilesUploadedError,
+                err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+        });
+    }).then(() => {
+        writeLogFile.writeLog(`Debug: файл ${infoDownloadFile.fileName}, успешно загружен'`);
 
         cb(null);
     }).catch(err => {

@@ -31,6 +31,9 @@ let redis = controllers.connectRedis();
 module.exports.start = function(socketIo, data, cb) {
     let taskIndex = data.taskIndex;
 
+    debug('...START function processingFilesUpload.start');
+    debug(data);
+
     async.waterfall([
         //получаем идентификатор сенсора
         callback => {
@@ -103,22 +106,44 @@ module.exports.start = function(socketIo, data, cb) {
         if (err) return cb(err);
 
         if (taskIsPerformed) {
-            //добавляем задачу на скачивание в очередь
-            downloadManagementFiles.addRequestDownloadFiles(redis, socketIo, {
-                sourceID: sourceID,
-                taskIndex: taskIndex,
-                listFiles: data.listFiles
+            getUserNameAndLogin(redis, socketIo).then(objLoginName => {
+                //записываем логин пользователя инициировавшего загрузку в таблицу task_filtering_all_information:
+                return setUserInfoToTable(redis, {
+                    'taskIndex': taskIndex,
+                    'userName': objLoginName.userName,
+                    'userLogin': objLoginName.userLogin
+                });
+            }).then(() => {
+                //добавляем задачу на скачивание в очередь
+                return downloadManagementFiles.addRequestDownloadFiles(redis, {
+                    sourceID: sourceID,
+                    taskIndex: taskIndex,
+                    listFiles: data.listFiles
+                });
             }).then(() => {
                 cb(null, sourceID);
             }).catch(err => {
+
+                debug('ERROR add files');
+                debug(err);
+
                 cb(err);
             });
         } else {
-            //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
-            downloadManagementFiles.startRequestDownloadFiles(redis, socketIo, {
-                sourceID: sourceID,
-                taskIndex: taskIndex,
-                listFiles: data.listFiles
+            getUserNameAndLogin(redis, socketIo).then(objLoginName => {
+                //записываем логин пользователя инициировавшего загрузку в таблицу task_filtering_all_information:
+                return setUserInfoToTable(redis, {
+                    'taskIndex': taskIndex,
+                    'userName': objLoginName.userName,
+                    'userLogin': objLoginName.userLogin
+                });
+            }).then(() => {
+                //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
+                return downloadManagementFiles.startRequestDownloadFiles(redis, {
+                    sourceID: sourceID,
+                    taskIndex: taskIndex,
+                    listFiles: data.listFiles
+                });
             }).then(() => {
                 //создаем псевдоиндекс, таблица task_uploaded_index_all
                 redis.zadd('task_uploaded_index_all', [+new Date(), taskIndex], (err) => {
@@ -127,6 +152,10 @@ module.exports.start = function(socketIo, data, cb) {
 
                 cb(null, sourceID);
             }).catch(err => {
+
+                debug('ERROR start files');
+                debug(err);
+
                 cb(err);
             });
         }
@@ -224,7 +253,7 @@ module.exports.cancel = function(socketIo, taskIndex, func) {
 module.exports.stop = function(socketIo, taskIndex, func) {
     async.waterfall([
         //проверяем выполняется ли загрузка с выбранного источника
-        (callback) => {
+        callback => {
             redis.exists('task_implementation_downloading_files', (err, result) => {
                 if (err) return callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
 
@@ -236,7 +265,7 @@ module.exports.stop = function(socketIo, taskIndex, func) {
                 }
             });
         },
-        (callback) => {
+        callback => {
             redis.hmget(`task_filtering_all_information:${taskIndex}`, 'sourceId', 'userLoginImport', (err, result) => {
                 if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
                 else callback(null, result[0], result[1]);
@@ -260,24 +289,6 @@ module.exports.stop = function(socketIo, taskIndex, func) {
 
             return func(err);
         }
-
-        //------------------
-        redis.lrange('task_implementation_downloading_files', [0, -1], (err, result) => {
-            if (err) return debug(err);
-            debug('********* STOP **********');
-            debug(' +++ downloadfiles +++ ');
-            debug(result);
-        });
-        //-------------------
-
-        //------------------
-        redis.lrange('task_turn_downloading_files', [0, -1], (err, result) => {
-            if (err) return debug(err);
-            debug('********* STOP **********');
-            debug(' *** turn downloadfiles *** ');
-            debug(result);
-        });
-        //-------------------
 
         getUserId.userId(redis, socketIo, (err, userId) => {
             if (err) {
@@ -319,3 +330,45 @@ module.exports.stop = function(socketIo, taskIndex, func) {
         });
     });
 };
+
+//получаем имя и логин пользователя
+function getUserNameAndLogin(redis, socketIo) {
+
+    debug('...START function getUserNameAndLogin');
+
+    return new Promise((resolve, reject) => {
+        getUserId.userId(redis, socketIo, (err, userId) => {
+            if (err) reject(err);
+            else resolve(userId);
+        });
+    }).then(userID => {
+        return new Promise((resolve, reject) => {
+            redis.hmget(`user_authntication:${userID}`, 'login', 'user_name', (err, user) => {
+                if (err) reject(err);
+                else resolve({
+                    userLogin: user[0],
+                    userName: user[1]
+                });
+            });
+        });
+    });
+}
+
+//записать информацию о пользователе инициировавшим загрузку
+function setUserInfoToTable(redis, { taskIndex, userName, userLogin }) {
+
+    debug('...START function setUserInfoToTAble');
+    debug(`taskIndex = ${taskIndex}, userName = ${userName}, userLogin = ${userLogin}`);
+
+    return new Promise((resolve, reject) => {
+        redis.hmset(`task_filtering_all_information:${taskIndex}`, {
+            'userLoginImport': userLogin,
+            'userNameStartUploadFiles': userName,
+            'dateTimeStartUploadFiles': +new Date(),
+            'uploadFiles': 'in line'
+        }, err => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}

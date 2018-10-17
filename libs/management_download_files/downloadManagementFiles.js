@@ -27,18 +27,20 @@ const objWebsocket = require('../../configure/objWebsocket');
  * @param {*} objData - содержит следующие параметры: sourceID, taskIndex и listFiles
  * @param {*} socketIo - дискриптор соединения по протоколу sockeio
  */
-module.exports.addRequestDownloadFiles = function(redis, socketIo, { sourceID, taskIndex, listFiles }) {
+module.exports.addRequestDownloadFiles = function(redis, { sourceID, taskIndex, listFiles }) {
     let countDownloadSelectedFiles = listFiles.length;
 
-    return getUserNameAndLogin(redis, socketIo).then(({ userLogin, userName }) => {
-        return setUserInfoToTable(redis, {
-            'taskIndex': taskIndex,
-            'userName': userName,
-            'userLogin': userLogin
-        });
-    }).then(() => {
-        return getDownloadInfo(redis, taskIndex, countDownloadSelectedFiles);
-    }).then(obj => {
+    debug('...START function addRequestDownloadFiles');
+    debug(`taskIndex = ${taskIndex}`);
+    debug(`countDownloadSelectedFiles = ${countDownloadSelectedFiles}`);
+
+    //return getUserNameAndLogin(redis, socketIo).then(({ userLogin, userName }) => {
+    /*return setUserInfoToTable(redis, {
+        'taskIndex': taskIndex,
+        'userName': userName,
+        'userLogin': userLogin
+    }).then(() => {*/
+    return getDownloadInfo(redis, taskIndex, countDownloadSelectedFiles).then(obj => {
         if (countDownloadSelectedFiles > 0) return obj;
 
         return getCountFilesUploaded(redis, taskIndex, sourceID, obj);
@@ -57,7 +59,8 @@ module.exports.addRequestDownloadFiles = function(redis, socketIo, { sourceID, t
                 'numberFilesUpload': countUploadFiles,
                 'numberFilesUploaded': 0,
                 'numberFilesUploadedError': 0,
-                'numberPreviouslyDownloadedFiles': +countFilesLoaded
+                'numberPreviouslyDownloadedFiles': +countFilesLoaded,
+                'listFiles': listFiles //добавляем список файлов
             },
             'uploadEvents': new uploadEventEmitter()
         });
@@ -71,26 +74,20 @@ module.exports.addRequestDownloadFiles = function(redis, socketIo, { sourceID, t
  * @param {*} objData - содержит следующие параметры: sourceID, taskIndex и listFiles
  * @param {*} socketIo - дискриптор соединения по протоколу sockeio
  */
-module.exports.startRequestDownloadFiles = function(redis, socketIo, { sourceID, taskIndex, listFiles }) {
+module.exports.startRequestDownloadFiles = function(redis, { sourceID, taskIndex, listFiles }) {
     let countDownloadSelectedFiles = listFiles.length;
 
-    return getUserNameAndLogin(redis, socketIo).then(objUserInfo => {
-        return new Promise((resolve, reject) => {
-            //удаляем идентификатор задачи из таблицы task_turn_downloading_files и добавляем в таблицу task_implementation_downloading_files
-            changeTaskInListDownloadFiles(redis, {
-                sourceId: sourceID,
-                taskIndex: taskIndex
-            }, 'start', (err) => {
-                if (err) reject(err);
-                else resolve(objUserInfo);
-            });
-        });
-    }).then(({ userLogin, userName }) => {
-        //записываем логин пользователя инициировавшего загрузку в таблицу task_filtering_all_information:
-        return setUserInfoToTable(redis, {
-            'taskIndex': taskIndex,
-            'userName': userName,
-            'userLogin': userLogin
+    debug('...START function startRequestDownloadFiles');
+
+    //    return getUserNameAndLogin(redis, socketIo).then(objUserInfo => {
+    return new Promise((resolve, reject) => {
+        //удаляем идентификатор задачи из таблицы task_turn_downloading_files и добавляем в таблицу task_implementation_downloading_files
+        changeTaskInListDownloadFiles(redis, {
+            sourceId: sourceID,
+            taskIndex: taskIndex
+        }, 'start', (err) => {
+            if (err) reject(err);
+            else resolve();
         });
     }).then(() => {
         return getDownloadInfo(redis, taskIndex, countDownloadSelectedFiles);
@@ -299,7 +296,7 @@ class uploadEventEmitter extends EventEmitter {
 }
 
 //получаем имя и логин пользователя
-function getUserNameAndLogin(redis, socketIo) {
+/*function getUserNameAndLogin(redis, socketIo) {
     return new Promise((resolve, reject) => {
         getUserId.userId(redis, socketIo, (err, userId) => {
             if (err) reject(err);
@@ -316,10 +313,10 @@ function getUserNameAndLogin(redis, socketIo) {
             });
         });
     });
-}
+}*/
 
 //записать информацию о пользователе инициировавшим загрузку
-function setUserInfoToTable(redis, { taskIndex, userName, userLogin }) {
+/*function setUserInfoToTable(redis, { taskIndex, userName, userLogin }) {
     return new Promise((resolve, reject) => {
         redis.hmset(`task_filtering_all_information:${taskIndex}`, {
             'userLoginImport': userLogin,
@@ -331,7 +328,7 @@ function setUserInfoToTable(redis, { taskIndex, userName, userLogin }) {
             else resolve();
         });
     });
-}
+}*/
 
 //получаем информацию о загружаемых файлах
 function getDownloadInfo(redis, taskIndex, countDownloadSelectedFiles) {

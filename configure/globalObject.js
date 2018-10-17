@@ -45,7 +45,8 @@
  *         'numberFilesUpload': <количество скачиваемых в задаче файлов>,
  *         'numberFilesUploaded': <количество загруженных в результате выполнения данной задачи файлов>,
  *         'numberFilesUploadedError': <количество загруженных файлов с ошибками>
- *         'numberPreviouslyDownloadedFiles': <количество файлов загруженных ранее>
+ *         'numberPreviouslyDownloadedFiles': <количество файлов загруженных ранее>,
+ *         'listFiles': <список файлов выбранных пользователем для скачивания>
  *     },
  *     'uploadEvents': <Event Emitter для события по загрузке сет. трафика>
  *    }}

@@ -355,15 +355,17 @@ module.exports.completed = function(redis, self, sourceID, cb) {
         .then(() => {
             return new Promise((resolve, reject) => {
                 //проверка очереди на выгрузку файлов (таблица task_turn_downloading_files)
-                checkQueueTaskDownloadFiles(redis, sourceID, (err, objTaskIndex) => {
+                checkQueueTaskDownloadFiles(redis, self.info.taskIndex, sourceID, err => { //, objTaskIndex) => {
                     if (err) reject(err);
-                    else resolve(objTaskIndex);
+                    else resolve();
+                    //else resolve(objTaskIndex);
                 });
             });
-        }).then(objTaskIndex => {
-            if (Object.keys(objTaskIndex).length > 0) {
-                wsConnection.sendUTF(JSON.stringify(objTaskIndex));
-            }
+        }).then(() => {
+            /*}).then(objTaskIndex => {
+                if (Object.keys(objTaskIndex).length > 0) {
+                    wsConnection.sendUTF(JSON.stringify(objTaskIndex));
+                }*/
 
             cb(null);
         }).catch(err => {

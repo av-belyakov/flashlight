@@ -7,17 +7,27 @@
 
 'use strict';
 
+const debug = require('debug')('checkQueueTaskDownloadFiles');
+
 const async = require('async');
 
 const errorsType = require('../../errors/errorsType');
+const globalObject = require('../../configure/globalObject');
+const downloadManagementFiles = require('./downloadManagementFiles');
 
-module.exports = function(redis, sourceID, callback) {
+module.exports = function(redis, taskIndex, sourceID, callback) {
     new Promise((resolve, reject) => {
+
+        debug('...START function checkQueueTaskDownloadFiles');
+
         redis.exists('task_turn_downloading_files', (err, result) => {
             if (err) reject(err);
-            else resolve((result === 0));
+            else resolve(result === 0);
         });
     }).then(isExist => {
+
+        debug(`table "task_turn_downloading_files" is exist: ${isExist}`);
+
         return new Promise((resolve, reject) => {
             if (isExist) return resolve([]);
 
@@ -28,6 +38,10 @@ module.exports = function(redis, sourceID, callback) {
             });
         });
     }).then(listTurnDownloadFiles => {
+
+        debug('list ALL task turn download files');
+        debug(listTurnDownloadFiles);
+
         if (listTurnDownloadFiles.length === 0) return [];
 
         let arraySourceIdTurnIsExists = listTurnDownloadFiles.filter(item => item.split(':')[0] === sourceID);
@@ -35,6 +49,10 @@ module.exports = function(redis, sourceID, callback) {
         return arraySourceIdTurnIsExists;
     }).then(arraySourceIdTurnIsExists => {
         return new Promise((resolve, reject) => {
+
+            debug('list task turn download files is current sources');
+            debug(arraySourceIdTurnIsExists);
+
             if (arraySourceIdTurnIsExists.length === 0) return callback(null, {});
 
             //проверяем таблицу выполняющихся задач
@@ -47,52 +65,100 @@ module.exports = function(redis, sourceID, callback) {
             });
         });
     }).then(({ listImplementation, listSourceTurn }) => {
+
+        debug('listImplementation');
+        debug(listImplementation);
+        debug('liastSourceTurn');
+        debug(listSourceTurn);
+
         let arraySourceIdImplementationIsExists = listImplementation.filter(item => item.split(':')[0] === sourceID);
 
+        debug(`count current source implementation ${arraySourceIdImplementationIsExists.length}`);
+
         if (arraySourceIdImplementationIsExists.length === 0) {
-            startNewTaskDownloadFiles(redis, listSourceTurn[0], (err, objTaskIndex) => {
+            for (let i = 0; i < listSourceTurn.length; i++) {
+
+                debug(listSourceTurn[i]);
+
+                if (~listSourceTurn[i].indexOf(':')) {
+                    let { sid, taskID } = listSourceTurn[i].split(':');
+
+                    debug(sid + ' ---- ' + taskID);
+                    debug(`sid === sourceID (${sid === sourceID})`);
+
+                    if (sid === sourceID) {
+                        let taskInfo = globalObject.getData('processingTasks', taskID);
+
+                        if (typeof taskInfo === 'undefined') return;
+
+                        debug('---------------------------------------------------');
+                        debug(`------ taskIndex ${taskID} ---------`);
+                        debug(taskInfo);
+
+                        return downloadManagementFiles.startRequestDownloadFiles(redis, {
+                            sourceID: sourceID,
+                            taskIndex: taskID,
+                            listFiles: taskInfo.uploadInfo.listFiles
+                        });
+                    }
+                }
+            }
+
+            /*startNewTaskDownloadFiles(redis, listSourceTurn[0], (err, objTaskIndex) => {
                 if (err) throw (err);
-                else callback(null, objTaskIndex);
-            });
+
+                debug('after function startNewTaskDownloadFiles');
+                debug(objTaskIndex);
+
+                callback(null, objTaskIndex);
+            });*/
         }
+
+        return;
+    }).then(() => {
+        callback(null);
     }).catch(err => {
         callback(err);
     });
 };
 
 //запуск новой задачи по выгузке файлов
-function startNewTaskDownloadFiles(redis, taskIndex, func) {
-    if (!(~taskIndex.indexOf(':'))) return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', ''));
+function startNewTaskDownloadFiles(redis, taskIndexHash, func) {
 
-    let taskIndexHash = taskIndex.split(':')[1];
+    debug('...START function startNewTaskDownloadFiles');
+    debug(taskIndexHash);
+
+    if (!(~taskIndexHash.indexOf(':'))) return func(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', ''));
+
+    let taskIndex = taskIndexHash.split(':')[1];
 
     async.series([
         //изменяем время начала загрузки файлов, таблица task_filtering_all_information:*
-        function(callback) {
-            redis.hset('task_filtering_all_information:' + taskIndexHash, 'dateTimeStartUploadFiles', +new Date(), function(err) {
+        callback => {
+            redis.hset(`task_filtering_all_information:${taskIndex}`, 'dateTimeStartUploadFiles', +new Date(), err => {
                 if (err) callback(err);
                 else callback(null);
             });
         },
         //удаляем задачу из таблице task_turn_downloading_files
-        function(callback) {
-            redis.lrem('task_turn_downloading_files', 0, taskIndex, function(err) {
+        callback => {
+            redis.lrem('task_turn_downloading_files', 0, taskIndexHash, err => {
                 if (err) callback(err);
                 else callback(null);
             });
         },
         //добавляем задачу в таблицу task_implementation_downloading_files
-        function(callback) {
-            redis.rpush('task_implementation_downloading_files', taskIndex, function(err) {
+        callback => {
+            redis.rpush('task_implementation_downloading_files', taskIndexHash, err => {
                 if (err) callback(err);
                 else callback(null);
             });
         }
-    ], function(err) {
+    ], err => {
         if (err) return func(err);
 
         //получаем необходимую информацию для формирования запроса о начале загрузки файлов
-        redis.hmget(`task_filtering_all_information:${taskIndexHash}`,
+        redis.hmget(`task_filtering_all_information:${taskIndex}`,
             'countFilesFound',
             'directoryFiltering',
             (err, result) => {
