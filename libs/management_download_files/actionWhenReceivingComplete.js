@@ -17,7 +17,7 @@ const xml2js = require('xml2js');
  * @param {*} param1 { taskIndex - ID задачи, sourceID - ID источника }
  * @param {*} cb - функция обратного вызова
  */
-module.exports = function(redis, { taskIndex, sourceID }, cb) {
+module.exports = function(redis, { taskIndex, sourceID }) {
     return new Promise((resolve, reject) => {
         redis.hvals(`task_list_files_found_during_filtering:${sourceID}:${taskIndex}`, (err, listValueFiles) => {
             if (err) reject(err);

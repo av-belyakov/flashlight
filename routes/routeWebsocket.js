@@ -549,7 +549,8 @@ let messageTypeUpload = function(redis, sourceID, callback) {
         'ready': processingToDownloadFiles.ready,
         'execute': processingToDownloadFiles.execute,
         'execute completed': processingToDownloadFiles.executeCompleted,
-        'completed': processingToDownloadFiles.completed
+        'completed': processingToDownloadFiles.completed,
+        'stop': processingToDownloadFiles.stop
     };
 
     objProcessing[self.info.processing](redis, self, sourceID, callback);

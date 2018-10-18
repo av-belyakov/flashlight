@@ -20,8 +20,8 @@ const errorsType = require('../../errors/errorsType');
 const objWebsocket = require('../../configure/objWebsocket.js');
 const writeLogFile = require('../writeLogFile');
 const globalObject = require('../../configure/globalObject');
-const actionWhenReceivingStop = require('./actionWhenReceivingStop');
 const checkQueueTaskDownloadFiles = require('./checkQueueTaskDownloadFiles');
+const actionWhenReceivingStop = require('./actionWhenReceivingStop');
 const actionWhenReceivingComplete = require('./actionWhenReceivingComplete');
 const actionWhenReceivingFileReceived = require('./actionWhenReceivingFileReceived');
 const actionWhenReceivingFileNotReceived = require('./actionWhenReceivingFileNotReceived');
@@ -273,9 +273,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         //создание ресурса на запись в файл
         //        debug('4. создание ресурса на запись в файл');
 
-        getStreamWrite(wsConnection.remoteAddress, fileName);
-
-        return;
+        return getStreamWrite(wsConnection.remoteAddress, fileName);
     }).then(() => {
 
         /*
@@ -339,6 +337,18 @@ module.exports.executeCompleted = function(redis, self, sourceID, cb) {
     cb(null);
 };
 
+module.exports.stop = function(redis, self, sourceID, cb) {
+    debug('...START function stop');
+    debug('resived message "STOP" from Moth_go');
+
+    actionWhenReceivingStop(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID })
+        .then(() => {
+            cb(null);
+        }).catch(err => {
+            cb(err);
+        });
+};
+
 //вызывается при завершении задачи по загрузки файлов
 module.exports.completed = function(redis, self, sourceID, cb) {
 
@@ -366,9 +376,14 @@ module.exports.completed = function(redis, self, sourceID, cb) {
                 if (Object.keys(objTaskIndex).length > 0) {
                     wsConnection.sendUTF(JSON.stringify(objTaskIndex));
                 }*/
+            debug('processing COMPLETE success');
 
             cb(null);
         }).catch(err => {
+
+            debug('ERROR processing COMPLITE');
+            debug(err);
+
             globalObject.deleteData('processingTasks', self.info.taskIndex);
             globalObject.deleteData('downloadFilesTmp', sourceID);
 
@@ -476,25 +491,17 @@ function completeWriteBinaryData(redis, sourceID, cb) {
     let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}_${dfi.fileName}.tmp`;
     fileRename(dfi, fileTmp)
         .then(() => {
-            try {
-
-                debug('generation event "download information" type "update count"');
-
-                let uploadEvents = globalObject.getData('processingTasks', dfi.taskIndex).uploadEvents;
-                uploadEvents.emit('download information', {
-                    msgType: 'update count'
-                });
-            } catch (err) {
-                throw (err);
-            }
-        }).then(() => {
             actionWhenReceivingFileReceived(redis, dfi.taskIndex, sourceID, err => {
-                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+                if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
 
                 writeLogFile.writeLog(`\tInfo: file ${dfi.fileName} resived successfy`);
 
                 wsConnection.sendUTF(JSON.stringify(objResponse));
-                cb(null);
+
+                sendEventsUpload(dfi.taskIndex, err => {
+                    if (err) cb(err);
+                    else cb(null);
+                });
             });
         }).catch(err => {
             debug('*-*-*-*-**-*-*-');
@@ -508,8 +515,26 @@ function completeWriteBinaryData(redis, sourceID, cb) {
 
                 objResponse.info.processing = 'execute failure';
                 wsConnection.sendUTF(JSON.stringify(objResponse));
-            });
 
-            cb(err);
+                sendEventsUpload(dfi.taskIndex, error => {
+                    if (err) writeLogFile.writeLog('\tError: ' + error.toString());
+                    else cb(err);
+                });
+            });
         });
+}
+
+//генерирование события обнавления загружаемой информации
+function sendEventsUpload(taskIndex, callback) {
+    let processTaskInfo = globalObject.getData('processingTasks', taskIndex);
+
+    if ((typeof processTaskInfo === 'undefined') || (typeof processTaskInfo.uploadEvents === 'undefined')) {
+        callback(new Error('not found "uploadEvents" in object "globalObject" type "processingTasks"'));
+    }
+
+    processTaskInfo.uploadEvents.emit('download information', {
+        msgType: 'update count'
+    });
+
+    callback(null);
 }

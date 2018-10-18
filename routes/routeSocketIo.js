@@ -448,18 +448,31 @@ module.exports.eventHandling = function(socketIo) {
         debug('REQUEST ---STOP--- DOWNLOAD FILES');
         debug(data);
 
-        processingStopTaskDownloadFiles(data.taskIndex, socketIo, redis, err => {
-            if (err) {
-                let errMsgLog = err.toString();
-                let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, останов задачи по загрузке файлов не возможен`;
-                if (err.name) {
-                    errMsgLog = err.message;
-                    errMsg = err.message;
-                }
+        new Promise((resolve, reject) => {
+            debug('проверка прав доступа пользователя');
 
-                writeLogFile.writeLog('\tError: ' + errMsgLog);
-                showNotify(socketIo, 'danger', errMsg);
+            //проверка прав доступа пользователя
+            checkAccessRights(socketIo, 'management_tasks_import', 'stop', trigger => {
+                if (!trigger) reject(new Error('Не достаточно прав доступа для останова задачи по загрузке найденных файлов'));
+                else resolve();
+            });
+        }).then(() => {
+            process.nextTick(() => {
+                let error = processingStopTaskDownloadFiles(data.taskIndex);
+                if (error !== null) {
+                    throw (error);
+                }
+            });
+        }).catch(err => {
+            let errMsgLog = err.toString();
+            let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, останов задачи по загрузке файлов не возможен`;
+            if (err.name) {
+                errMsgLog = err.message;
+                errMsg = err.message;
             }
+
+            writeLogFile.writeLog(`\tError: ${errMsgLog}`);
+            showNotify(socketIo, 'danger', errMsg);
         });
     });
 
@@ -468,7 +481,6 @@ module.exports.eventHandling = function(socketIo) {
         debug('REQUEST ---CANCEL--- DOWNLOAD FILES');
         debug(data);
 
-        /** ДОРАБОТАТЬ функцию processingCancelTaskDownloadFiles */
         processingCancelTaskDownloadFiles(data.taskIndex, socketIo, redis, err => {
             if (err) {
                 let errMsgLog = err.toString();

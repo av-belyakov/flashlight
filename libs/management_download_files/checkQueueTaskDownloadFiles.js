@@ -81,7 +81,7 @@ module.exports = function(redis, taskIndex, sourceID, callback) {
                 debug(listSourceTurn[i]);
 
                 if (~listSourceTurn[i].indexOf(':')) {
-                    let { sid, taskID } = listSourceTurn[i].split(':');
+                    let [sid, taskID] = listSourceTurn[i].split(':');
 
                     debug(sid + ' ---- ' + taskID);
                     debug(`sid === sourceID (${sid === sourceID})`);
