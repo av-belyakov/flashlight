@@ -378,7 +378,7 @@ module.exports.eventHandling = function(socketIo) {
         });
     });
 
-    /* пллучить информацию для виджета */
+    /* получить информацию для виджета */
     socketIo.on('get information for source id', (data) => {
         informationForChoiseSource.getAllInformationSource(redis, data.sourceId, function(obj) {
             socketIo.emit('information widgets', { processingType: 'showInformationSource', information: obj });
@@ -390,7 +390,6 @@ module.exports.eventHandling = function(socketIo) {
     /*
      * УПРАВЛЕНИЕ ЗАДАЧАМИ ПО ЗАГРУЗКЕ НАЙДЕННЫХ ФАЙЛОВ
      * */
-
     //получить список всех файлов найденных в результате фильтрации 
     socketIo.on('get list all files obtained result filtering', (data) => {
         processingGetListFilesResultFiltering(redis, data, (err, resultObj) => {

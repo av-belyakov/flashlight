@@ -209,7 +209,7 @@ let messageTypeInformation = function(redis, sourceID, func) {
         });
     }).then(() => {
         func(null, 'successfully');
-    }).catch((err) => {
+    }).catch(err => {
         func(err);
     });
 };
@@ -371,7 +371,7 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
                     if (err) reject(err);
                     else resolve(listFilesUnprocessing);
                 });
-            }).then((listFilesUnprocessing) => {
+            }).then(listFilesUnprocessing => {
                 let stringResultFilesUnprocessing = '';
                 if (~listFilesUnprocessing.indexOf(',')) {
                     let array = listFilesUnprocessing.split(',');
@@ -412,7 +412,7 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
             //debug('-------- processing FIRST part (MESSAGE TYPE COMPLETE)');
 
             async.parallel([
-                (callback) => {
+                callback => {
 
                     //debug('--- routeWebsocket (message COMPLETE): 111');
 
@@ -423,7 +423,7 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
                                 if (err) reject(err);
                                 else resolve(countFilesFiltering);
                             });
-                    }).then((countFilesFiltering) => {
+                    }).then(countFilesFiltering => {
                         redis.hmset(`task_filtering_all_information:${self.info.taskIndex}`, {
                             'jobStatus': self.info.processing,
                             'dateTimeEndFilter': +new Date(),

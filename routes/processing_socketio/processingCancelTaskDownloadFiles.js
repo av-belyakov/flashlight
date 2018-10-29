@@ -107,6 +107,8 @@ module.exports = function(taskIndex, socketIo, redis, cb) {
             }
         };
 
+        debug('удаляем информацию о выполняемой задачи из объекта globalObject');
+
         //генерируем событие удаляющее виджет визуализирующий загрузку файла
         socketIo.emit('task upload files cancel', objFileInfo);
         socketIo.broadcast.emit('task upload files cancel', objFileInfo);
@@ -121,21 +123,32 @@ module.exports = function(taskIndex, socketIo, redis, cb) {
 function sendMsgChangeTaskStatus(redis, socketIoS, taskIndex) {
     //сообщения об изменении статуса задач
     return new Promise((resolve, reject) => {
+
+        debug('    //сообщения об изменении статуса задач');
+
+
         getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
             if (err) reject(err);
             else resolve(objTaskStatus);
         });
     }).then(objTaskStatus => {
         return new Promise((resolve, reject) => {
+
+            debug('-=-=-=-=-=-=');
+            debug(objTaskStatus);
+
             getListsTaskProcessing((err, objListsTaskProcessing) => {
                 if (err) reject(err);
-                resolve({
+                else resolve({
                     status: objTaskStatus,
                     lists: objListsTaskProcessing
                 });
             });
         });
     }).then(obj => {
+
+        debug(obj.status);
+
         let objStatus = {
             processingType: 'showChangeObject',
             informationPageJobLog: obj.status,
@@ -145,6 +158,9 @@ function sendMsgChangeTaskStatus(redis, socketIoS, taskIndex) {
         socketIoS.emit('change object status', objStatus);
         socketIoS.broadcast.emit('change object status', objStatus);
     }).catch(err => {
+
+        debug(err);
+
         throw (err);
     });
 }

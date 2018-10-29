@@ -72,9 +72,6 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
         async.waterfall([
             //получаем краткое название источника
             function(cb) {
-
-                //                debug('2. получаем краткое название источника');
-
                 redis.hget(`remote_host:settings:${sourceID}`, 'shortName', (err, shortSourceName) => {
                     if (err) cb(err);
                     else cb(null, shortSourceName);
@@ -343,6 +340,14 @@ module.exports.stop = function(redis, self, sourceID, cb) {
 
     actionWhenReceivingStop(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID })
         .then(() => {
+            return new Promise((resolve, reject) => {
+                //проверка очереди на выгрузку файлов (таблица task_turn_downloading_files)
+                checkQueueTaskDownloadFiles(redis, self.info.taskIndex, sourceID, err => { //, objTaskIndex) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
+        }).then(() => {
             cb(null);
         }).catch(err => {
             cb(err);

@@ -271,6 +271,9 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
     }
 
     function requestTypeStop() {
+
+        debug('MSG type "STOP" from Moth_go');
+
         requestTypeComplete();
     }
 };
