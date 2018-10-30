@@ -461,6 +461,8 @@ module.exports.eventHandling = function(socketIo) {
                 if (error !== null) {
                     throw (error);
                 }
+
+                showNotify(socketIo, 'success', 'Запрос на останов задачи по скачиванию файлов успешно отправлен');
             });
         }).catch(err => {
             let errMsgLog = err.toString();

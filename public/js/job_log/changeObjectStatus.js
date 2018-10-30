@@ -73,10 +73,11 @@ export default function(data) {
         let isExpect = (data.informationPageJobLog.newStatus === 'expect');
         let isUploaded = (data.informationPageJobLog.newStatus === 'uploaded');
         let isLoaded = (data.informationPageJobLog.newStatus === 'loaded');
+        let isInLine = (data.informationPageJobLog.newStatus === 'in line');
 
         let buttonImport = divTaskIndex.querySelector('button[name="buttonImport"]');
         //удаление кнопки 'импорт'
-        if (isExpect || isUploaded || isLoaded) {
+        if (isExpect || isUploaded || isLoaded || isInLine) {
             if (buttonImport === null) return;
 
             let parentElement = buttonImport.parentElement;
@@ -84,7 +85,7 @@ export default function(data) {
         }
 
         //добавление кнопки 'импорт'
-        if (data.informationPageJobLog.newStatus === 'partially loaded') {
+        if ((data.informationPageJobLog.newStatus === 'partially loaded') || (data.informationPageJobLog.newStatus === 'not loaded')) {
             if (buttonImport) return;
 
             addButtonImport();

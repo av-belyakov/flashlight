@@ -45,40 +45,5 @@ module.exports = function(redis, { taskIndex, sourceID }) {
             if (err) reject(err);
             else resolve(null);
         });
-    }).then(() => {
-        //получаем имя загружаемого файла
-        let fileName = globalObject.getData('downloadFilesTmp', sourceID).fileName;
-        let sourceIP = globalObject.getData('sources', sourceID).ipaddress;
-
-        debug('получаем имя загружаемого файла');
-        debug(fileName);
-        debug('получаем IP источника');
-        debug(sourceIP);
-
-        return { 'fileName': fileName, 'sourceIP': sourceIP };
-    }).then(({ fileName, sourceIP }) => {
-        let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${sourceIP}_${fileName}`);
-        if ((wsl === null) || (typeof wsl === 'undefined')) {
-            throw (new Error('not found a stream for writing to a file'));
-        }
-
-        debug('закрываем дискриптор потока на запись в файл');
-
-        //закрываем дискриптор потока на запись в файл
-        wsl.end();
-
-        let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${sourceIP}_${fileName}.tmp`;
-
-        return fileTmp;
-    }).then(fileTmp => {
-        return new Promise((resolve, reject) => {
-            debug('удаляем временный файл');
-
-            //удаляем временный файл
-            fs.unlink(fileTmp, err => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
     });
 };

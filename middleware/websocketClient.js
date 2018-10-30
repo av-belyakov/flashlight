@@ -23,6 +23,7 @@ const routeSocketIo = require('../routes/routeSocketIo');
 const routeWebsocket = require('../routes/routeWebsocket');
 const getRemoteHostSetupDbRedis = require('../libs/getRemoteHostSetupDbRedis');
 const controllingConnectedSources = require('../libs/controllingConnectedSources');
+const processingDownloadFilesConnectionClosed = require('../libs/management_download_files/processingDownloadFilesConnectionClosed');
 
 /*
  * remote_hosts_exist:id - список
@@ -226,7 +227,7 @@ function addHandlerConnection(objSetup) {
             if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
 
             //изменяем статус загрузки файлов
-            changeFieldUploadFiles(objSetup.redis, objSetup.hostId, (err) => {
+            changeFieldUploadFiles(objSetup.redis, objSetup.hostId, err => {
                 if (err) writeLogFile.writeLog(`\tError: connect error: ${err.toString()}`);
             });
         });
@@ -237,16 +238,30 @@ function addHandlerConnection(objSetup) {
         debug('---------------------------------- connection CLOSED -----------------------');
 
         //изменяем состояние соединения
-        writeConnectionStatus(objSetup.hostId, 'disconnect', (err) => {
+        writeConnectionStatus(objSetup.hostId, 'disconnect', err => {
             if (err) writeLogFile.writeLog('\tError: ' + err.toString());
 
             writeLogFile.writeLog(`\tInfo: connection with the remote host ${objSetup.hostId} terminated`);
             if (typeof objWebsocket[remoteHost] !== 'undefined') delete objWebsocket[remoteHost];
 
-            //изменяем статус загрузки файлов
-            changeFieldUploadFiles(objSetup.redis, objSetup.hostId, (err) => {
-                if (err) writeLogFile.writeLog(`\tError: connect error: ${err.toString()}`);
+            new Promise((resolve, reject) => {
+                //изменяем статус загрузки файлов
+                changeFieldUploadFiles(objSetup.redis, objSetup.hostId, err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            }).then(() => {
+                //обрабатываем ход выполнения задач при разрыве соединения
+                return new Promise((resolve, reject) => {
+                    processingDownloadFilesConnectionClosed(objSetup.redis, objSetup.hostId, err => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+            }).catch(err => {
+                writeLogFile.writeLog(`\tError: connect error: ${err.toString()}`);
             });
+
             routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
         });
     });

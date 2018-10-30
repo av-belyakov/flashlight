@@ -111,12 +111,28 @@ class GlobalObject {
         return this._getDataTask('filtering');
     }
 
-    //получить все выполняемые задачи по выгрузки файлов
+    //получить все выполняемые задачи по скачиванию файлов
     getDataTaskDownloadFiles() {
         return this._getDataTask('upload');
     }
 
-    //получить всю информацию о загружаемых с указанного ip адреса файлов
+    //получить все выполняемые задачи по скачиванию файлов для заданного ip адреса источника
+    getDataTaskDownloadFilesForSourceIP(sourceID) {
+        let objResult = {};
+
+        let tasks = this._getDataTask('upload');
+        for (let taskIndex in tasks) {
+            if (tasks[taskIndex].sourceId === sourceID) {
+                objResult[taskIndex] = {};
+
+                Object.assign(objResult[taskIndex], tasks[taskIndex]);
+            }
+        }
+
+        return objResult;
+    }
+
+    //получить всю информацию о загружаемых с указанного ip адреса файлах
     getInformationDownloadFiles(sourceIP) {
         let listDownloadFiles = this._getListDownloadFiles();
         for (let ip in listDownloadFiles) {
