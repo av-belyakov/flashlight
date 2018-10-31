@@ -81,39 +81,25 @@ module.exports = function(data, socketIo, redis, callback) {
             });
         });
     }).then(objTaskStatus => {
-        return new Promise((resolve, reject) => {
-
-            console.log('------------------');
-            console.log('список выполняющихся процессов');
-            console.log('------------------');
-
-            getListsTaskProcessing((err, objListsTaskProcessing) => {
-                if (err) reject(err);
-                else resolve({
-                    status: objTaskStatus,
-                    lists: objListsTaskProcessing
-                });
-            });
-        });
-    }).then(obj => {
 
         console.log('------------------');
-        console.log('генерация событий');
-        console.log(obj);
+        console.log('список выполняющихся процессов');
         console.log('------------------');
+
+        let objListsTaskProcessing = getListsTaskProcessing();
 
         //только для пользователя инициировавшего загрузку
         socketIo.emit('change object status', {
             processingType: 'showChangeObject',
-            informationPageJobLog: obj.status,
-            informationPageAdmin: obj.lists
+            informationPageJobLog: objTaskStatus,
+            informationPageAdmin: objListsTaskProcessing
         });
 
         //для всех пользователей
         socketIo.broadcast.emit('change object status', {
             processingType: 'showChangeObject',
-            informationPageJobLog: obj.status,
-            informationPageAdmin: obj.lists
+            informationPageJobLog: objTaskStatus,
+            informationPageAdmin: objListsTaskProcessing
         });
 
         callback(null);

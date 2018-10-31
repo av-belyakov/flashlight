@@ -11,34 +11,31 @@ const objWebsocket = require('../../configure/objWebsocket');
 const globalObject = require('../../configure/globalObject');
 
 /**
- * 
- * @param {*} taskIndex - ID задачи
+ * @param {*} redis дискриптор соединения с БД
+ * @param {*} taskIndex ID задачи
+ * @param {*} cb функция обратного вызова
  */
-module.exports = function(taskIndex) {
-    let taskInfo = globalObject.getData('processingTasks', taskIndex);
+module.exports = function(redis, taskIndex, cb) {
+    redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', (err, sourceID) => {
+        if (err) return cb(err);
 
-    if ((typeof taskInfo === 'undefined') || (typeof taskInfo.sourceId === 'undefined')) {
-        return (new errorsType.receivedIncorrectData('Ошибка: получены некорректные данные, останов задачи по скачиванию файлов не возможен', 'received incorrect data, stopping the task of downloading files is not possible'));
-    }
+        //статус источника (подключен ли он)
+        let connectionStatus = globalObject.getData('sources', sourceID, 'connectionStatus');
 
-    let sourceID = taskInfo.sourceId;
-
-    //статус источника (подключен ли он)
-    let connectionStatus = globalObject.getData('sources', sourceID, 'connectionStatus');
-
-    if ((connectionStatus === null) || (connectionStatus === 'disconnect')) {
-        return (new errorsType.sourceIsNotConnection(`Ошибка: источник №<strong>${sourceID}</strong> не подключен`));
-    }
-
-    let wsConnection = objWebsocket[`remote_host:${sourceID}`];
-
-    wsConnection.sendUTF(JSON.stringify({
-        messageType: 'download files',
-        info: {
-            processing: 'stop',
-            taskIndex: taskIndex
+        if ((connectionStatus === null) || (connectionStatus === 'disconnect')) {
+            return cb(new errorsType.sourceIsNotConnection(`Ошибка: источник №<strong>${sourceID}</strong> не подключен`));
         }
-    }));
 
-    return null;
+        let wsConnection = objWebsocket[`remote_host:${sourceID}`];
+
+        wsConnection.sendUTF(JSON.stringify({
+            messageType: 'download files',
+            info: {
+                processing: 'stop',
+                taskIndex: taskIndex
+            }
+        }));
+
+        cb(null);
+    });
 };

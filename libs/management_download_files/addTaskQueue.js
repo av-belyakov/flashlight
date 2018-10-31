@@ -11,9 +11,8 @@ const globalObject = require('../../configure/globalObject');
 /**
  * @param {*} redis дискриптор соединения с БД
  * @param {*} taskIndex ID источника
- * @param {*} callback функция обратного вызова
  */
-module.exports = function addTaskQueue(redis, taskIndex, callback) {
+module.exports = function addTaskQueue(redis, taskIndex) {
     return new Promise((resolve, reject) => {
         //получаем sourceID
         redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', (err, sourceID) => {
@@ -45,9 +44,5 @@ module.exports = function addTaskQueue(redis, taskIndex, callback) {
             ['status', 'in line'],
             ['timestampModify', +new Date()]
         ]);
-
-        callback(null);
-    }).catch(err => {
-        callback(err);
     });
 };

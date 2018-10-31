@@ -2,19 +2,14 @@
  * Модуль формирующий объект содержащий перечень выполняемых задач
  * и их количество
  * 
- * Версия 0.11, дата релиза 23.05.2018
+ * Версия 0.21, дата релиза 31.10.2018
  */
 
 'use strict';
 
 const globalObject = require('../configure/globalObject');
 
-module.exports = function(callback) {
-    /**
-     * @param processingTasks - выполняемые задачи, как по фильтрации, так и по загрузки файлов
-     * @param downloadFilesTmp - информация по загружаемому файлу
-     */
-
+module.exports = function() {
     let objResultTaskList = {
         taskFiltering: [],
         taskTurnDownloadingFiles: [],
@@ -36,5 +31,5 @@ module.exports = function(callback) {
         } else continue;
     }
 
-    callback(null, objResultTaskList);
+    return objResultTaskList;
 };

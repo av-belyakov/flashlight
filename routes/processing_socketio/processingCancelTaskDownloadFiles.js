@@ -69,7 +69,12 @@ module.exports = function(taskIndex, socketIo, redis, cb) {
             else return;
         });
     }).then(() => {
-        return getObjChangeTaskStatus(redis, taskIndex);
+        return new Promise((resolve, reject) => {
+            getObjChangeTaskStatus(redis, taskIndex, (err, objChangeTaskStatus) => {
+                if (err) reject(err);
+                else resolve(objChangeTaskStatus);
+            });
+        });
     }).then(objChangeTaskStatus => {
         //удаляем информацию о выполняемой задачи из объекта globalObject
         globalObject.deleteData('processingTasks', taskIndex);
@@ -98,28 +103,21 @@ module.exports = function(taskIndex, socketIo, redis, cb) {
 };
 
 //сообщение об изменения статуса задач
-function getObjChangeTaskStatus(redis, taskIndex) {
-    //сообщения об изменении статуса задач
-    return new Promise((resolve, reject) => {
-        getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
-            if (err) reject(err);
-            else resolve(objTaskStatus);
-        });
-    }).then(objTaskStatus => {
-        return new Promise((resolve, reject) => {
-            getListsTaskProcessing((err, objListsTaskProcessing) => {
-                if (err) return reject(err);
+function getObjChangeTaskStatus(redis, taskIndex, cb) {
+    console.log('processingCancelTaskDownloadFiles --- 4.1');
 
-                let objStatus = {
-                    processingType: 'showChangeObject',
-                    informationPageJobLog: objTaskStatus,
-                    informationPageAdmin: objListsTaskProcessing
-                };
+    getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
+        if (err) return cb(err);
 
-                resolve(objStatus);
-            });
-        });
-    }).catch(err => {
-        throw (err);
+        console.log('processingCancelTaskDownloadFiles --- 4.2');
+        console.log(objTaskStatus);
+
+        let objStatus = {
+            processingType: 'showChangeObject',
+            informationPageJobLog: objTaskStatus,
+            informationPageAdmin: getListsTaskProcessing()
+        };
+
+        cb(null, objStatus);
     });
 }

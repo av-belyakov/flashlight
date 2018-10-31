@@ -35,20 +35,20 @@
  *  выполняемые задачи
  *   'processingTasks': {
  *    '<tasksIndex>': {
- *     'taskType': <filtering'/'upload>
- *     'sourceId': <идентификатор источника>
- *     'status': <'expect' и 'execute' (для фильрации), 'expect', 'in line', 'loaded' (для загрузки файлов)>
- *     'timestampStart': <дата в формате unix>
- *     'timestampModify': <дата в формате unix>
- *     'uploadInfo': {
+ *      'taskType': <filtering'/'upload>
+ *      'sourceId': <идентификатор источника>
+ *      'status': <'expect' и 'execute' (для фильрации), 'expect', 'in line', 'loaded' (для загрузки файлов)>
+ *      'timestampStart': <дата в формате unix>
+ *      'timestampModify': <дата в формате unix>
+ *      'uploadInfo': {
  *         'fileSelectionType': <отметка о загрузки всех файлов или выбранных только пользователем>,
  *         'numberFilesUpload': <количество скачиваемых в задаче файлов>,
  *         'numberFilesUploaded': <количество загруженных в результате выполнения данной задачи файлов>,
  *         'numberFilesUploadedError': <количество загруженных файлов с ошибками>
  *         'numberPreviouslyDownloadedFiles': <количество файлов загруженных ранее>,
  *         'listFiles': <список файлов выбранных пользователем для скачивания>
- *     },
- *     'uploadEvents': <Event Emitter для события по загрузке сет. трафика>
+ *      },
+ *      'uploadEvents': <Event Emitter для события по загрузке сет. трафика>
  *    }}
  *
  *  потоки для записи файлов
@@ -190,6 +190,8 @@ class GlobalObject {
 
         arrayData.forEach(element => {
             if (Array.isArray(element) && (element.length === 2)) {
+                if ((typeof this.obj[type][group] === 'undefined') || (typeof this.obj[type][group][element[0]] === 'undefined')) return;
+
                 this.obj[type][group][element[0]] = element[1];
             }
         });

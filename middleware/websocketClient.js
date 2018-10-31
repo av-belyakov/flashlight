@@ -244,25 +244,71 @@ function addHandlerConnection(objSetup) {
             writeLogFile.writeLog(`\tInfo: connection with the remote host ${objSetup.hostId} terminated`);
             if (typeof objWebsocket[remoteHost] !== 'undefined') delete objWebsocket[remoteHost];
 
+
             new Promise((resolve, reject) => {
-                //изменяем статус загрузки файлов
-                changeFieldUploadFiles(objSetup.redis, objSetup.hostId, err => {
+                objSetup.redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
                     if (err) reject(err);
                     else resolve();
                 });
             }).then(() => {
-                //обрабатываем ход выполнения задач при разрыве соединения
+                debug('121212');
+
                 return new Promise((resolve, reject) => {
-                    processingDownloadFilesConnectionClosed(objSetup.redis, objSetup.hostId, err => {
+                    delSourceIDTablesUploadFiles({ 'redis': objSetup.redis, 'sourceID': objSetup.hostId }, err => {
                         if (err) reject(err);
                         else resolve();
                     });
+
                 });
+
+                //return Promise.all(delSourceIDTablesUploadFiles({ 'redis': objSetup.redis, 'sourceID': objSetup.hostId }));
+            }).then(() => {
+                debug('23232323');
+                //изменяем состояние 'uploadFiles' в таблицах 'task_filtering_all_information:*'
+                return processingDownloadFilesConnectionClosed(objSetup.redis, objSetup.hostId);
+            }).then(() => {
+
+                debug('34343434');
+
+                objSetup.redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
+                    if (err) return debug(err);
+
+                    debug('list from table task_turn_downloading_files');
+                    debug(list);
+                });
+
+                /** 
+                 * !!! 
+                 * НУЖНО сделать изменение состояния выполняемой задачи по скачиванию файлов 
+                 * !!! 
+                 * */
+
+                //изменяем состояние источника
+                routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
             }).catch(err => {
-                writeLogFile.writeLog(`\tError: connect error: ${err.toString()}`);
+
+                debug(err);
+
+                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
             });
 
-            routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
+            /*delSourceIDTablesUploadFiles(objSetup.redis, objSetup.hostId)
+                .then(() => {
+                    //изменяем состояние 'uploadFiles' в таблицах 'task_filtering_all_information:*'
+                    return processingDownloadFilesConnectionClosed(objSetup.redis, objSetup.hostId);
+                }).then(() => {
+
+                    redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
+                        if (err) return debug(err);
+
+                        debug('list from table task_turn_downloading_files');
+                        debug(list);
+                    });
+
+                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
+                }).catch(err => {
+                    if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+                });*/
         });
     });
 
@@ -404,7 +450,7 @@ function addHandlerConnection(objSetup) {
 function changeFieldUploadFiles(redis, sourceId, func) {
     //*удаление идентификаторов источников из таблиц task_turn_downloading_files и task_implementation_downloading_files
     deleteSourceIdTablesDownloadFiles(redis, sourceId, (err, arraySourceDownloadingFiles) => {
-        if (err) return func(err);
+        if (err) func(err);
         if (arraySourceDownloadingFiles.length === 0) return func(null);
 
         async.eachOf(arraySourceDownloadingFiles, (name, key, callbackEachOf) => {
@@ -422,6 +468,119 @@ function changeFieldUploadFiles(redis, sourceId, func) {
     });
 }
 
+
+//удаление идентификатора отключенного источника из таблиц task_turn_downloading_files и task_implementation_downloading_files
+function delSourceIDTablesUploadFiles({ redis, sourceID }, cb) {
+    const listNameTables = ['task_turn_downloading_files', 'task_implementation_downloading_files'];
+
+    async.each(listNameTables, (tableName, callback) => {
+        new Promise((resolve, reject) => {
+
+            debug('delSourceIDTablesUploadFiles --- проверка существования таблицы ' + tableName);
+
+            redis.exists(tableName, (err, isExist) => {
+                if (err) reject(err);
+                else resolve(isExist);
+            });
+        }).then(isExist => {
+            return new Promise((resolve, reject) => {
+
+                debug('delSourceIDTablesUploadFiles --- table is exist:' + isExist);
+
+                if (!isExist) return resolve([]);
+
+                redis.lrange(tableName, [0, -1], (err, listTasks) => {
+                    if (err) return reject(err);
+
+                    let list = listTasks.filter(value => {
+                        if (~value.indexOf(':')) {
+                            return (sourceID === value.split(':')[0]);
+                        }
+
+                        return false;
+                    });
+
+                    debug('delSourceIDTablesUploadFiles --- список задач с совпадающим ID для таблицы ' + tableName);
+                    debug(list);
+
+                    resolve(list);
+                });
+            });
+        }).then(listTasksDrop => {
+            async.each(listTasksDrop, (item, callbackEach) => {
+
+                debug(`delSourceIDTablesUploadFiles ---  delete ${item} from table name ${tableName}`);
+
+                redis.lrem(tableName, 0, item, err => {
+                    if (err) callbackEach(err);
+                    else callbackEach();
+                });
+            }, err => {
+                if (err) callback(err);
+                else callback(null);
+            });
+        });
+    }, err => {
+        if (err) cb(err);
+        else cb(null);
+    });
+
+    /*let promises = listNameTables.map(tableName => {
+        new Promise((resolve, reject) => {
+
+            debug('delSourceIDTablesUploadFiles --- проверка существования таблицы ' + tableName);
+
+            redis.exists(tableName, (err, isExist) => {
+                if (err) reject(err);
+                else resolve(isExist);
+            });
+        }).then(isExist => {
+            return new Promise((resolve, reject) => {
+
+                debug('delSourceIDTablesUploadFiles --- table is exist:' + isExist);
+
+                if (!isExist) return resolve([]);
+
+                redis.lrange(tableName, [0, -1], (err, listTasks) => {
+                    if (err) return reject(err);
+
+                    let list = listTasks.filter(value => {
+                        if (~value.indexOf(':')) {
+                            return (sourceID === value.split(':')[0]);
+                        }
+
+                        return false;
+                    });
+
+                    debug('delSourceIDTablesUploadFiles --- список задач с совпадающим ID для таблицы ' + tableName);
+                    debug(list);
+
+                    resolve(list);
+                });
+            });
+        }).then(listTasksDrop => {
+            async.each(listTasksDrop, (item, callbackEach) => {
+
+                debug(`delSourceIDTablesUploadFiles ---  delete ${item} from table name ${tableName}`);
+
+                redis.lrem(tableName, 0, item, err => {
+                    if (err) callbackEach(err);
+                    else callbackEach();
+                });
+            }, err => {
+                if (err) throw (err);
+                else return;
+            });
+        }).catch(err => {
+
+            debug(err);
+
+            throw (err);
+        });
+    });
+
+    return promises;*/
+}
 
 //удаление идентификатора отключенного источника из таблиц task_turn_downloading_files и task_implementation_downloading_files
 function deleteSourceIdTablesDownloadFiles(redis, sourceId, func) {

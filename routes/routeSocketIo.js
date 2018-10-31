@@ -12,6 +12,7 @@ const debug = require('debug')('routeSocketIo.js');
 
 const showNotify = require('../libs/showNotify');
 const controllers = require('../controllers');
+const addTaskQueue = require('../libs/management_download_files/addTaskQueue');
 const writeLogFile = require('../libs/writeLogFile');
 const globalObject = require('../configure/globalObject');
 const getListSources = require('../libs/helpers/getListSources');
@@ -372,14 +373,14 @@ module.exports.eventHandling = function(socketIo) {
      * УПРАВЛЕНИЕ КОНКРЕТНЫМ ИСТОЧНИКОМ
      * */
     /* получить всю информацию по выбранному источнику */
-    socketIo.on('get all information for source id', function(data) {
+    socketIo.on('get all information for source id', data => {
         informationForChoiseSource.getAllInformationSource(redis, data.sourceId, function(obj) {
             socketIo.emit('all information for source id', { processingType: 'showInformationSource', information: obj });
         });
     });
 
     /* получить информацию для виджета */
-    socketIo.on('get information for source id', (data) => {
+    socketIo.on('get information for source id', data => {
         informationForChoiseSource.getAllInformationSource(redis, data.sourceId, function(obj) {
             socketIo.emit('information widgets', { processingType: 'showInformationSource', information: obj });
         });
@@ -391,7 +392,7 @@ module.exports.eventHandling = function(socketIo) {
      * УПРАВЛЕНИЕ ЗАДАЧАМИ ПО ЗАГРУЗКЕ НАЙДЕННЫХ ФАЙЛОВ
      * */
     //получить список всех файлов найденных в результате фильтрации 
-    socketIo.on('get list all files obtained result filtering', (data) => {
+    socketIo.on('get list all files obtained result filtering', data => {
         processingGetListFilesResultFiltering(redis, data, (err, resultObj) => {
             if (err) {
                 writeLogFile.writeLog('\tError: ' + err.toString());
@@ -402,12 +403,12 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* скачать все файлы созданные в результате фильтрации */
-    socketIo.on('download all files obtained result filtering', function(data) {
+    socketIo.on('download all files obtained result filtering', data => {
         debug('REQUEST DOWNLOAD ---ALL--- FILES');
         debug(data);
 
         data.listFiles = [];
-        preparingFileDownloadRequest(data, socketIo, redis, (err) => {
+        preparingFileDownloadRequest(data, socketIo, redis, err => {
             if (err) {
                 let errMsgLog = err.toString();
                 let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
@@ -423,11 +424,11 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* скачать файлы выбранные пользователем и полученые в результате фильтрации */
-    socketIo.on('download choose files obtained result filtering', function(data) {
+    socketIo.on('download choose files obtained result filtering', data => {
         debug('REQUEST DOWNLOAD ---CHOOSE--- FILES');
         debug(data);
 
-        preparingFileDownloadRequest(data, socketIo, redis, (err) => {
+        preparingFileDownloadRequest(data, socketIo, redis, err => {
             if (err) {
                 let errMsgLog = err.toString();
                 let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, контроль загрузки файлов не возможен`;
@@ -443,27 +444,65 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* остановить загрузку файлов */
-    socketIo.on('stop download files', function(data) {
+    socketIo.on('stop download files', data => {
         debug('REQUEST ---STOP--- DOWNLOAD FILES');
         debug(data);
 
         new Promise((resolve, reject) => {
-            debug('проверка прав доступа пользователя');
-
             //проверка прав доступа пользователя
             checkAccessRights(socketIo, 'management_tasks_import', 'stop', trigger => {
                 if (!trigger) reject(new Error('Не достаточно прав доступа для останова задачи по загрузке найденных файлов'));
                 else resolve();
             });
         }).then(() => {
-            process.nextTick(() => {
-                let error = processingStopTaskDownloadFiles(data.taskIndex);
-                if (error !== null) {
-                    throw (error);
-                }
-
-                showNotify(socketIo, 'success', 'Запрос на останов задачи по скачиванию файлов успешно отправлен');
+            return new Promise((resolve, reject) => {
+                processingStopTaskDownloadFiles(redis, data.taskIndex, err => {
+                    if (err) {
+                        if (err.name !== 'SourceIsNotConnection') reject(err);
+                        else resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                });
             });
+        }).then(changeStatus => {
+            if (!changeStatus) {
+                return showNotify(socketIo, 'success', 'Запрос на останов задачи по скачиванию файлов успешно отправлен');
+            }
+
+            addTaskQueue(redis, data.taskIndex)
+                .then(() => {
+                    return new Promise((resolve, reject) => {
+                        //визуализируем изменение состояния источника
+                        getTaskStatusForJobLogPage(redis, data.taskIndex, 'uploadFiles', (err, objTaskStatus) => {
+                            if (err) reject(err);
+                            else resolve(objTaskStatus);
+                        });
+                    });
+                }).then(objTaskStatus => {
+
+                    console.log('------------------');
+                    console.log('список выполняющихся процессов');
+                    console.log('------------------');
+
+                    let objListsTaskProcessing = getListsTaskProcessing();
+
+                    //только для пользователя инициировавшего загрузку
+                    socketIo.emit('change object status', {
+                        processingType: 'showChangeObject',
+                        informationPageJobLog: objTaskStatus,
+                        informationPageAdmin: objListsTaskProcessing
+                    });
+
+                    //для всех пользователей
+                    socketIo.broadcast.emit('change object status', {
+                        processingType: 'showChangeObject',
+                        informationPageJobLog: objTaskStatus,
+                        informationPageAdmin: objListsTaskProcessing
+                    });
+
+                    showNotify(socketIo, 'success', 'В настоящее время данный источник не подключен, задача успешно переведена в статус "в очереди"');
+                });
         }).catch(err => {
             let errMsgLog = err.toString();
             let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, останов задачи по загрузке файлов не возможен`;
@@ -478,7 +517,7 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* отменить задачу по загрузке файлов */
-    socketIo.on('cancel download files', function(data) {
+    socketIo.on('cancel download files', data => {
         debug('REQUEST ---CANCEL--- DOWNLOAD FILES');
         debug(data);
 
@@ -498,7 +537,7 @@ module.exports.eventHandling = function(socketIo) {
     });
 
     /* запрос на следующий кусочек списка найденных в результате фильтрации файлов (для модального окна со списком найденных файлов) */
-    socketIo.on('next chunk files filter result', function(data) {
+    socketIo.on('next chunk files filter result', data => {
         debug('REQUEST ---- NEXT CHUNK LIST FILES ----');
         debug(data);
 
@@ -511,7 +550,7 @@ module.exports.eventHandling = function(socketIo) {
      * УПРАВЛЕНИЕ ЗАДАЧАМИ ФИЛЬТРАЦИИ
      * */
     /* добавить задание на фильтрацию */
-    socketIo.on('add start filter', function(data) {
+    socketIo.on('add start filter', data => {
         processingStartTaskFiltering(redis, data.filterTask, socketIo);
     });
 
