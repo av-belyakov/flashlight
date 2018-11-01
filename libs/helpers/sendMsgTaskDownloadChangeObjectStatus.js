@@ -10,32 +10,25 @@
 const getListsTaskProcessing = require('../getListsTaskProcessing');
 const getTaskStatusForJobLogPage = require('../getTaskStatusForJobLogPage');
 
+/**
+ * @param {*} redis дискриптор соединения с БД
+ * @param {*} taskIndex ID задачи
+ * @param {*} socketIo дискриптор соединения с UI через websocket
+ * @param {*} cb функция обратного вызова
+ */
 module.exports = function(redis, taskIndex, socketIo, cb) {
-    //сообщения об изменении статуса задач
-    new Promise((resolve, reject) => {
-        getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
-            if (err) reject(err);
-            else resolve(objTaskStatus);
-        });
-    }).then(objTaskStatus => {
-        return new Promise((resolve, reject) => {
-            getListsTaskProcessing((err, objListsTaskProcessing) => {
-                if (err) reject(err);
-                else resolve({
-                    status: objTaskStatus,
-                    lists: objListsTaskProcessing
-                });
-            });
-        });
-    }).then(obj => {
+
+    console.log('...START function sendMsgTaskDownloadChangeObjectStatus');
+
+    getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
+        if (err) return cb(err);
+
         socketIo.emit('change object status', {
             processingType: 'showChangeObject',
-            informationPageJobLog: obj.status,
-            informationPageAdmin: obj.lists
+            informationPageJobLog: objTaskStatus,
+            informationPageAdmin: getListsTaskProcessing()
         });
 
         cb(null);
-    }).catch(err => {
-        cb(err);
     });
 };

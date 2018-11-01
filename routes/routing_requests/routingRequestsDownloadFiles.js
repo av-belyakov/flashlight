@@ -18,6 +18,7 @@ const getListsTaskProcessing = require('../../libs/getListsTaskProcessing');
 const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPage');
 const getCountFilesUploadNotConsidered = require('../../libs/getCountFilesUploadNotConsidered');
 const preparingVisualizationDownloadFiles = require('../processing_socketio/preparingVisualizationDownloadFiles');
+const sendMsgTaskDownloadChangeObjectStatus = require('../../libs/helpers/sendMsgTaskDownloadChangeObjectStatus');
 
 module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notifyMessage }) {
     let objTypeRequest = {
@@ -84,8 +85,18 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                 showNotify(socketIoS, 'success', `Источник №<strong>${sourceID}</strong>, началась загрузка файлов`);
                 socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
 
+                sendMsgTaskDownloadChangeObjectStatus(redis, taskIndex, socketIoS, err => {
+                    if (err) {
+                        writeLogFile.writeLog(`\tError: ${err.toString()}, routingRequestDownloadFiles.js`);
+                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+                    } else {
+                        let uploadEvents = globalObject.getData('processingTasks', taskIndex).uploadEvents;
+                        uploadEvents.on('download information', sendEventsUpload);
+                    }
+                });
+
                 //сообщения об изменении статуса задач
-                new Promise((resolve, reject) => {
+                /*new Promise((resolve, reject) => {
                     getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
                         if (err) {
                             writeLogFile.writeLog('\tError: function getTaskStatusForJobLogPage, ' + err.toString());
@@ -118,7 +129,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                 }).catch(err => {
                     writeLogFile.writeLog(`\tError: ${err.toString()}, routingRequestDownloadFiles.js`);
                     showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-                });
+                });*/
             }
         });
     }
@@ -218,8 +229,22 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                         });
                     }
                 }
+
+                sendMsgTaskDownloadChangeObjectStatus(redis, taskIndex, socketIoS, err => {
+                    if (err) {
+                        writeLogFile.writeLog(`\tError: ${err.toString()}, routingRequestDownloadFiles.js`);
+                        showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
+                    } else {
+                        let uploadEvents = globalObject.getData('processingTasks', taskIndex).uploadEvents;
+                        uploadEvents.removeListener('download information', sendEventsUpload);
+
+                        globalObject.deleteData('processingTasks', taskIndex);
+                        globalObject.deleteData('downloadFilesTmp', sourceID);
+                    }
+                });
+
                 //сообщения об изменении статуса задач
-                new Promise((resolve, reject) => {
+                /*new Promise((resolve, reject) => {
                     getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
                         if (err) {
                             writeLogFile.writeLog(`\tError: ${err.toString()}, function getTaskStatusForJobLogPage`);
@@ -255,7 +280,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                 }).catch(err => {
                     writeLogFile.writeLog(`\tError: ${err.toString()}, routingRequestDownloadFiles.js`);
                     showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-                });
+                });*/
             }
         });
     }

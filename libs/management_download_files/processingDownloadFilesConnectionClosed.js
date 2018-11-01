@@ -135,7 +135,7 @@ module.exports = function(redis, sourceID) {
             debug('FINALY');
             debug(globalObject.getDataTaskDownloadFilesForSourceIP(sourceID));
 
-            resolve(null);
+            resolve(objListTasks);
         });
     });
 };

@@ -29,6 +29,7 @@ const routingRequestDownloadFiles = require('./routing_requests/routingRequestsD
 const preparingFileDownloadRequest = require('./processing_socketio/preparingFileDownloadRequest');
 const getNextChunkListFilteringFiles = require('../libs/management_download_files/getNextChunkListFilteringFiles');
 const informationForPageUploadedFiles = require('../libs/management_uploaded_files/informationForPageUploadedFiles');
+const sendMsgTaskDownloadChangeObjectStatus = require('../libs/helpers/sendMsgTaskDownloadChangeObjectStatus');
 const checkAccessRightsUsersMakeChangesTask = require('../libs/users_management/checkAccessRightsUsersMakeChangesTask');
 
 const processingUser = require('./processing_socketio/processingUser');
@@ -68,8 +69,22 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
         if (typeof objChangeStatus[taskType] === 'undefined') return writeLogFile.writeLog(`\tError: incorrect type 'taskType' equal to ${taskType}`);
 
+        getTaskStatusForJobLogPage(redis, taskIndex, objChangeStatus[taskType], function(err, objTaskStatus) {
+            if (err) {
+                showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
+                return writeLogFile.writeLog('\tError: ' + err.toString());
+            }
+
+            socketIoS.emit('change object status', {
+                processingType: 'showChangeObject',
+                informationPageJobLog: objTaskStatus,
+                informationPageAdmin: getListsTaskProcessing()
+            });
+        });
+
+
         //сообщения об изменении статуса задач
-        new Promise((resolve, reject) => {
+        /*new Promise((resolve, reject) => {
             getTaskStatusForJobLogPage(redis, taskIndex, objChangeStatus[taskType], function(err, objTaskStatus) {
                 if (err) reject(err);
                 else resolve(objTaskStatus);
@@ -96,7 +111,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
         }).catch(err => {
             writeLogFile.writeLog('\tError: ' + err.toString());
             showNotify(socketIoS, 'danger', `111 Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-        });
+        });*/
     };
 
     let obj = {

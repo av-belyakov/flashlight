@@ -2,7 +2,7 @@
  *
  * Установление соединений через протокол websocket с удаленными хостами
  *
- * Версия 0.22, дата релиза 22.08.2018
+ * Версия 0.32, дата релиза 01.11.2018
  * */
 
 'use strict';
@@ -18,11 +18,13 @@ const config = require('../configure');
 const controllers = require('../controllers');
 const globalObject = require('../configure/globalObject');
 const objWebsocket = require('../configure/objWebsocket');
-const writeLogFile = require('./../libs/writeLogFile');
+const writeLogFile = require('../libs/writeLogFile');
 const routeSocketIo = require('../routes/routeSocketIo');
 const routeWebsocket = require('../routes/routeWebsocket');
+const downloadManagementFiles = require('../libs/management_download_files/downloadManagementFiles');
 const getRemoteHostSetupDbRedis = require('../libs/getRemoteHostSetupDbRedis');
 const controllingConnectedSources = require('../libs/controllingConnectedSources');
+const sendMsgTaskDownloadChangeObjectStatus = require('../libs/helpers/sendMsgTaskDownloadChangeObjectStatus');
 const processingDownloadFilesConnectionClosed = require('../libs/management_download_files/processingDownloadFilesConnectionClosed');
 
 /*
@@ -60,21 +62,21 @@ module.exports = function(socketIo) {
 
                     callbackForEachOf(null);
                 });
-            }, (err) => {
+            }, err => {
                 if (err) reject(err);
                 else resolve(null);
             });
         });
     }).then(() => {
         reconnect(redis, socketIo, function() {
-            setInterval(reconnect.bind(null, redis, socketIo, (err) => {
+            setInterval(reconnect.bind(null, redis, socketIo, err => {
                 if (err) writeLogFile.writeLog('\tError: ' + err.toString());
             }), config.get('timerReconnectWebsocketClient'));
         });
 
         //отслеживание соединений с источниками и сброс соединений по источникам по которым отсутствуют данные заданное количество времени
         let controllingConnected = controllingConnectedSources(redis, socketIo);
-        setInterval(controllingConnected.bind(null, (err) => {
+        setInterval(controllingConnected.bind(null, err => {
             if (err) writeLogFile.writeLog('\tError: ' + err.toString());
         }), config.get('timeControllingConnectedSources'));
     }).catch((err) => {
@@ -111,7 +113,7 @@ function createWebsocketConnect(redis, socketIo, hostId) {
         }
     });
 
-    websocketTmp.on('connectFailed', (err) => {
+    websocketTmp.on('connectFailed', err => {
         if (err) writeLogFile.writeLog(`\t${err.toString()}`);
 
         if (options.host === '127.0.0.1') {
@@ -119,14 +121,14 @@ function createWebsocketConnect(redis, socketIo, hostId) {
             debug(err);
         }
 
-        checkSourceExist(redis, hostId, socketIo, (trigger) => {
+        checkSourceExist(redis, hostId, socketIo, trigger => {
             if (trigger) {
                 redis.hset('remote_host:settings:' + hostId, 'numberConnectionAttempts', ++sourceInfo.numberConnectionAttempts);
             }
         });
     });
 
-    websocketTmp.on('connect', (connection) => {
+    websocketTmp.on('connect', connection => {
         let remoteHost = 'remote_host:' + hostId;
 
         //if (options.host === '127.0.0.1') debug(connection);
@@ -134,8 +136,9 @@ function createWebsocketConnect(redis, socketIo, hostId) {
         if (typeof objWebsocket[remoteHost] !== 'undefined') return connection.drop(1000);
 
         objWebsocket[remoteHost] = connection;
+
         //изменяем состояние соединения
-        writeConnectionStatus(hostId, 'connect', (err) => {
+        writeConnectionStatus(hostId, 'connect', err => {
             if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
 
             addHandlerConnection({
@@ -153,13 +156,38 @@ function createWebsocketConnect(redis, socketIo, hostId) {
         redis.hset('remote_host:settings:' + hostId, 'dateLastConnected', successConnectDate);
         globalObject.setData('sources', hostId, 'dateLastConnected', successConnectDate);
 
-        //устанавливаем значение сообщающее о том что соединение с источником ранее было разорванно
+        //устанавливаем значение сообщающее о том что соединение с источником ранее было установлено
         globalObject.setData('sources', hostId, 'wasThereConnectionBreak', true);
 
         writeLogFile.writeLog('\tInfo: connection with the remote host ' + hostId + ' established');
+
+        /** START TEST */
+        //1010:0bf777b4fa88eb844c7b140f96ba2e9e
+
+        /*new Promise((resolve, reject) => {
+            redis.lpush('task_turn_downloading_files', '1010:0bf777b4fa88eb844c7b140f96ba2e9e', err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        }).then(() => {
+            return new Promise((resolve, reject) => {
+                resumeDownloadFiles(redis, hostId, err => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
+        }).catch(err => {
+            debug(err);
+        });*/
+        /** TEST END */
+
+
+        resumeDownloadFiles(redis, hostId, err => {
+            if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
+        });
     });
 
-    websocketTmp.on('error', (err) => {
+    websocketTmp.on('error', err => {
         writeLogFile.writeLog(`\t${err.toString()}`);
 
         if (options.host === '127.0.0.1') debug(err);
@@ -215,7 +243,7 @@ function addHandlerConnection(objSetup) {
     //отправляем эхо-запрос с некоторыми параметрами
     sendPing(objSetup.connection, objSetup.sourceInfo);
 
-    objSetup.connection.on('error', (err) => {
+    objSetup.connection.on('error', err => {
 
         debug('///////////////////// ERROR ||||||||||||||||||||||||||||||');
         debug(err);
@@ -266,25 +294,55 @@ function addHandlerConnection(objSetup) {
                 debug('23232323');
                 //изменяем состояние 'uploadFiles' в таблицах 'task_filtering_all_information:*'
                 return processingDownloadFilesConnectionClosed(objSetup.redis, objSetup.hostId);
-            }).then(() => {
+            }).then(objListTasks => {
 
                 debug('34343434');
+                debug(objListTasks);
 
-                objSetup.redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
+                /** TEST start */
+                /*objSetup.redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
                     if (err) return debug(err);
 
                     debug('list from table task_turn_downloading_files');
                     debug(list);
+                });*/
+                /** TEST stop */
+
+                let arrTaskIndex = [];
+                for (let key in objListTasks) {
+                    objListTasks[key].forEach(item => {
+                        if (typeof item.taskIndex !== 'undefined') {
+                            arrTaskIndex.push(item.taskIndex);
+                        }
+                    });
+                }
+
+                debug('array ID task index');
+                debug(arrTaskIndex);
+
+                //генерируем событие удаляющее виджет визуализирующий загрузку файла
+                arrTaskIndex.forEach(item => {
+                    let objFileInfo = {
+                        'information': {
+                            'taskIndex': item
+                        }
+                    };
+
+                    objSetup.socketIo.emit('task upload files cancel', objFileInfo);
                 });
 
-                /** 
-                 * !!! 
-                 * НУЖНО сделать изменение состояния выполняемой задачи по скачиванию файлов 
-                 * !!! 
-                 * */
+                async.each(arrTaskIndex, (item, callbackEach) => {
+                    //изменяем состояние задачи на странице управления задачами
+                    sendMsgTaskDownloadChangeObjectStatus(objSetup.redis, item, objSetup.socketIo, err => {
+                        if (err) callbackEach(err);
+                        else callbackEach(null);
+                    });
+                }, err => {
+                    if (err) writeLogFile.writeLog(`\tError: ${err.toString()}, routingRequestDownloadFiles.js`);
 
-                //изменяем состояние источника
-                routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
+                    //изменяем состояние источника
+                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
+                });
             }).catch(err => {
 
                 debug(err);
@@ -312,7 +370,7 @@ function addHandlerConnection(objSetup) {
         });
     });
 
-    objSetup.connection.on('message', (message) => {
+    objSetup.connection.on('message', message => {
         if (message.type === 'utf8') {
             let objData = getParseStringJSON(message);
 
@@ -445,6 +503,44 @@ function addHandlerConnection(objSetup) {
     });
 }
 
+function resumeDownloadFiles(redis, sourceID, cb) {
+    new Promise((resolve, reject) => {
+        redis.lrange('task_turn_downloading_files', [0, -1], (err, tasksList) => {
+            if (err) reject(err);
+            else resolve(tasksList);
+        });
+    }).then(tasksList => {
+
+        debug(tasksList);
+
+        let tasksListProcess = [];
+        tasksList.forEach(task => {
+
+            debug(task);
+
+            if ((~task.indexOf(sourceID)) && (~task.indexOf(':'))) {
+                tasksListProcess.push(task.split(':')[1]);
+            }
+        });
+
+        debug(tasksListProcess);
+
+        if (tasksListProcess.length === 0) return cb(null);
+
+        return tasksListProcess;
+    }).then(tasksListProcess => {
+        //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
+        return downloadManagementFiles.startRequestDownloadFiles(redis, {
+            sourceID: sourceID,
+            taskIndex: tasksListProcess[0],
+            listFiles: []
+        });
+    }).then(() => {
+        cb(null);
+    }).catch(err => {
+        cb(err);
+    });
+}
 
 //изменение состояния поля uploadFiles хеш таблицы task_filtering_all_information:*
 function changeFieldUploadFiles(redis, sourceId, func) {
