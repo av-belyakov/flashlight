@@ -299,7 +299,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             throw ('not found a stream for writing to a file');
         }
 
-        debug('Добавляем обработчик wsl.once на событие "finish"');
+        debug('Добавляем обработчик wsl.once на событие "finish", имя файла ' + fileName);
 
         wsl.once('finish', () => {
 
@@ -503,6 +503,8 @@ function completeWriteBinaryData(redis, sourceID, cb) {
 
                 wsConnection.sendUTF(JSON.stringify(objResponse));
 
+                debug(objResponse);
+
                 sendEventsUpload(dfi.taskIndex, err => {
                     if (err) cb(err);
                     else cb(null);
@@ -520,6 +522,8 @@ function completeWriteBinaryData(redis, sourceID, cb) {
 
                 objResponse.info.processing = 'execute failure';
                 wsConnection.sendUTF(JSON.stringify(objResponse));
+
+                debug(objResponse);
 
                 sendEventsUpload(dfi.taskIndex, error => {
                     if (err) writeLogFile.writeLog('\tError: ' + error.toString());
