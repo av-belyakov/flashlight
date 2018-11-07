@@ -480,7 +480,7 @@ function addHandlerConnection(objSetup) {
                     return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
                 }
 
-                process.nextTick(() => {
+                /*process.nextTick(() => {
                     let fileName = globalObject.getData('downloadFilesTmp', objSetup.hostId).fileName;
                     let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${source.ipaddress}_${fileName}`);
 
@@ -492,19 +492,24 @@ function addHandlerConnection(objSetup) {
 
                     //закрываем дискриптор потока на запись в файл
                     wsl.end();
-                });
+                });*/
 
-                /*                writeLogFile.writeLog(`Info: закрываем дискриптор потока на запись в файл ${fileName}`);
+                let fileName = globalObject.getData('downloadFilesTmp', objSetup.hostId).fileName;
+                let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${source.ipaddress}_${fileName}`);
 
-                                //закрываем дискриптор потока на запись в файл
-                                wsl.end();
+                if ((wsl === null) || (typeof wsl === 'undefined')) {
+                    return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
+                }
 
-                                return;*/
-                return;
+                writeLogFile.writeLog(`Info: закрываем дискриптор потока на запись в файл ${fileName}`);
+
+                //закрываем дискриптор потока на запись в файл
+                wsl.end();
+            } else {
+
+                //пишем кусочки файлов в поток
+                wsl.write(message.binaryData);
             }
-
-            //пишем кусочки файлов в поток
-            wsl.write(message.binaryData);
         }
     });
 }

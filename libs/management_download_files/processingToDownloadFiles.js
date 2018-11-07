@@ -190,12 +190,13 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
     let taskIndex = objData.info.taskIndex;
 
     //получить ресурс доступа к streamWrite
-    let getStreamWrite = function(remoteAddress, fileName) {
+    let getWriteStream = function(remoteAddress, { fileName, uploadDirectoryFiles }) {
         let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}_${fileName}`);
 
         if ((typeof wsl !== 'undefined') && (wsl !== null)) return wsl;
 
-        let writeStream = fs.createWriteStream(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${remoteAddress}_${fileName}.tmp`);
+        //let writeStream = fs.createWriteStream(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${remoteAddress}_${fileName}.tmp`);
+        let writeStream = fs.createWriteStream(`${uploadDirectoryFiles}/${fileName}`);
         writeStream.on('error', err => {
             writeLogFile.writeLog(`\tError: ${err.toString()}`);
         });
@@ -223,22 +224,16 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         //        debug('1. изменяем статус uploadFiles в таблице task_filtering_all_information:');
 
         redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'loaded', (err) => {
-            if (err) reject(err);
-            else resolve(null);
+            if (err) return reject(err);
+
+            //изменяем информацию о выполняемой задаче (processingTask)
+            globalObject.modifyData('processingTasks', taskIndex, [
+                ['status', 'loaded'],
+                ['timestampModify', +new Date()]
+            ]);
+
+            resolve(null);
         });
-    }).then(() => {
-
-        //        debug('2. изменяем информацию о выполняемой задаче');
-
-        //изменяем информацию о выполняемой задаче (processingTask)
-        globalObject.modifyData('processingTasks', taskIndex, [
-            ['status', 'loaded'],
-            ['timestampModify', +new Date()]
-        ]);
-
-        //        debug('globalObject.modifyData');
-        //        debug(globalObject.getData('processingTasks', taskIndex));
-
     }).then(() => {
         return new Promise((resolve, reject) => {
             redis.hget(`task_filtering_all_information:${taskIndex}`, 'uploadDirectoryFiles', (err, uploadDirectoryFiles) => {
@@ -263,15 +258,13 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
                                 debug(globalObject.getData('downloadFilesTmp', sourceID));
                 */
 
-                resolve(objData.info.fileName);
+                resolve({
+                    'fileName': objData.info.fileName,
+                    'uploadDirectoryFiles': uploadDirectoryFiles
+                });
             });
         });
-    }).then(fileName => {
-        //создание ресурса на запись в файл
-        //        debug('4. создание ресурса на запись в файл');
-
-        return getStreamWrite(wsConnection.remoteAddress, fileName);
-    }).then(() => {
+    }).then(obj => {
 
         /*
                 debug('EVENT "EXECUTE"');
@@ -281,36 +274,29 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
         let dfi = globalObject.getData('downloadFilesTmp', sourceID);
 
+        //добавляем обработчик на событие "finish"
+        //        debug('5. добавляем обработчик на событие "finish"');
+
+
+        debug('Добавляем обработчик wsl.once на событие "finish", имя файла ' + dfi.fileName);
+
+        getWriteStream(wsConnection.remoteAddress, obj)
+            .once('finish', () => {
+
+                writeLogFile.writeLog(`Info: получено событие 'finish для файла ${dfi.fileName}, готовимся отправить сообщение о готовности принять следующий файл'`);
+
+                completeWriteBinaryData(redis, sourceID, err => {
+                    if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+                });
+            });
+
+
         objResponse.info.fileInfo = {
             'fileName': dfi.fileName,
             'fileHash': dfi.fileHash
         };
 
         wsConnection.sendUTF(JSON.stringify(objResponse));
-
-        return dfi.fileName;
-    }).then(fileName => {
-        //добавляем обработчик на событие "finish"
-        //        debug('5. добавляем обработчик на событие "finish"');
-
-        //обработчик сбытия 'finish' при завершении записи в файл
-        let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}_${fileName}`);
-        if ((wsl === null) || (typeof wsl === 'undefined')) {
-            throw ('not found a stream for writing to a file');
-        }
-
-        debug('Добавляем обработчик wsl.once на событие "finish", имя файла ' + fileName);
-
-        wsl.once('finish', () => {
-
-            //            debug('--------- WRITE IS FINISH ------------');
-
-            writeLogFile.writeLog(`Info: получено событие 'finish для файла ${fileName}, готовимся отправить сообщение о готовности принять следующий файл'`);
-
-            completeWriteBinaryData(redis, sourceID, err => {
-                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
-            });
-        });
 
         callback(null);
     }).catch(err => {
@@ -444,6 +430,43 @@ function fileRename(infoDownloadFile, fileTmp) {
     });
 }
 
+function checkUploadedFile(infoDownloadFile) {
+    let uploadedFile = `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`;
+
+    return new Promise((resolve, reject) => {
+        fs.lstat(uploadedFile, (err, fileSettings) => {
+            if (err) return reject(err);
+
+            //            debug(`fileSettings.size (${fileSettings.size}) !== infoDownloadFile.fileFullSize( ${infoDownloadFile.fileFullSize} )`);
+            //            debug(fileSettings.size !== infoDownloadFile.fileFullSize);
+
+            if (fileSettings.size !== infoDownloadFile.fileFullSize) {
+                writeLogFile.writeLog(`\tError: the SIZE of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
+
+                return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", размер полученного файла не совпадает с ранее переданным`));
+            }
+
+            resolve();
+        });
+    }).then(() => {
+        return md5File(uploadedFile);
+    }).then(hash => {
+        return new Promise((resolve, reject) => {
+
+            //            debug(`infoDownloadFile.fileHash (${infoDownloadFile.fileHash}) !== hash (${hash})`);
+            //            debug(infoDownloadFile.fileHash !== hash);
+
+            if (infoDownloadFile.fileHash !== hash) {
+                writeLogFile.writeLog(`\tError: the HEX of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
+
+                return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", хеш сумма полученного файла не совпадает с ранее переданной`));
+            }
+
+            resolve();
+        });
+    });
+}
+
 function completeWriteBinaryData(redis, sourceID, cb) {
 
     debug('START function completeWriteBinaryData');
@@ -491,10 +514,7 @@ function completeWriteBinaryData(redis, sourceID, cb) {
     //удаляем ресурс для записи в файл
     globalObject.deleteData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}_${dfi.fileName}`);
 
-    //    debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
-
-    let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}_${dfi.fileName}.tmp`;
-    fileRename(dfi, fileTmp)
+    checkUploadedFile(dfi)
         .then(() => {
             actionWhenReceivingFileReceived(redis, dfi.taskIndex, sourceID, err => {
                 if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
@@ -531,9 +551,50 @@ function completeWriteBinaryData(redis, sourceID, cb) {
                 });
             });
         });
+
+    //    debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
+
+    /*let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}_${dfi.fileName}.tmp`;
+    fileRename(dfi, fileTmp)
+        .then(() => {
+            actionWhenReceivingFileReceived(redis, dfi.taskIndex, sourceID, err => {
+                if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
+
+                writeLogFile.writeLog(`\tInfo: file ${dfi.fileName} resived successfy`);
+
+                wsConnection.sendUTF(JSON.stringify(objResponse));
+
+                debug(objResponse);
+
+                sendEventsUpload(dfi.taskIndex, err => {
+                    if (err) cb(err);
+                    else cb(null);
+                });
+            });
+        }).catch(err => {
+            debug('*-*-*-*-**-*-*-');
+            debug(err.message);
+            debug('*-*-*-*-**-*-*-');
+
+            actionWhenReceivingFileNotReceived(redis, dfi.taskIndex, err => {
+                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+
+                writeLogFile.writeLog(`\tInfo: file ${dfi.fileName} resived failure`);
+
+                objResponse.info.processing = 'execute failure';
+                wsConnection.sendUTF(JSON.stringify(objResponse));
+
+                debug(objResponse);
+
+                sendEventsUpload(dfi.taskIndex, error => {
+                    if (err) writeLogFile.writeLog('\tError: ' + error.toString());
+                    else cb(err);
+                });
+            });
+        });*/
 }
 
-//генерирование события обнавления загружаемой информации
+//генерирование события обновления загружаемой информации
 function sendEventsUpload(taskIndex, callback) {
     let processTaskInfo = globalObject.getData('processingTasks', taskIndex);
 
