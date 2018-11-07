@@ -296,9 +296,11 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             'fileHash': dfi.fileHash
         };
 
-        wsConnection.sendUTF(JSON.stringify(objResponse));
+        process.nextTick(() => {
+            wsConnection.sendUTF(JSON.stringify(objResponse));
 
-        callback(null);
+            callback(null);
+        });
     }).catch(err => {
         writeLogFile.writeLog('\tError: ' + err.toString());
         objResponse.info.processing = 'cancel';
@@ -309,9 +311,11 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
                 debug(err);
         */
 
-        wsConnection.sendUTF(JSON.stringify(objResponse));
+        process.nextTick(() => {
+            wsConnection.sendUTF(JSON.stringify(objResponse));
 
-        callback(err);
+            callback(err);
+        });
     });
 };
 
