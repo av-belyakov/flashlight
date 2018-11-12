@@ -1,7 +1,50 @@
 var settingGroupsPage =
 webpackJsonp_name_([8],{
 
-/***/ 100:
+/***/ 103:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/**
+ * Модуль изменения информационных иконок полей ввода
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+function ManagementIcon() {
+    let elemSpanIcon = document.getElementById('iconSuccess');
+    this.elemSpanIcon = elemSpanIcon;
+    this.parentNode = elemSpanIcon.parentNode;
+}
+
+ManagementIcon.prototype.showIcon = function (trigger) {
+    if (!trigger) {
+        this.elemSpanIcon.classList.remove('glyphicon-ok');
+        this.parentNode.classList.remove('has-success');
+        this.elemSpanIcon.classList.add('glyphicon-remove');
+        this.parentNode.classList.add('has-error');
+    } else {
+        this.elemSpanIcon.classList.remove('glyphicon-remove');
+        this.parentNode.classList.remove('has-error');
+        this.elemSpanIcon.classList.add('glyphicon-ok');
+        this.parentNode.classList.add('has-success');
+    }
+};
+
+ManagementIcon.prototype.clearIcon = function () {
+    this.elemSpanIcon.classList.remove('glyphicon-ok');
+    this.parentNode.classList.remove('has-success');
+    this.elemSpanIcon.classList.remove('glyphicon-remove');
+    this.parentNode.classList.remove('has-error');
+};
+
+/* harmony default export */ __webpack_exports__["a"] = (ManagementIcon);
+
+/***/ }),
+
+/***/ 104:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -32,16 +75,16 @@ function createObjInformationGroup(getGroupCheckbox, groupName) {
 
 /***/ }),
 
-/***/ 174:
+/***/ 179:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__setting_groups_page_markRead__ = __webpack_require__(175);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__setting_groups_page_createGroup__ = __webpack_require__(176);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_groups_page_managementIcon__ = __webpack_require__(99);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_groups_page_createObjInformationGroup__ = __webpack_require__(100);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__setting_groups_page_markRead__ = __webpack_require__(180);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__setting_groups_page_createGroup__ = __webpack_require__(181);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_groups_page_managementIcon__ = __webpack_require__(103);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_groups_page_createObjInformationGroup__ = __webpack_require__(104);
 
 
 
@@ -164,7 +207,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 175:
+/***/ 180:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -221,13 +264,13 @@ function markRead(elem) {
 
 /***/ }),
 
-/***/ 176:
+/***/ 181:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createGroup;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__managementIcon__ = __webpack_require__(99);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createObjInformationGroup__ = __webpack_require__(100);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__managementIcon__ = __webpack_require__(103);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createObjInformationGroup__ = __webpack_require__(104);
 /**
  * Содание новой группы пользователей
  * 
@@ -258,7 +301,7 @@ function createGroup() {
 
 /***/ }),
 
-/***/ 2:
+/***/ 3:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -283,50 +326,7 @@ let showNotify = function (type, message) {
 
 
 
-/***/ }),
-
-/***/ 99:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/**
- * Модуль изменения информационных иконок полей ввода
- * 
- * Версия 0.1, дата релиза 29.11.2017
- */
-
-
-
-function ManagementIcon() {
-    let elemSpanIcon = document.getElementById('iconSuccess');
-    this.elemSpanIcon = elemSpanIcon;
-    this.parentNode = elemSpanIcon.parentNode;
-}
-
-ManagementIcon.prototype.showIcon = function (trigger) {
-    if (!trigger) {
-        this.elemSpanIcon.classList.remove('glyphicon-ok');
-        this.parentNode.classList.remove('has-success');
-        this.elemSpanIcon.classList.add('glyphicon-remove');
-        this.parentNode.classList.add('has-error');
-    } else {
-        this.elemSpanIcon.classList.remove('glyphicon-remove');
-        this.parentNode.classList.remove('has-error');
-        this.elemSpanIcon.classList.add('glyphicon-ok');
-        this.parentNode.classList.add('has-success');
-    }
-};
-
-ManagementIcon.prototype.clearIcon = function () {
-    this.elemSpanIcon.classList.remove('glyphicon-ok');
-    this.parentNode.classList.remove('has-success');
-    this.elemSpanIcon.classList.remove('glyphicon-remove');
-    this.parentNode.classList.remove('has-error');
-};
-
-/* harmony default export */ __webpack_exports__["a"] = (ManagementIcon);
-
 /***/ })
 
-},[174]);
+},[179]);
 //# sourceMappingURL=settingGroupsPage.js.map

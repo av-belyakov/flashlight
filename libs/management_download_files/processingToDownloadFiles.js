@@ -190,8 +190,10 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
     let taskIndex = objData.info.taskIndex;
 
     //получить ресурс доступа к streamWrite
-    let getWriteStream = function(remoteAddress, { fileName, uploadDirectoryFiles }) {
-        let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}_${fileName}`);
+    let getWriteStream = function(remoteAddress, { fileHash, fileName, uploadDirectoryFiles }) {
+        //        let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${remoteAddress}_${fileName}`);
+
+        let wsl = globalObject.getData('writeStreamLinks', fileHash);
 
         if ((typeof wsl !== 'undefined') && (wsl !== null)) return wsl;
 
@@ -201,7 +203,8 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             writeLogFile.writeLog(`\tError: ${err.toString()}`);
         });
 
-        globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}_${fileName}`, writeStream);
+        //        globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}_${fileName}`, writeStream);
+        globalObject.setData('writeStreamLinks', fileHash, writeStream);
 
         return writeStream;
     };
@@ -259,6 +262,7 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
                 */
 
                 resolve({
+                    'fileHash': objData.info.fileHash,
                     'fileName': objData.info.fileName,
                     'uploadDirectoryFiles': uploadDirectoryFiles
                 });
@@ -516,7 +520,9 @@ function completeWriteBinaryData(redis, sourceID, cb) {
     }
 
     //удаляем ресурс для записи в файл
-    globalObject.deleteData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}_${dfi.fileName}`);
+    //    globalObject.deleteData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}_${dfi.fileName}`);
+
+    globalObject.deleteData('writeStreamLinks', dfi.fileHash);
 
     checkUploadedFile(dfi)
         .then(() => {

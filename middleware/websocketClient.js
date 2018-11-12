@@ -7,6 +7,7 @@
 
 'use strict';
 
+const buf = require('buffer').Buffer;
 const async = require('async');
 const https = require('https');
 const validator = require('validator');
@@ -208,7 +209,7 @@ function createWebsocketConnect(redis, socketIo, hostId) {
     };
 
     //предварительный HTTP запрос
-    let req = https.request(options, function(res) {
+    let req = https.request(options, res => {
 
         //проверка ответа HTTP сервера
         debug('ip address = ' + options.host);
@@ -220,7 +221,7 @@ function createWebsocketConnect(redis, socketIo, hostId) {
             debug('REDIRECTION FOR ' + res.headers.location);
 
             //запрос на соединение по протоколу webSocket
-            websocketTmp.connect('wss://' + sourceInfo.ipaddress + ':' + sourceInfo.port);
+            websocketTmp.connect(`wss://${sourceInfo.ipaddress}:${sourceInfo.port}/wss`);
         } else {
             writeLogFile.writeLog(`\tError: connection error to remote host ${hostId}, IP ${sourceInfo.ipaddress}, code ${res.statusCode} (${res.statusMessage})`);
         }
@@ -238,6 +239,8 @@ function createWebsocketConnect(redis, socketIo, hostId) {
 
 //добавляет обработчики на установленное соединение и получает объекты соединения
 function addHandlerConnection(objSetup) {
+    const MARKER_LENGTH = 32;
+
     let remoteHost = `remote_host:${objSetup.hostId}`;
 
     //отправляем эхо-запрос с некоторыми параметрами
@@ -435,13 +438,22 @@ function addHandlerConnection(objSetup) {
                 });
             }
 
+            let newBuffer = buf.from(message.binaryData);
+
+            //получаем маркер для идентификации открытого дискриптора файла
+            let marker = newBuffer.toString('utf8', 0, MARKER_LENGTH);
+
+            //let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${objSetup.connection.remoteAddress}_${infoDownloadFile.fileName}`);
+            let wsl = globalObject.getData('writeStreamLinks', marker);
+            if ((wsl === null) || (typeof wsl === 'undefined')) {
+                return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
+            }
+
             let fileChunkSize = infoDownloadFile.fileChunkSize;
             let fileSizeTmp = infoDownloadFile.fileSizeTmp;
 
-            let messageBinaryDataString = message.binaryData.toString();
-
             if (fileSizeTmp <= fileChunkSize) {
-                infoDownloadFile.fileSizeTmp += messageBinaryDataString.length;
+                infoDownloadFile.fileSizeTmp += newBuffer.slice(MARKER_LENGTH).length;
 
                 globalObject.modifyData('downloadFilesTmp', objSetup.hostId, [
                     ['fileSizeTmp', infoDownloadFile.fileSizeTmp]
@@ -462,13 +474,8 @@ function addHandlerConnection(objSetup) {
                 }, '');
             }
 
-            let wsl = globalObject.getData('writeStreamLinks', `writeStreamLink_${objSetup.connection.remoteAddress}_${infoDownloadFile.fileName}`);
-            if ((wsl === null) || (typeof wsl === 'undefined')) {
-                return writeLogFile.writeLog('\tError: not found a stream for writing to a file');
-            }
-
             //проверяем передан ли файл полностью
-            if ((message.binaryData.length === 18) && (message.binaryData.toString('utf8') === 'moth say: file_EOF')) {
+            if ((message.binaryData.length === 51) && (newBuffer.toString('utf8', 33) === 'moth say: file_EOF')) {
                 debug('RESIVED BYTES LAST FILE');
                 debug('генерируем событие для закрытия дискриптора файла');
 
@@ -490,9 +497,8 @@ function addHandlerConnection(objSetup) {
                 //закрываем дискриптор потока на запись в файл
                 wsl.end();
             } else {
-
                 //пишем кусочки файлов в поток
-                wsl.write(message.binaryData);
+                wsl.write(newBuffer.slice(MARKER_LENGTH));
             }
         }
     });

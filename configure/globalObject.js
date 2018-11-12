@@ -56,7 +56,7 @@
  *    'writeStreamLink'_<source_ip>_<file_name>: writeStream
  *   }
  * 
- * Версия 0.1, дата релиза 21.05.2018
+ * Версия 0.2, дата релиза 07.11.2018
  */
 
 'use strict';
