@@ -9,19 +9,6 @@
 import openModalWindowDelete from './openModalWindowDelete';
 
 export default function createTableTaskResultFilter(objData) {
-    //удаление старой таблицы с данными
-    function removeElementByClassName() {
-        let removeElement = document.querySelector('#main-content .table');
-
-        if (removeElement === null) return;
-
-        let parentNode = removeElement.parentNode;
-        parentNode.removeChild(removeElement);
-    }
-
-    //удаляем старую таблицу
-    removeElementByClassName();
-
     function getName(userName) {
         if (!(~userName.indexOf(' '))) return userName;
 
@@ -32,6 +19,12 @@ export default function createTableTaskResultFilter(objData) {
         }
         return newUserName;
     }
+
+    //удаляем старую таблицу
+    let removeElement = document.querySelector('#field_table .table-responsive');
+    if (removeElement === null) return;
+
+    removeElement.innerHTML = '';
 
     let informationTaskIndex = objData.informationTaskIndex;
 
@@ -65,8 +58,6 @@ export default function createTableTaskResultFilter(objData) {
     let disabledRead = (dataAccessRights[0].split('=')[1] === 'false') ? 'disabled="disabled"' : '';
     let disabledImport = (dataAccessRights[1].split('=')[1] === 'false') ? 'disabled="disabled"' : '';
     let disabledDelete = (dataAccessRights[2].split('=')[1] === 'false') ? 'disabled="disabled"' : '';
-
-    let divElement = document.getElementById('field_table');
 
     let tableHeader = '<thead><tr><th>№</th><th class="text-left">дата формирования задачи</th><th class="text-right">id источника</th><th class="text-left">пользователь</th>';
     tableHeader += '<th class="text-left">ip-адреса источники</th><th class="text-left">импорт файлов</th><th class="text-left">статус задачи</th><th class="text-right">файлов найдено</th></tr></thead>';
@@ -137,7 +128,7 @@ export default function createTableTaskResultFilter(objData) {
     }
     tableBody += '</tbody>';
 
-    divElement.innerHTML = '<div class="table-responsive" style="margin-left: 10px; margin-right: 10px;"><table class="table table-striped table-hover table-sm">' + tableHeader + tableBody + '</table></div>';
+    removeElement.parentNode.innerHTML = `<div class="table-responsive" style="margin-left: 10px; margin-right: 10px;"><table class="table table-striped table-hover table-sm">${tableHeader} ${tableBody}</table></div>`;
 
     //загрузка отфильтрованного сетевого трафика
     function importFiles(taskIndex) {

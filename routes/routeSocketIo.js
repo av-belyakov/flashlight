@@ -211,6 +211,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             });
         },
         'error': function() {
+
+            debug(stringMessage);
+
             let objErrorMessage = {
                 400: `Некорректный запрос к источнику №<striong>${remoteHostId}</strong>`,
                 401: `На источнике №<string>${remoteHostId}</strong> нет файлов для экспорта`,
@@ -236,6 +239,17 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
 
                     if (taskID === stringMessage.taskId) sendMessageChangeTaskStatus(stringMessage.taskId, tasksIndex[taskID].taskType);
                 }
+            }
+
+            //когда невозможно отменить задачу по выгрузке файлов по причине несовпадения ID
+            if (stringMessage.errorCode === 409) {
+                debug('Resived error code = 409');
+                processingCancelTaskDownloadFiles(stringMessage.taskId, socketIoS, redis, err => {
+                    if (err) {
+                        debug(err);
+                        writeLogFile.writeLog('\tError: ' + err.toString());
+                    }
+                });
             }
 
             let errMsg = (stringMessage.errorMessage === null) ? objErrorMessage[stringMessage.errorCode] : stringMessage.errorMessage;
@@ -536,18 +550,22 @@ module.exports.eventHandling = function(socketIo) {
         debug('REQUEST ---CANCEL--- DOWNLOAD FILES');
         debug(data);
 
-        processingCancelTaskDownloadFiles(data.taskIndex, socketIo, redis, err => {
-            if (err) {
-                let errMsgLog = err.toString();
-                let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, останов задачи по загрузке файлов не возможен`;
-                if (err.name) {
-                    errMsgLog = err.message;
-                    errMsg = err.message;
-                }
+        checkAccessRights(socketIo, 'management_tasks_import', 'cancel', trigger => {
+            if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для останова задачи по загрузке найденных файлов');
 
-                writeLogFile.writeLog('\tError: ' + errMsgLog);
-                showNotify(socketIo, 'danger', errMsg);
-            }
+            processingCancelTaskDownloadFiles(data.taskIndex, socketIo, redis, err => {
+                if (err) {
+                    let errMsgLog = err.toString();
+                    let errMsg = `Неопределенная ошибка источника №<strong>${data.sourceId}</strong>, останов задачи по загрузке файлов не возможен`;
+                    if (err.name) {
+                        errMsgLog = err.message;
+                        errMsg = err.message;
+                    }
+
+                    writeLogFile.writeLog('\tError: ' + errMsgLog);
+                    showNotify(socketIo, 'danger', errMsg);
+                }
+            });
         });
     });
 
@@ -609,7 +627,7 @@ module.exports.eventHandling = function(socketIo) {
         processingResumeTaskFiltering(socketIo, redis, data.taskIndex);
     });
 
-    /* поиск задачи по заданным параметра */
+    /* поиск задачи по заданным параметрам */
     socketIo.on('search all tasks index', function(data) {
         let cookie = socketIo.request.headers.cookie.split('; ');
         let userId = cookie[1].slice(16).split('.');
@@ -623,6 +641,12 @@ module.exports.eventHandling = function(socketIo) {
         };
 
         informationForPageLogFilter.getAllInformation(redis, objReq, function(objInformationTasks) {
+
+            /*debug('--*-*-*-*-*-*-*-*-*-*-*-*-*-');
+            debug(objInformationTasks);
+            debug('--*-*-**-');*/
+
+
             //набор параметров для поиска
             listParametersSearch.jobLog(redis, function(objSelectList) {
                 socketIo.emit('found all tasks Index', {
@@ -645,7 +669,13 @@ module.exports.eventHandling = function(socketIo) {
             isNewReq: false,
             chunkNumber: data.pageNumber
         };
+
         informationForPageLogFilter.getAllInformation(redis, objReq, function(obj) {
+
+            debug('--*-*-*-*-*-*-*-*-*-*-*-*-*-');
+            debug(obj);
+            debug('--*-*-*-*-*-*-*-*-*-*-*-*-*-');
+
             socketIo.emit('show new page', obj);
         });
     });

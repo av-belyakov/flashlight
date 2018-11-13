@@ -72,8 +72,6 @@ module.exports.addRequestDownloadFiles = function(redis, { sourceID, taskIndex, 
 module.exports.startRequestDownloadFiles = function(redis, { sourceID, taskIndex, listFiles }) {
     let countDownloadSelectedFiles = listFiles.length;
 
-    debug('...START function startRequestDownloadFiles');
-
     //    return getUserNameAndLogin(redis, socketIo).then(objUserInfo => {
     return new Promise((resolve, reject) => {
         //удаляем идентификатор задачи из таблицы task_turn_downloading_files и добавляем в таблицу task_implementation_downloading_files

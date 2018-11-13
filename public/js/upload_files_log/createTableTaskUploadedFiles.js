@@ -44,8 +44,11 @@ export default function createTableTaskUploadedFiles(objData) {
     let tableBodyButton = '';
 
     for (let taskIndex in informationTaskIndex) {
-        let x = (new Date()).getTimezoneOffset() * 60000;
-        let dateTimeStartUploadFiles = (new Date((+informationTaskIndex[taskIndex].dateTimeStartUploadFiles - x)).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, ''));
+        let dateTimeStartUploadFiles = 'null';
+        if (!isNaN(informationTaskIndex[taskIndex].dateTimeStartUploadFiles)) {
+            let x = (new Date()).getTimezoneOffset() * 60000;
+            dateTimeStartUploadFiles = (new Date((+informationTaskIndex[taskIndex].dateTimeStartUploadFiles - x)).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, ''));
+        }
 
         let textSettings;
         try {

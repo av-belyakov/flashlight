@@ -1,7 +1,7 @@
 /**
  * Модуль обработки отмены задачи по скачиванию файлов находящейся в очереди
  * 
- * Версия 0.1, дата релиза 03.10.2018
+ * Версия 0.13, дата релиза 13.11.2018
  */
 
 'use strict';
@@ -10,7 +10,6 @@ const async = require('async');
 
 const showNotify = require('../../libs/showNotify');
 const globalObject = require('../../configure/globalObject');
-const checkAccessRights = require('../../libs/users_management/checkAccessRights');
 const getListsTaskProcessing = require('../../libs/getListsTaskProcessing');
 const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPage');
 
@@ -24,16 +23,9 @@ const getTaskStatusForJobLogPage = require('../../libs/getTaskStatusForJobLogPag
  */
 module.exports = function(taskIndex, socketIo, redis, cb) {
     new Promise((resolve, reject) => {
-        checkAccessRights(socketIo, 'management_tasks_import', 'cancel', function(trigger) {
-            if (!trigger) reject(new Error('Не достаточно прав доступа для останова задачи по загрузке найденных файлов'));
-            else resolve();
-        });
-    }).then(() => {
-        return new Promise((resolve, reject) => {
-            redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', (err, sourceID) => {
-                if (err) reject(err);
-                else resolve(sourceID);
-            });
+        redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', (err, sourceID) => {
+            if (err) reject(err);
+            else resolve(sourceID);
         });
     }).then(sourceID => {
         let taskIDDownloadFiles = `${sourceID}:${taskIndex}`;

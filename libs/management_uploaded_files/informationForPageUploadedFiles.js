@@ -10,6 +10,7 @@ const async = require('async');
 
 const errorsType = require('../../errors/errorsType');
 const writeLogFile = require('../writeLogFile');
+const objDownloadFilesTmp = require('../../configure/objDownloadFilesTmp');
 const searchEnginesUploadedFiles = require('../search_engines/searchEnginesUploadedFiles');
 
 /*
@@ -87,10 +88,7 @@ module.exports.getNewInformationFileUpload = function(redis, objReq, func) {
  * @param {*} func 
  */
 module.exports.getAllInformationSearching = function(redis, objReq, func) {
-
     const MAX_COUNT_TASK_INDEX = 14;
-
-    const objGlobal = {};
 
     if (objReq.isNewReq === true) {
         //получить информацию для первой страницы или при поиске
@@ -128,13 +126,13 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
                 newArray[num] = arrayResult.splice(0, MAX_COUNT_TASK_INDEX);
             }
 
-            objGlobal.objResultFindTaskUpload = {};
-            objGlobal.objResultFindTaskUpload[objReq.userId] = newArray;
-            objGlobal.objResultFindTaskUpload[objReq.userId].countTasks = arrayTasksLength;
+            objDownloadFilesTmp.objResultFindTaskUpload = {};
+            objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId] = newArray;
+            objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId].countTasks = arrayTasksLength;
 
             //получаем информацию по первой части
             var objInformationTasks = {};
-            async.map(objGlobal.objResultFindTaskUpload[objReq.userId][0], function(id, callbackMap) {
+            async.map(objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId][0], function(id, callbackMap) {
                 redis.hmget('task_filtering_all_information:' + id,
                     'dateTimeStartUploadFiles',
                     'sourceId',
@@ -166,7 +164,7 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
                                         maxCountElementsIndex: MAX_COUNT_TASK_INDEX,
                                         chunksNumber: 1,
                                         countChunks: countChunks,
-                                        countElements: objGlobal.objResultFindTaskUpload[objReq.userId].countTasks
+                                        countElements: objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId].countTasks
                                     }
                                 });
                             });
@@ -181,7 +179,7 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
 
     // получить информацию при переходе по постраничным ссылкам 
     function getInformationUploadFilesChoicePage(callbackFunc) {
-        if ((typeof objGlobal.objResultFindTaskUpload[objReq.userId] === 'undefined') || (!Array.isArray(objGlobal.objResultFindTaskUpload[objReq.userId]))) {
+        if ((typeof objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId] === 'undefined') || (!Array.isArray(objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId]))) {
             writeLogFile.writeLog('\tError: userId is not defined');
             return callbackFunc(new errorsType.receivedIncorrectData('Ошибка: поиск невозможен, неверный идентификатор пользователя'));
         }
@@ -193,7 +191,7 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
         }
 
         let nextChunkNumber = +objReq.chunkNumber;
-        let newArray = objGlobal.objResultFindTaskUpload[objReq.userId][nextChunkNumber - 1];
+        let newArray = objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId][nextChunkNumber - 1];
 
         let objInformationTasks = {};
         async.map(newArray, function(id, callbackMap) {
@@ -229,8 +227,8 @@ module.exports.getAllInformationSearching = function(redis, objReq, func) {
                                 informationPaginate: {
                                     maxCountElementsIndex: MAX_COUNT_TASK_INDEX,
                                     chunksNumber: nextChunkNumber,
-                                    countChunks: objGlobal.objResultFindTaskUpload[objReq.userId].length,
-                                    countElements: objGlobal.objResultFindTaskUpload[objReq.userId].countTasks
+                                    countChunks: objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId].length,
+                                    countElements: objDownloadFilesTmp.objResultFindTaskUpload[objReq.userId].countTasks
                                 }
                             });
                         });

@@ -230,7 +230,7 @@ function createWebsocketConnect(redis, socketIo, hostId) {
         res.on('end', () => {});
     });
 
-    req.on('error', (err) => {
+    req.on('error', err => {
         writeLogFile.writeLog(`\t${err.toString()} error remote host ${hostId}`);
     });
 
@@ -511,27 +511,19 @@ function resumeDownloadFiles(redis, sourceID, cb) {
             else resolve(tasksList);
         });
     }).then(tasksList => {
-
-        debug(tasksList);
-
         let tasksListProcess = [];
         tasksList.forEach(task => {
-
-            debug(task);
-
             if ((~task.indexOf(sourceID)) && (~task.indexOf(':'))) {
                 tasksListProcess.push(task.split(':')[1]);
             }
         });
 
-        debug(tasksListProcess);
-
-        if (tasksListProcess.length === 0) return cb(null);
-
         return tasksListProcess;
     }).then(tasksListProcess => {
+
+        if (tasksListProcess.length === 0) return;
         //формируем и отправляем выбранному источнику запрос на выгрузку файлов в формате JSON
-        return downloadManagementFiles.startRequestDownloadFiles(redis, {
+        else return downloadManagementFiles.startRequestDownloadFiles(redis, {
             sourceID: sourceID,
             taskIndex: tasksListProcess[0],
             listFiles: []
