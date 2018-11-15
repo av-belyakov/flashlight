@@ -77,7 +77,7 @@ exports.deleteInformation = function(socketIo, obj, func) {
                         redis.zrem('task_filtering_index_all', obj.taskIndex, function(err) {
                             if (err) callback(err);
                             else callback(null, true);
-                        })
+                        });
                     },
                     //удаляем таблицу task_filtering_all_information:*
                     function(callback) {

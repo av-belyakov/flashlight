@@ -11,8 +11,6 @@ const async = require('async');
 const globalObject = require('../../configure/globalObject');
 const writeLogFile = require('../../libs/writeLogFile');
 
-const debug = require('debug')('preparingVisualizationDownloadFiles');
-
 //подготовка данных необходимых для визуализации добавления в очередь задачи на выгрузку файлов
 module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, sourceID, cb) {
     getShortSourcesInformationTurn(redis, taskIndex, sourceID, (err, obj) => {
@@ -22,10 +20,6 @@ module.exports.preparingVisualizationAddTurn = function(redis, taskIndex, source
 
             cb(err);
         } else {
-
-            debug('task ID ' + taskIndex + ' visualization');
-            debug(obj);
-
             cb(null, obj);
         }
     });
@@ -91,14 +85,8 @@ module.exports.preparingVisualizationComplete = function(redis, taskIndex, sourc
             if (err.name === 'Error') writeLogFile.writeLog('\tError: ' + err.toString());
             else writeLogFile.writeLog('\tError: ' + err.message.toString());
 
-            debug(err);
-
             func(err);
         } else {
-
-            debug('DOWNLOAD COMPLETED');
-            debug(obj);
-
             func(null, obj);
         }
     });

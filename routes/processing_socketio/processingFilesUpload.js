@@ -7,9 +7,6 @@
 'use strict';
 
 const async = require('async');
-const EventEmitter = require('events').EventEmitter;
-
-const debug = require('debug')('processingFilesUpload.js');
 
 const getUserId = require('../../libs/users_management/getUserId');
 const errorsType = require('../../errors/errorsType');
@@ -31,15 +28,9 @@ let redis = controllers.connectRedis();
 module.exports.start = function(socketIo, data, cb) {
     let taskIndex = data.taskIndex;
 
-    debug('...START function processingFilesUpload.start');
-    debug(data);
-
     async.waterfall([
         //получаем идентификатор сенсора
         callback => {
-
-            debug('        //получаем идентификатор сенсора');
-
             redis.hget(`task_filtering_all_information:${taskIndex}`, 'sourceId', (err, sourceID) => {
                 if (err) callback(new errorsType.errorRedisDataBase('Внутренняя ошибка сервера', err.toString()));
                 else callback(null, sourceID);
@@ -47,9 +38,6 @@ module.exports.start = function(socketIo, data, cb) {
         },
         //проверяем есть ли соединение с источником
         (sourceID, callback) => {
-
-            debug('        //проверяем есть ли соединение с источником');
-
             let connectionStatus = globalObject.getData('sources', sourceID, 'connectionStatus');
 
             if (connectionStatus === null || connectionStatus === 'disconnect') {
@@ -60,15 +48,10 @@ module.exports.start = function(socketIo, data, cb) {
         },
         //проверяем есть ли в очереди на загрузку задача с соответствующим идентификатором
         (sourceID, callback) => {
-
-            debug('        //проверяем есть ли в очереди на загрузку задача с соответствующим идентификатором');
-
             redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
                 if (err) return callback(err);
 
                 let isTrue = list.some((item) => ((`${sourceID}:${taskIndex}`) === item));
-
-                debug('task ID is exist ' + isTrue);
 
                 if (isTrue) callback(new errorsType.taskIndexAlreadyExistToTurn(`Задача на экспорт сетевого трафика с идентификатором ${taskIndex} уже добавлена в очередь`));
                 else callback(null, sourceID);
@@ -76,9 +59,6 @@ module.exports.start = function(socketIo, data, cb) {
         },
         //добавление задачи в очередь (загрузка данных в таблицу task_turn_downloading_files)
         (sourceID, callback) => {
-
-            debug('        //добавление задачи в очередь (загрузка данных в таблицу task_turn_downloading_files)');
-
             redis.rpush('task_turn_downloading_files', `${sourceID}:${taskIndex}`, (err) => {
                 if (err) callback(err);
                 else callback(null, sourceID);
@@ -86,9 +66,6 @@ module.exports.start = function(socketIo, data, cb) {
         },
         //проверка осуществления загрузки файлов с указанного источника (идентификатор источника в таблице task_implementation_downloading_files)
         (sourceID, callback) => {
-
-            debug('        //проверка осуществления загрузки файлов с указанного источника (идентификатор источника в таблице task_implementation_downloading_files)');
-
             redis.exists('task_implementation_downloading_files', (err, result) => {
                 if (err) return callback(err);
 
@@ -123,10 +100,6 @@ module.exports.start = function(socketIo, data, cb) {
             }).then(() => {
                 cb(null, sourceID);
             }).catch(err => {
-
-                debug('ERROR add files');
-                debug(err);
-
                 cb(err);
             });
         } else {
@@ -152,10 +125,6 @@ module.exports.start = function(socketIo, data, cb) {
 
                 cb(null, sourceID);
             }).catch(err => {
-
-                debug('ERROR start files');
-                debug(err);
-
                 cb(err);
             });
         }
@@ -333,9 +302,6 @@ module.exports.stop = function(socketIo, taskIndex, func) {
 
 //получаем имя и логин пользователя
 function getUserNameAndLogin(redis, socketIo) {
-
-    debug('...START function getUserNameAndLogin');
-
     return new Promise((resolve, reject) => {
         getUserId.userId(redis, socketIo, (err, userId) => {
             if (err) reject(err);
@@ -356,10 +322,6 @@ function getUserNameAndLogin(redis, socketIo) {
 
 //записать информацию о пользователе инициировавшим загрузку
 function setUserInfoToTable(redis, { taskIndex, userName, userLogin }) {
-
-    debug('...START function setUserInfoToTAble');
-    debug(`taskIndex = ${taskIndex}, userName = ${userName}, userLogin = ${userLogin}`);
-
     return new Promise((resolve, reject) => {
         redis.hmset(`task_filtering_all_information:${taskIndex}`, {
             'userLoginImport': userLogin,

@@ -7,12 +7,9 @@
 
 'use strict';
 
-const debug = require('debug')('downloadManagemetFiles');
-
 const async = require('async');
 const EventEmitter = require('events').EventEmitter;
 
-const getUserId = require('./../users_management/getUserId');
 const errorsType = require('../../errors/errorsType');
 const globalObject = require('../../configure/globalObject');
 const objWebsocket = require('../../configure/objWebsocket');
@@ -25,16 +22,6 @@ const objWebsocket = require('../../configure/objWebsocket');
 module.exports.addRequestDownloadFiles = function(redis, { sourceID, taskIndex, listFiles }) {
     let countDownloadSelectedFiles = listFiles.length;
 
-    debug('...START function addRequestDownloadFiles');
-    debug(`taskIndex = ${taskIndex}`);
-    debug(`countDownloadSelectedFiles = ${countDownloadSelectedFiles}`);
-
-    //return getUserNameAndLogin(redis, socketIo).then(({ userLogin, userName }) => {
-    /*return setUserInfoToTable(redis, {
-        'taskIndex': taskIndex,
-        'userName': userName,
-        'userLogin': userLogin
-    }).then(() => {*/
     return getDownloadInfo(redis, taskIndex, countDownloadSelectedFiles).then(obj => {
         if (countDownloadSelectedFiles > 0) return obj;
 
@@ -91,10 +78,6 @@ module.exports.startRequestDownloadFiles = function(redis, { sourceID, taskIndex
     }).then(({ countUploadFiles, directoryFiltering, countFilesLoaded }) => {
         let filesSelectionType = (countDownloadSelectedFiles === 0) ? 'all files' : 'chosen files';
 
-        debug('*-*-*-*-*-*-*-*-*--*-*---*-*-*-*-**-*-*-');
-        debug(`count files upload = ${countUploadFiles}`);
-        debug('*-*-*-*-*-*-*-*-*--*-*---*-*-*-*-**-*-*-');
-
         //добавляем информацию о задаче в глобальный объект
         globalObject.setData('processingTasks', taskIndex, {
             'taskType': 'upload',
@@ -143,18 +126,11 @@ module.exports.startRequestDownloadFiles = function(redis, { sourceID, taskIndex
                 }
             });
 
-            debug('CHOOSE ALL FILES');
-            debug(strRequest);
-
             return wsConnection.sendUTF(strRequest);
         }
 
         //если скачиваются ТОЛЬКО выбранные пользователем файлы
         let { countChunk, list: newListFiles } = transformListIndexFiles(20, listFiles);
-
-        debug(`count chunks = ${countChunk}`);
-        debug(newListFiles);
-        debug(`countDownloadSelectedFiles ${listFiles.length}`);
 
         //предварительный запрос
         let objRequest = {
@@ -170,17 +146,11 @@ module.exports.startRequestDownloadFiles = function(redis, { sourceID, taskIndex
             }
         };
 
-        debug('CHOOSE FILES');
-        debug(objRequest);
-
         wsConnection.sendUTF(JSON.stringify(objRequest));
 
         for (let i = 0; i < countChunk; i++) {
             objRequest.info.numberMessageParts = [(i + 1), countChunk];
             objRequest.info.listDownloadSelectedFiles = newListFiles[i];
-
-            debug('------');
-            debug(objRequest);
 
             wsConnection.sendUTF(JSON.stringify(objRequest));
         }
@@ -288,41 +258,6 @@ class uploadEventEmitter extends EventEmitter {
     }
 }
 
-//получаем имя и логин пользователя
-/*function getUserNameAndLogin(redis, socketIo) {
-    return new Promise((resolve, reject) => {
-        getUserId.userId(redis, socketIo, (err, userId) => {
-            if (err) reject(err);
-            else resolve(userId);
-        });
-    }).then(userID => {
-        return new Promise((resolve, reject) => {
-            redis.hmget(`user_authntication:${userID}`, 'login', 'user_name', (err, user) => {
-                if (err) reject(err);
-                else resolve({
-                    userLogin: user[0],
-                    userName: user[1]
-                });
-            });
-        });
-    });
-}*/
-
-//записать информацию о пользователе инициировавшим загрузку
-/*function setUserInfoToTable(redis, { taskIndex, userName, userLogin }) {
-    return new Promise((resolve, reject) => {
-        redis.hmset(`task_filtering_all_information:${taskIndex}`, {
-            'userLoginImport': userLogin,
-            'userNameStartUploadFiles': userName,
-            'dateTimeStartUploadFiles': +new Date(),
-            'uploadFiles': 'in line'
-        }, err => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
-}*/
-
 //получаем информацию о загружаемых файлах
 function getDownloadInfo(redis, taskIndex, countDownloadSelectedFiles) {
     return new Promise((resolve, reject) => {
@@ -357,10 +292,6 @@ function getCountFilesUploaded(redis, taskIndex, sourceID, obj) {
 
                 if ((typeof fileInfo.fileDownloaded !== 'undefined') && fileInfo.fileDownloaded) countUploaded++;
             }
-
-            debug('---------------------');
-            debug(countUploaded);
-            debug('---------------------');
 
             obj.countUploadFiles -= countUploaded;
 

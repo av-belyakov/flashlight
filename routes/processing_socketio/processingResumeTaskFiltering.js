@@ -6,8 +6,6 @@
 
 'use strict';
 
-const debug = require('debug')('processingResumeTaskFiltering');
-
 const errorsType = require('../../errors/errorsType');
 const showNotify = require('../../libs/showNotify');
 const globalObject = require('../../configure/globalObject');
@@ -22,8 +20,6 @@ const processingListFilesForFiltering = require('../../libs/list_file_management
  * @param {*} taskIndex - уникальный идентификатор задачи
  */
 module.exports = function(socketIo, redis, taskIndex) {
-    debug('RESUME FILTERING start....');
-
     new Promise((resolve, reject) => {
         //получаем идентификатор источника
         redis.hmget(`task_filtering_all_information:${taskIndex}`,
@@ -54,7 +50,7 @@ module.exports = function(socketIo, redis, taskIndex) {
                 if (Object.keys(listFilterFiles) === 0) {
                     throw new errorsType.receivedIncorrectData('Ошибка: невозможно выполнить задачу, получены некорректные данные');
                 }
-                debug(objectParameters);
+
                 //отправляем список файлов по которым нужно возобновить фильтрацию
                 routingRequestFilterFiles({
                     'sourceId': objectParameters.sourceId,

@@ -12,10 +12,6 @@ import changeInformationListSources from './setting_task/changeInformationListSo
 
     //вывод информации и количества выполняемых задач
     socket.on('change object status', function(data) {
-        if (Object.keys(data.informationPageAdmin).length > 0) {
-            console.log(data);
-        }
-
         changeCountTaskProcessing(data);
     });
 

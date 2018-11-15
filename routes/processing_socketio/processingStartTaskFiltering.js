@@ -12,8 +12,6 @@
 
 'use strict';
 
-const debug = require('debug')('processingFiltering');
-
 const async = require('async');
 const crypto = require('crypto');
 
@@ -205,18 +203,10 @@ module.exports = function(redis, obj, socketIo) {
                         }
                     };
 
-                    debug('START Filtering NOT INDEX ++++++');
-                    debug('Flashlight -> Moth');
-                    debug(objTaskFilter);
-
                     wsConnection.sendUTF(JSON.stringify(objTaskFilter));
 
                     return callback(null, taskIndex);
                 } else {
-
-                    debug('---------------------------------------');
-                    debug('RESUME FILTERING, get list files');
-
                     processingListFilesForFiltering.getList(obj.sourceId, taskIndex, redis)
                         .then((listFilterFiles) => {
                             if (Object.keys(listFilterFiles) === 0) {

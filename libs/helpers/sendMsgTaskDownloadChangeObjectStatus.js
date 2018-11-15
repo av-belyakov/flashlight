@@ -17,9 +17,6 @@ const getTaskStatusForJobLogPage = require('../getTaskStatusForJobLogPage');
  * @param {*} cb функция обратного вызова
  */
 module.exports = function(redis, taskIndex, socketIo, cb) {
-
-    console.log('...START function sendMsgTaskDownloadChangeObjectStatus');
-
     getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
         if (err) return cb(err);
 

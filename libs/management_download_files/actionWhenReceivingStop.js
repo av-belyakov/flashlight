@@ -6,13 +6,7 @@
 
 'use strict';
 
-const debug = require('debug')('actionWhenReceivingStop');
-
-const fs = require('fs');
 const async = require('async');
-
-const config = require('../../configure');
-const globalObject = require('../../configure/globalObject');
 
 /**
  * 
@@ -21,9 +15,6 @@ const globalObject = require('../../configure/globalObject');
  * @param {*} sourceID - ID источника
  */
 module.exports = function(redis, { taskIndex, sourceID }) {
-
-    debug('...START function actionWhenReceivingStop');
-
     return new Promise((resolve, reject) => {
         async.parallel([
             callback => {

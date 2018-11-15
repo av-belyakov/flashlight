@@ -111,12 +111,12 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
             clearMinWidget(data);
         });
 
-        //информация о ходе фильтрации
+        //информация о ходе выполнения фильтрации
         socket.on('filtering execute', function(data) {
             createWidgetVisualizationFiltration(data);
         });
 
-        //информация о ходе фильтрации
+        //информация об останове фильтрации
         socket.on('filtering stop', function(data) {
             objectTimers[data.information.taskIndex] = setTimeout(deleteElementInformationFiltering.bind(null, data.information.taskIndex), 30000);
         });
@@ -246,12 +246,6 @@ import modalWindowFilterResults from './index_page/modalWindowFilterResults';
 
             setTimeout(deleteElementInformationFiltering.bind(null, data.information.taskIndex), 30000);
         });
-
-        //изменение статуса задачи по загрузки файлов
-        /*socket.on('change object status', function(data) {
-            console.log(data);
-
-        });*/
 
         //удаление задачи из очереди загрузок
         socket.on('task upload files cancel', function(data) {

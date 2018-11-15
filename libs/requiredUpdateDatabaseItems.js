@@ -55,19 +55,6 @@ module.exports = function(redis) {
         });
     }, function(err) {
         if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
-
-        /*redis.keys('user_group:*', (err, arrayGroups) => {
-            if (err) return debug(err);
-
-            async.forEachOf(arrayGroups, (gr, ind, back) => {
-                redis.hgetall(gr, (err, res) => {
-                    if (err) return debug(err);
-
-                    console.log(gr);
-                    console.log(res);
-                });
-            });
-        });*/
     });
 };
 
@@ -100,7 +87,6 @@ function addNewElementUserGroup(objAddElement, redis, func) {
                         let groupsNeedChange = keys.some((key) => element === key);
 
                         if (!groupsNeedChange) {
-                            //                            debug('group update: ' + group);
                             redis.hset(group, element, JSON.stringify(objElem), (err) => {
                                 if (err) callbackForEachThree(err);
                                 else callbackForEachThree(null);

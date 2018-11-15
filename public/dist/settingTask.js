@@ -24,10 +24,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
     //вывод информации и количества выполняемых задач
     socket.on('change object status', function (data) {
-        if (Object.keys(data.informationPageAdmin).length > 0) {
-            console.log(data);
-        }
-
         Object(__WEBPACK_IMPORTED_MODULE_1__setting_task_changeCountTaskProcessing__["a" /* default */])(data);
     });
 

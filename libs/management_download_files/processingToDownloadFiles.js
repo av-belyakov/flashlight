@@ -13,8 +13,6 @@ const mv = require('mv');
 const async = require('async');
 const md5File = require('md5-file/promise');
 
-const debug = require('debug')('processingToDownloadFiles');
-
 const config = require('../../configure');
 const errorsType = require('../../errors/errorsType');
 const objWebsocket = require('../../configure/objWebsocket.js');
@@ -50,24 +48,6 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
         }
     };
 
-    /*
-        debug('------------ RESIVED MESSAGE "ready" for Moth_go ---------------');
-        debug(objData);
-
-        //удаляем временный файл если он есть
-        debug('1. удаляем временный файл если он есть');
-    */
-
-    /*        //удаляем временный файл если он есть
-            fs.access(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, fs.constants.R_OK, err => {
-                if (err) return resolve();
-
-                fs.unlink(`/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${wsConnection.remoteAddress}.tmp`, err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });*/
-
     new Promise((resolve, reject) => {
         async.waterfall([
             //получаем краткое название источника
@@ -79,10 +59,6 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             },
             //формируем массив с данными о расположении загружаемых файлов
             function(shortSourceName, cb) {
-
-                //                debug(shortSourceName);
-                //                debug('3. формируем массив с данными о расположении загружаемых файлов');
-
                 let newArray = shortSourceName.split(' ');
                 let sourceIdShortName = newArray.join('_');
 
@@ -110,10 +86,6 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             },
             //выполняем формирование директорий
             function(arrayDownloadDirectoryName, cb) {
-
-                //                debug(arrayDownloadDirectoryName);
-                //                debug('4. выполняем формирование директорий');
-
                 let sourceId = arrayDownloadDirectoryName.splice(0, 1);
                 let mainDownloadDirectoryName = '/' + config.get('downloadDirectory:directoryName') + '/';
 
@@ -137,10 +109,6 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             },
             //изменяем в таблице task_filtering_all_information:* ряд значений
             function(uploadDirectoryFiles, cb) {
-
-                //                debug(uploadDirectoryFiles);
-                //                debug('5. изменяем в таблице task_filtering_all_information:* ряд значений');
-
                 redis.hmset(`task_filtering_all_information:${taskIndex}`, {
                     'uploadFiles': 'in line',
                     'uploadDirectoryFiles': uploadDirectoryFiles
@@ -154,24 +122,11 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
             else resolve();
         });
     }).then(() => {
-
-        /*        
-                debug('EVENT "READY"');
-                debug('SEND SUCCESS MESSAGE TO MOTH_GO');
-                debug(objResponse);
-        */
-
         wsConnection.sendUTF(JSON.stringify(objResponse));
 
         callback(null);
     }).catch(err => {
         objResponse.info.processing = 'cancel';
-
-        /*
-                debug('EVENT "READY"');
-                debug('SEND ERROR MESSAGE TO MOTH_GO');
-                debug(objResponse);
-        */
 
         wsConnection.sendUTF(JSON.stringify(objResponse));
 
@@ -181,12 +136,6 @@ module.exports.ready = function(redis, objData, sourceID, callback) {
 
 //обработка пакета JSON полученного с источника и содержащего имя отправляемого файла
 module.exports.execute = function(redis, objData, sourceID, callback) {
-
-    /*
-    debug('EVENT EXECUTE');
-    debug(objData);
-*/
-
     let taskIndex = objData.info.taskIndex;
 
     //получить ресурс доступа к streamWrite
@@ -203,7 +152,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             writeLogFile.writeLog(`\tError: ${err.toString()}`);
         });
 
-        //        globalObject.setData('writeStreamLinks', `writeStreamLink_${remoteAddress}_${fileName}`, writeStream);
         globalObject.setData('writeStreamLinks', fileHash, writeStream);
 
         return writeStream;
@@ -224,8 +172,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
 
     new Promise((resolve, reject) => {
         //изменяем статус uploadFiles в таблице task_filtering_all_information:<taskIndex>
-        //        debug('1. изменяем статус uploadFiles в таблице task_filtering_all_information:');
-
         redis.hset(`task_filtering_all_information:${taskIndex}`, 'uploadFiles', 'loaded', (err) => {
             if (err) return reject(err);
 
@@ -255,12 +201,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
                     'uploadDirectoryFiles': uploadDirectoryFiles //путь до директории в которой будут сохранятся файлы 
                 });
 
-                /*                
-                                debug('3. добавляем информацию о загружаемом файле');
-                                debug('globalObject.setData (downloadFilesTmp)');
-                                debug(globalObject.getData('downloadFilesTmp', sourceID));
-                */
-
                 resolve({
                     'fileHash': objData.info.fileHash,
                     'fileName': objData.info.fileName,
@@ -269,21 +209,9 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
             });
         });
     }).then(obj => {
-
-        /*
-                debug('EVENT "EXECUTE"');
-                debug('------>SEND SUCCESS MESSAGE TO MOTH_GO');
-                debug(objResponse);
-        */
-
         let dfi = globalObject.getData('downloadFilesTmp', sourceID);
 
         //добавляем обработчик на событие "finish"
-        //        debug('5. добавляем обработчик на событие "finish"');
-
-
-        debug('Добавляем обработчик wsl.once на событие "finish", имя файла ' + dfi.fileName);
-
         getWriteStream(wsConnection.remoteAddress, obj)
             .once('finish', () => {
 
@@ -309,12 +237,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         writeLogFile.writeLog('\tError: ' + err.toString());
         objResponse.info.processing = 'cancel';
 
-        /*        
-                debug('EVENT "EXECUTE"');
-                debug('------->SEND ERROR MESSAGE TO MOTH_GO');
-                debug(err);
-        */
-
         process.nextTick(() => {
             wsConnection.sendUTF(JSON.stringify(objResponse));
 
@@ -329,9 +251,6 @@ module.exports.executeCompleted = function(redis, self, sourceID, cb) {
 };
 
 module.exports.stop = function(redis, self, sourceID, cb) {
-    debug('...START function stop');
-    debug('resived message "STOP" from Moth_go');
-
     actionWhenReceivingStop(redis, { taskIndex: self.info.taskIndex, sourceID: sourceID })
         .then(() => {
             return new Promise((resolve, reject) => {
@@ -350,10 +269,6 @@ module.exports.stop = function(redis, self, sourceID, cb) {
 
 //вызывается при завершении задачи по загрузки файлов
 module.exports.completed = function(redis, self, sourceID, cb) {
-
-    debug('resived message type "completed"');
-    debug(self);
-
     let wsConnection = objWebsocket[`remote_host:${sourceID}`];
 
     if (typeof wsConnection === 'undefined') {
@@ -367,22 +282,11 @@ module.exports.completed = function(redis, self, sourceID, cb) {
                 checkQueueTaskDownloadFiles(redis, self.info.taskIndex, sourceID, err => { //, objTaskIndex) => {
                     if (err) reject(err);
                     else resolve();
-                    //else resolve(objTaskIndex);
                 });
             });
         }).then(() => {
-            /*}).then(objTaskIndex => {
-                if (Object.keys(objTaskIndex).length > 0) {
-                    wsConnection.sendUTF(JSON.stringify(objTaskIndex));
-                }*/
-            debug('processing COMPLETE success');
-
             cb(null);
         }).catch(err => {
-
-            debug('ERROR processing COMPLITE');
-            debug(err);
-
             globalObject.deleteData('processingTasks', self.info.taskIndex);
             globalObject.deleteData('downloadFilesTmp', sourceID);
 
@@ -396,9 +300,6 @@ function fileRename(infoDownloadFile, fileTmp) {
         fs.lstat(fileTmp, (err, fileSettings) => {
             if (err) return reject(err);
 
-            //            debug(`fileSettings.size (${fileSettings.size}) !== infoDownloadFile.fileFullSize( ${infoDownloadFile.fileFullSize} )`);
-            //            debug(fileSettings.size !== infoDownloadFile.fileFullSize);
-
             if (fileSettings.size !== infoDownloadFile.fileFullSize) {
                 writeLogFile.writeLog(`\tError: the SIZE of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
 
@@ -411,18 +312,11 @@ function fileRename(infoDownloadFile, fileTmp) {
         return md5File(fileTmp);
     }).then(hash => {
         return new Promise((resolve, reject) => {
-
-            //            debug(`infoDownloadFile.fileHash (${infoDownloadFile.fileHash}) !== hash (${hash})`);
-            //            debug(infoDownloadFile.fileHash !== hash);
-
             if (infoDownloadFile.fileHash !== hash) {
                 writeLogFile.writeLog(`\tError: the HEX of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
 
                 return reject(new errorsType.errorLoadingFile(`Ошибка при загрузке файла "${infoDownloadFile.fileName}", хеш сумма полученного файла не совпадает с ранее переданной`));
             }
-
-            //            debug(infoDownloadFile);
-            //            debug(`======== directory for copy file ${infoDownloadFile.uploadDirectoryFiles}`);
 
             //переименовывает и удаляет исходный файл
             mv(fileTmp, `${infoDownloadFile.uploadDirectoryFiles}/${infoDownloadFile.fileName}`, { mkdirp: true }, err => {
@@ -445,9 +339,6 @@ function checkUploadedFile(infoDownloadFile) {
         fs.lstat(uploadedFile, (err, fileSettings) => {
             if (err) return reject(err);
 
-            //            debug(`fileSettings.size (${fileSettings.size}) !== infoDownloadFile.fileFullSize( ${infoDownloadFile.fileFullSize} )`);
-            //            debug(fileSettings.size !== infoDownloadFile.fileFullSize);
-
             if (fileSettings.size !== infoDownloadFile.fileFullSize) {
                 writeLogFile.writeLog(`\tError: the SIZE of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
 
@@ -460,10 +351,6 @@ function checkUploadedFile(infoDownloadFile) {
         return md5File(uploadedFile);
     }).then(hash => {
         return new Promise((resolve, reject) => {
-
-            //            debug(`infoDownloadFile.fileHash (${infoDownloadFile.fileHash}) !== hash (${hash})`);
-            //            debug(infoDownloadFile.fileHash !== hash);
-
             if (infoDownloadFile.fileHash !== hash) {
                 writeLogFile.writeLog(`\tError: the HEX of the received file "${infoDownloadFile.fileName}" is not the same as previously transferred`);
 
@@ -476,9 +363,6 @@ function checkUploadedFile(infoDownloadFile) {
 }
 
 function completeWriteBinaryData(redis, sourceID, cb) {
-
-    debug('START function completeWriteBinaryData');
-
     let dfi = globalObject.getData('downloadFilesTmp', sourceID);
 
     if ((dfi === null) || (typeof dfi === 'undefined')) {
@@ -486,12 +370,6 @@ function completeWriteBinaryData(redis, sourceID, cb) {
 
         return cb(new errorsType.receivedEmptyObject('Не найден ip адрес источника, невозможно контролировать загрузку файлов'));
     }
-
-    /*
-    debug('**-*----*-*- START function completeWriteBinaryData *-*-*-*-*---');
-    debug(`sourceID = ${sourceID}, taskIndex = ${dfi.taskIndex}, fileName = ${dfi.fileName}`);
-    debug('**-*----*-*-*-*-*-*-*---');
-*/
 
     let objResponse = {
         'messageType': 'download files',
@@ -520,8 +398,6 @@ function completeWriteBinaryData(redis, sourceID, cb) {
     }
 
     //удаляем ресурс для записи в файл
-    //    globalObject.deleteData('writeStreamLinks', `writeStreamLink_${wsConnection.remoteAddress}_${dfi.fileName}`);
-
     globalObject.deleteData('writeStreamLinks', dfi.fileHash);
 
     checkUploadedFile(dfi)
@@ -533,17 +409,13 @@ function completeWriteBinaryData(redis, sourceID, cb) {
 
                 wsConnection.sendUTF(JSON.stringify(objResponse));
 
-                debug(objResponse);
-
                 sendEventsUpload(dfi.taskIndex, err => {
                     if (err) cb(err);
                     else cb(null);
                 });
             });
         }).catch(err => {
-            debug('*-*-*-*-**-*-*-');
-            debug(err.message);
-            debug('*-*-*-*-**-*-*-');
+            if (err) writeLogFile.writeLog('\tError: ' + err.toString());
 
             actionWhenReceivingFileNotReceived(redis, dfi.taskIndex, err => {
                 if (err) writeLogFile.writeLog('\tError: ' + err.toString());
@@ -552,8 +424,6 @@ function completeWriteBinaryData(redis, sourceID, cb) {
 
                 objResponse.info.processing = 'execute failure';
                 wsConnection.sendUTF(JSON.stringify(objResponse));
-
-                debug(objResponse);
 
                 sendEventsUpload(dfi.taskIndex, error => {
                     if (err) writeLogFile.writeLog('\tError: ' + error.toString());
@@ -561,47 +431,6 @@ function completeWriteBinaryData(redis, sourceID, cb) {
                 });
             });
         });
-
-    //    debug('-------------- RESIVED emitter "chunk write complete" START function "fileRename" ');
-
-    /*let fileTmp = `/${config.get('downloadDirectoryTmp:directoryName')}/uploading_with_${source.ipaddress}_${dfi.fileName}.tmp`;
-    fileRename(dfi, fileTmp)
-        .then(() => {
-            actionWhenReceivingFileReceived(redis, dfi.taskIndex, sourceID, err => {
-                if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
-
-                writeLogFile.writeLog(`\tInfo: file ${dfi.fileName} resived successfy`);
-
-                wsConnection.sendUTF(JSON.stringify(objResponse));
-
-                debug(objResponse);
-
-                sendEventsUpload(dfi.taskIndex, err => {
-                    if (err) cb(err);
-                    else cb(null);
-                });
-            });
-        }).catch(err => {
-            debug('*-*-*-*-**-*-*-');
-            debug(err.message);
-            debug('*-*-*-*-**-*-*-');
-
-            actionWhenReceivingFileNotReceived(redis, dfi.taskIndex, err => {
-                if (err) writeLogFile.writeLog('\tError: ' + err.toString());
-
-                writeLogFile.writeLog(`\tInfo: file ${dfi.fileName} resived failure`);
-
-                objResponse.info.processing = 'execute failure';
-                wsConnection.sendUTF(JSON.stringify(objResponse));
-
-                debug(objResponse);
-
-                sendEventsUpload(dfi.taskIndex, error => {
-                    if (err) writeLogFile.writeLog('\tError: ' + error.toString());
-                    else cb(err);
-                });
-            });
-        });*/
 }
 
 //генерирование события обновления загружаемой информации

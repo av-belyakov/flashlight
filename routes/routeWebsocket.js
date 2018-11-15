@@ -6,8 +6,6 @@
 
 'use strict';
 
-const debug = require('debug')('routeWebsocket.js');
-
 const async = require('async');
 const process = require('process');
 
@@ -50,16 +48,7 @@ let messageTypeUndefined = function(redis, sourceID, callback) {
 
 //обработка ошибок принимаемых от удаленных источников
 let messageTypeError = function(redis, sourceID, callback) {
-
-
-    debug('websocket RESIVED MESSAGE TYPE "ERROR"');
-    debug(this);
-
-
     function changeStatusProcessingTask(taskIndex, taskType) {
-
-        //debug(`taskIndex = ${taskIndex}, taskType = ${taskType}`);
-
         let objChangeStatus = {
             'filtering': {
                 'table': ['jobStatus', 'rejected']
@@ -110,8 +99,6 @@ let messageTypeError = function(redis, sourceID, callback) {
     if (+this.errorCode === 410 || +this.errorCode === 413 || +this.errorCode === 500) {
         let taskId = (~this.taskId.indexOf(':')) ? this.taskId.split(':')[1] : this.taskId;
 
-        debug(`Resived Error MSG "410" or "413" or "500" for task ID ${taskId}`);
-
         changingStatusReceiveErrorCode(redis, taskId, callback);
     }
 
@@ -120,9 +107,6 @@ let messageTypeError = function(redis, sourceID, callback) {
      * изменяем значения в таблице task_filtering_all_information:*
      * */
     if (+this.errorCode === 414) {
-
-        //debug('ERROR error code 414');
-
         redis.hmset(`task_filtering_all_information:${this.taskId}`, {
             'uploadFiles': 'loaded',
             'userNameStopUploadFiles': 'null',
@@ -226,12 +210,6 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
     }
 
     if (self.info.processing === 'start') {
-
-        /*
-        debug('START FILTERING Moth_go -> Flashlight');
-        debug(self);
-        */
-
         //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
         globalObject.setData('sources', sourceID, 'wasThereConnectionBreak', false);
 
@@ -279,10 +257,6 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
                 objFilesList: self.info.listFilesFilter
             }, redis).then(() => {
                 if (self.info.numberMessageParts[0] === self.info.numberMessageParts[1]) {
-
-                    //debug('End segments message for filtering');
-                    //debug('Emit event START message');
-
                     callback(null);
                 }
             }).catch(err => {
@@ -292,15 +266,6 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
     }
 
     if (self.info.processing === 'execute') {
-
-        /*
-                debug('moth -> flashlight, message EXECUTE');
-                debug(`count files processed: ${self.info.countFilesProcessed}`);
-                debug(`count files found: ${self.info.countFilesFound}`);
-                debug(`count found files size: ${self.info.countFoundFilesSize}`);
-                debug('***********************************');
-        */
-
         if (typeof self.info.infoProcessingFile.statusProcessed === 'undefined') {
             callback(new errorsType.receivedIncorrectData('received incorrect data'));
         }
@@ -401,21 +366,9 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
     }
 
     if (self.info.processing === 'complete') {
-
-        /*
-        debug('moth -> flashlight, message COMPLETE');
-        debug(self.info);
-*/
-
         let processingFirstPart = function(func) {
-
-            //debug('-------- processing FIRST part (MESSAGE TYPE COMPLETE)');
-
             async.parallel([
                 callback => {
-
-                    //debug('--- routeWebsocket (message COMPLETE): 111');
-
                     new Promise((resolve, reject) => {
                         redis.hget(`task_filtering_all_information:${self.info.taskIndex}`,
                             'countFilesFiltering',
@@ -444,16 +397,12 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
                     });
                 },
                 callback => {
-                    //                    debug('--- routeWebsocket (message COMPLETE): 222');
-
                     redis.lpush('task_filtering_index_processing_completed', self.info.taskIndex, function(err) {
                         if (err) callback(err);
                         else callback(null, true);
                     });
                 },
                 callback => {
-                    //                    debug('--- routeWebsocket (message COMPLETE): 333');
-
                     globalObject.deleteData('processingTasks', self.info.taskIndex);
 
                     callback(null, true);
@@ -461,7 +410,6 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
             ], (err, result) => {
                 if (err) return func(new errorsType.errorRedisDataBase('Error: redis data base'));
 
-                //                debug(result);
                 let isTrue = result.every(item => item);
 
                 if (isTrue) func(null);
@@ -470,8 +418,6 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
         };
 
         let processingSecondPart = function(func) {
-            //         debug('-------- processing SECOND part (MESSAGE TYPE COMPLETE)');
-
             processingListFilesFoundDuringFiltering.createList({
                 'sourceId': sourceID,
                 'taskIndex': self.info.taskIndex,
@@ -490,9 +436,6 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
                     func(null);
                 }
             }).catch(err => {
-
-                //          debug(err);
-
                 func(err);
             });
         };
@@ -537,9 +480,6 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
 //обработка информации об импорте файлов
 let messageTypeUpload = function(redis, sourceID, callback) {
     let self = this;
-
-    debug('messageTypeUpload');
-    debug(this);
 
     if (!new RegExp('^[a-zA-Z0-9:]').test(self.info.taskIndex)) {
         return callback(new errorsType.receivedIncorrectData('received incorrect data'));

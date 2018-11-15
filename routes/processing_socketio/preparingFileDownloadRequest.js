@@ -51,15 +51,7 @@ module.exports = function(data, socketIo, redis, callback) {
         return new Promise((resolve, reject) => {
             preparingVisualizationDownloadFiles.preparingVisualizationAddTurn(redis, data.taskIndex, sourceID, (err, data) => {
                 if (err) return reject(err);
-
-                console.log('--- preparingFileDownloadRequest (after preparingVisualizationDownloadFiles) task ID = ' + data.taskIndex);
-                console.log(data);
-
-
                 if (Object.keys(data).length === 0) return resolve();
-
-                console.log('--- preparingFileDownloadRequest (emit broadcast)--- task ID = ' + data.taskIndex);
-                console.log(data);
 
                 socketIo.broadcast.emit('task upload files added', { processingType: 'showInformationDownload', information: data });
                 let taskIndex = (~data.taskIndex.indexOf(':')) ? data.taskIndex.split(':')[1] : data.taskIndex;
@@ -70,22 +62,12 @@ module.exports = function(data, socketIo, redis, callback) {
     }).then(taskIndex => {
         //сообщения об изменении статуса задач
         return new Promise((resolve, reject) => {
-
-            console.log('------------------');
-            console.log('сообщение об изменении статуса задачи ' + taskIndex);
-            console.log('------------------');
-
             getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
                 if (err) reject(err);
                 else resolve(objTaskStatus);
             });
         });
     }).then(objTaskStatus => {
-
-        console.log('------------------');
-        console.log('список выполняющихся процессов');
-        console.log('------------------');
-
         let objListsTaskProcessing = getListsTaskProcessing();
 
         //только для пользователя инициировавшего загрузку

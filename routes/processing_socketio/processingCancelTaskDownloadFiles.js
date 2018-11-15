@@ -96,13 +96,8 @@ module.exports = function(taskIndex, socketIo, redis, cb) {
 
 //сообщение об изменения статуса задач
 function getObjChangeTaskStatus(redis, taskIndex, cb) {
-    console.log('processingCancelTaskDownloadFiles --- 4.1');
-
     getTaskStatusForJobLogPage(redis, taskIndex, 'uploadFiles', (err, objTaskStatus) => {
         if (err) return cb(err);
-
-        console.log('processingCancelTaskDownloadFiles --- 4.2');
-        console.log(objTaskStatus);
 
         let objStatus = {
             processingType: 'showChangeObject',

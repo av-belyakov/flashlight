@@ -16,7 +16,14 @@ module.exports.listFilterHosts = function(redis, func) {
     let processingTasks = globalObject.getDataTaskFilter();
     let obj = {};
 
-    async.map(Object.keys(processingTasks), (taskIndex, callbackMap) => {
+    let listIndex = Object.keys(processingTasks).filter(taskID => {
+        if (typeof processingTasks[taskID].status === 'undefined' || processingTasks[taskID].status === null) return false;
+        if (processingTasks[taskID].status === 'expect') return true;
+
+        return false;
+    });
+
+    async.map(listIndex, (taskIndex, callbackMap) => {
         redis.hmget(`task_filtering_all_information:${taskIndex}`,
             'sourceId',
             'countCycleComplete',

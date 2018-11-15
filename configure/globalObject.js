@@ -132,6 +132,22 @@ class GlobalObject {
         return objResult;
     }
 
+    //получить все выполняемые задачи по скачиванию файлов для заданного ip адреса источника
+    getDataTaskFilterFilesForSourceIP(sourceID) {
+        let objResult = {};
+
+        let tasks = this._getDataTask('filtering');
+        for (let taskIndex in tasks) {
+            if (tasks[taskIndex].sourceId === sourceID) {
+                objResult[taskIndex] = {};
+
+                Object.assign(objResult[taskIndex], tasks[taskIndex]);
+            }
+        }
+
+        return objResult;
+    }
+
     //получить всю информацию о загружаемых с указанного ip адреса файлах
     getInformationDownloadFiles(sourceIP) {
         let listDownloadFiles = this._getListDownloadFiles();
@@ -179,10 +195,10 @@ class GlobalObject {
      * @param arrayData массив с изменяемыми данными
      * 
      * пример:
-     *    globalObject.modufyData('processingType', taskIndex, [
+     *    globalObject.modifyData('processingType', taskIndex, [
      *          ['status', 'in line'],
      *          ['timestampModify', +new Date()]
-     *     }]);
+     *     ]);
      */
     modifyData(type, group, arrayData) {
         if (this._checkKeys(type)) return false;
@@ -210,23 +226,10 @@ class GlobalObject {
     incrementNumberFiles(taskIndex, field) {
         let processingTaskInfo = this.obj.processingTasks[taskIndex];
 
-        console.log('******************** globalObject.incrementNumberFiles() *******************');
-        /*        console.log(`taskIndex = ${taskIndex}, field = ${field}`);
-                console.log(this.obj.processingTasks);
-                console.log('typeof processingTaskInfo === \'undefined\' ' + (typeof processingTaskInfo === 'undefined'));
-        */
         if (typeof processingTaskInfo === 'undefined') return false;
-
-        //        console.log("(typeof processingTaskInfo.uploadInfo === 'undefined') " + (typeof processingTaskInfo.uploadInfo === 'undefined'));
-        //        console.log("(typeof processingTaskInfo.uploadInfo[field] === 'undefined') " + (typeof processingTaskInfo.uploadInfo[field] === 'undefined'));
-
         if ((typeof processingTaskInfo.uploadInfo === 'undefined') || (typeof processingTaskInfo.uploadInfo[field] === 'undefined')) return false;
 
-        //        console.log(`++++++++++++++++++++++++++++++ ` + this.obj.processingTasks[taskIndex].uploadInfo[field]);
-
         this.obj.processingTasks[taskIndex].uploadInfo[field]++;
-
-        //        console.log(this.obj.processingTasks);
 
         return true;
     }

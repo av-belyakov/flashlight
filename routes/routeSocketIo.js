@@ -8,7 +8,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const debug = require('debug')('routeSocketIo.js');
 
 const showNotify = require('../libs/showNotify');
 const controllers = require('../controllers');
@@ -29,7 +28,6 @@ const routingRequestDownloadFiles = require('./routing_requests/routingRequestsD
 const preparingFileDownloadRequest = require('./processing_socketio/preparingFileDownloadRequest');
 const getNextChunkListFilteringFiles = require('../libs/management_download_files/getNextChunkListFilteringFiles');
 const informationForPageUploadedFiles = require('../libs/management_uploaded_files/informationForPageUploadedFiles');
-const sendMsgTaskDownloadChangeObjectStatus = require('../libs/helpers/sendMsgTaskDownloadChangeObjectStatus');
 const checkAccessRightsUsersMakeChangesTask = require('../libs/users_management/checkAccessRightsUsersMakeChangesTask');
 
 const processingUser = require('./processing_socketio/processingUser');
@@ -59,9 +57,6 @@ const redis = controllers.connectRedis();
  */
 module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage, notifyMessage) {
     let sendMessageChangeTaskStatus = (taskIndex, taskType) => {
-
-        debug('function sendMessageChangeTaskStatus...');
-
         let objChangeStatus = {
             'filtering': 'jobStatus',
             'upload': 'uploadFiles'
@@ -81,37 +76,6 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 informationPageAdmin: getListsTaskProcessing()
             });
         });
-
-
-        //сообщения об изменении статуса задач
-        /*new Promise((resolve, reject) => {
-            getTaskStatusForJobLogPage(redis, taskIndex, objChangeStatus[taskType], function(err, objTaskStatus) {
-                if (err) reject(err);
-                else resolve(objTaskStatus);
-            });
-        }).then(objTaskStatus => {
-            return new Promise((resolve, reject) => {
-                getListsTaskProcessing((err, objListsTaskProcessing) => {
-                    if (err) reject(err);
-                    else resolve({
-                        status: objTaskStatus,
-                        lists: objListsTaskProcessing
-                    });
-                });
-            });
-        }).then(obj => {
-
-            debug(obj);
-
-            socketIoS.emit('change object status', {
-                processingType: 'showChangeObject',
-                informationPageJobLog: obj.status,
-                informationPageAdmin: obj.lists
-            });
-        }).catch(err => {
-            writeLogFile.writeLog('\tError: ' + err.toString());
-            showNotify(socketIoS, 'danger', `111 Неопределенная ошибка источника №<strong>${remoteHostId}</strong>, контроль загрузки файлов не возможен`);
-        });*/
     };
 
     let obj = {
@@ -123,9 +87,6 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             });
         },
         'information': function() {
-
-            //debug(`remoute host ${remoteHostId}`);
-
             socketIoS.emit('new information message', { sourceId: remoteHostId });
         },
         'filtering': function() {
@@ -150,8 +111,6 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             };
 
             let filteringStatusExecute = function() {
-                debug(`FILTERING FILES: remoteHostId = ${remoteHostId}`);
-
                 processingExecuteFiltering.execute(stringMessage.info.taskIndex, function(err, data) {
                     if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                     else socketIoS.emit('filtering execute', { processingType: 'showInformationFilter', information: data });
@@ -211,9 +170,6 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             });
         },
         'error': function() {
-
-            debug(stringMessage);
-
             let objErrorMessage = {
                 400: `Некорректный запрос к источнику №<striong>${remoteHostId}</strong>`,
                 401: `На источнике №<string>${remoteHostId}</strong> нет файлов для экспорта`,
@@ -234,21 +190,14 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             if ((stringMessage.errorCode === 400) || (stringMessage.errorCode === 406)) {
                 let tasksIndex = globalObject.getData('processingTasks');
                 for (let taskID in tasksIndex) {
-
-                    debug(`taskID: ${taskID} === this.taskId: ${stringMessage.taskId}`);
-
                     if (taskID === stringMessage.taskId) sendMessageChangeTaskStatus(stringMessage.taskId, tasksIndex[taskID].taskType);
                 }
             }
 
             //когда невозможно отменить задачу по выгрузке файлов по причине несовпадения ID
             if (stringMessage.errorCode === 409) {
-                debug('Resived error code = 409');
                 processingCancelTaskDownloadFiles(stringMessage.taskId, socketIoS, redis, err => {
-                    if (err) {
-                        debug(err);
-                        writeLogFile.writeLog('\tError: ' + err.toString());
-                    }
+                    if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                 });
             }
 
@@ -433,9 +382,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* скачать все файлы созданные в результате фильтрации */
     socketIo.on('download all files obtained result filtering', data => {
-        debug('REQUEST DOWNLOAD ---ALL--- FILES');
-        debug(data);
-
         data.listFiles = [];
         preparingFileDownloadRequest(data, socketIo, redis, err => {
             if (err) {
@@ -454,9 +400,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* скачать файлы выбранные пользователем и полученые в результате фильтрации */
     socketIo.on('download choose files obtained result filtering', data => {
-        debug('REQUEST DOWNLOAD ---CHOOSE--- FILES');
-        debug(data);
-
         preparingFileDownloadRequest(data, socketIo, redis, err => {
             if (err) {
                 let errMsgLog = err.toString();
@@ -474,9 +417,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* остановить загрузку файлов */
     socketIo.on('stop download files', data => {
-        debug('REQUEST ---STOP--- DOWNLOAD FILES');
-        debug(data);
-
         new Promise((resolve, reject) => {
             //проверка прав доступа пользователя
             checkAccessRights(socketIo, 'management_tasks_import', 'stop', trigger => {
@@ -509,11 +449,6 @@ module.exports.eventHandling = function(socketIo) {
                         });
                     });
                 }).then(objTaskStatus => {
-
-                    console.log('------------------');
-                    console.log('список выполняющихся процессов');
-                    console.log('------------------');
-
                     let objListsTaskProcessing = getListsTaskProcessing();
 
                     //только для пользователя инициировавшего загрузку
@@ -547,9 +482,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* отменить задачу по загрузке файлов */
     socketIo.on('cancel download files', data => {
-        debug('REQUEST ---CANCEL--- DOWNLOAD FILES');
-        debug(data);
-
         checkAccessRights(socketIo, 'management_tasks_import', 'cancel', trigger => {
             if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для останова задачи по загрузке найденных файлов');
 
@@ -571,9 +503,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* запрос на следующий кусочек списка найденных в результате фильтрации файлов (для модального окна со списком найденных файлов) */
     socketIo.on('next chunk files filter result', data => {
-        debug('REQUEST ---- NEXT CHUNK LIST FILES ----');
-        debug(data);
-
         getNextChunkListFilteringFiles(data, socketIo, redis, (err) => {
             if (err) writeLogFile.writeLog('\tError: ' + err.toString());
         });
@@ -589,10 +518,6 @@ module.exports.eventHandling = function(socketIo) {
 
     /* получить информацию по выбранной задачи фильтрации */
     socketIo.on('get all information for task index', function(data) {
-
-        debug('EVENT "GET ALL INFORMATION FOR TASK INDEX"');
-        debug(data);
-
         checkAccessRights(socketIo, 'management_tasks_filter', 'read', function(trigger) {
             if (!trigger) return showNotify(socketIo, 'danger', 'Не достаточно прав доступа для просмотра полной информации');
 
@@ -642,11 +567,6 @@ module.exports.eventHandling = function(socketIo) {
 
         informationForPageLogFilter.getAllInformation(redis, objReq, function(objInformationTasks) {
 
-            /*debug('--*-*-*-*-*-*-*-*-*-*-*-*-*-');
-            debug(objInformationTasks);
-            debug('--*-*-**-');*/
-
-
             //набор параметров для поиска
             listParametersSearch.jobLog(redis, function(objSelectList) {
                 socketIo.emit('found all tasks Index', {
@@ -671,11 +591,6 @@ module.exports.eventHandling = function(socketIo) {
         };
 
         informationForPageLogFilter.getAllInformation(redis, objReq, function(obj) {
-
-            debug('--*-*-*-*-*-*-*-*-*-*-*-*-*-');
-            debug(obj);
-            debug('--*-*-*-*-*-*-*-*-*-*-*-*-*-');
-
             socketIo.emit('show new page', obj);
         });
     });
@@ -684,6 +599,7 @@ module.exports.eventHandling = function(socketIo) {
     socketIo.on('search all errors sources', function(data) {
         let cookie = socketIo.request.headers.cookie.split('; ');
         let userId = cookie[1].slice(16).split('.');
+
         //таблица с информацией о заданиях на фильтрацию
         let objReq = {
             userId: userId[0],

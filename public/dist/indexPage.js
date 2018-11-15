@@ -127,12 +127,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             Object(__WEBPACK_IMPORTED_MODULE_8__index_page_clearMinWidget__["a" /* default */])(data);
         });
 
-        //информация о ходе фильтрации
+        //информация о ходе выполнения фильтрации
         socket.on('filtering execute', function (data) {
             Object(__WEBPACK_IMPORTED_MODULE_5__index_page_createWidgetVisualizationFiltration__["a" /* default */])(data);
         });
 
-        //информация о ходе фильтрации
+        //информация об останове фильтрации
         socket.on('filtering stop', function (data) {
             objectTimers[data.information.taskIndex] = setTimeout(__WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__["a" /* default */].bind(null, data.information.taskIndex), 30000);
         });
@@ -261,11 +261,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
             setTimeout(__WEBPACK_IMPORTED_MODULE_4__index_page_deleteElementInformationFiltering__["a" /* default */].bind(null, data.information.taskIndex), 30000);
         });
-
-        //изменение статуса задачи по загрузки файлов
-        /*socket.on('change object status', function(data) {
-            console.log(data);
-         });*/
 
         //удаление задачи из очереди загрузок
         socket.on('task upload files cancel', function (data) {

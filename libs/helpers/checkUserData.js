@@ -21,7 +21,7 @@ module.exports = function(obj, callback) {
     let isSourceIdTrue = validator.isInt(obj.sourceId);
 
     //проверка даты и времени
-    let patternDataTime = new RegExp('^(\\d{2}).(\\d{2}).(\\d{4})\\s(\\d{2}):(\\d{2})$');
+    let patternDataTime = new RegExp('^(\\d{1,2}).(\\d{1,2}).(\\d{2,4})\\s(\\d{1,2}):(\\d{1,2})$');
     let isDateTimeStartTrue = patternDataTime.test(obj.dateTimeStart);
     let isDateTimeEndTrue = patternDataTime.test(obj.dateTimeEnd);
 
@@ -37,4 +37,4 @@ module.exports = function(obj, callback) {
     let trigger = (isSourceIdTrue && isDateTimeStartTrue && isDateTimeEndTrue && isIpOrNetworkTrue) ? true : false;
 
     callback(trigger);
-}
+};
