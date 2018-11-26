@@ -6,6 +6,8 @@
 
 'use strict';
 
+import handlersButtonsTable from './handlersButtonsTable';
+
 export default function sortColumns(event) {
     //изменяем иконку
     let sortOrder = changeIcon();
@@ -34,6 +36,15 @@ export default function sortColumns(event) {
     tableBody.innerHTML = newTableBody;
 
     $('[data-toggle="tooltip"]').tooltip();
+
+    //обработчик на кнопку 'полная информация'
+    handlersButtonsTable.handlerShowInfo();
+
+    //обработчик на кнопку 'изменить статус'
+    handlersButtonsTable.handlerChangeStatus();
+
+    //обработчик на кнопку 'удалить'
+    handlersButtonsTable.handlerDelete();
 
     function changeIcon() {
         let elementSpan = event.target;

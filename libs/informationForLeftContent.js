@@ -115,8 +115,5 @@ function getShortSourcesInformation(arrayResult) {
         finalyResult[taskIndex].ipaddress = sourceInfo.ipaddress;
     });
 
-    console.log('++++++++ getShortSourcesInformation +++++++++');
-    console.log(finalyResult);
-
     return finalyResult;
 }

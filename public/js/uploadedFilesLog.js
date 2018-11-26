@@ -7,6 +7,7 @@ import common from './common';
 import submitQuery from './upload_files_log/submitQuery';
 import sortColumns from './upload_files_log/sortColumns';
 import processPagination from './commons/processPagination';
+import handlersButtonsTable from './upload_files_log/handlersButtonsTable';
 import openModalWindowDelete from './upload_files_log/openModalWindowDelete';
 import getBodyJournalOfFiltrations from './commons/getBodyJournalOfFiltrations';
 import createTableTaskUploadedFiles from './upload_files_log/createTableTaskUploadedFiles';
@@ -94,35 +95,13 @@ import createModalWindowFilterResults from './commons/createModalWindowFilterRes
         })();
 
         //обработчик на кнопку 'полная информация'
-        (function() {
-            let buttonsImport = document.querySelectorAll('#field_table [name="buttonAllInformation"]');
-            buttonsImport.forEach((element) => {
-                let taskIndex = element.parentElement.dataset.taskIndex;
-                element.onclick = (function(taskIndex) {
-                    socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
-                }).bind(null, taskIndex);
-            });
-        })();
+        handlersButtonsTable.handlerShowInfo();
 
         //обработчик на кнопку 'изменить статус'
-        (function() {
-            let buttonsImport = document.querySelectorAll('#field_table [name="buttonChangeStatus"]');
-            buttonsImport.forEach((element) => {
-                let taskIndex = element.dataset.sourceIdTaskIndex;
-                element.onclick = (function(taskIndex) {
-                    socket.emit('a mark of consideration', { processingType: 'changeStatusFile', taskIndex: taskIndex });
-                }).bind(null, taskIndex);
-            });
-        })();
+        handlersButtonsTable.handlerChangeStatus();
 
         //обработчик на кнопку 'удалить'
-        (function() {
-            let buttonsImport = document.querySelectorAll('#field_table [name="buttonDelete"]');
-            buttonsImport.forEach((element) => {
-                let taskIndex = element.parentElement.dataset.taskIndex;
-                element.onclick = openModalWindowDelete.bind(null, taskIndex);
-            });
-        })();
+        handlersButtonsTable.handlerDelete();
 
         //обработчик на кнопку 'удалить' модального окна
         (function() {

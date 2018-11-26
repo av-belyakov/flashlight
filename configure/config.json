@@ -1,20 +1,20 @@
 {
-  "timerReconnectWebsocketClient" : 10000,
-  "dbRedis": {
-    "host": "127.0.0.1",
-    "port": "6379",
-    "UnixSocketPath": "../../../../tmp/redis.sock",
-    "password": "Grd@4N!jd*0s"
-  },
-  "httpServer": {
-    "host": "192.168.13.3",
-    "port": "8080"
-  },
-  "downloadDirectory": {
-    "directoryName": "__FLASHLIGHT_DOWNLOAD_DIRECTORY"
-  },
-  "downloadDirectoryTmp": {
-    "directoryName": "__TMP"
-  },
-  "timeControllingConnectedSources": 600000
+    "timerReconnectWebsocketClient": 10000,
+    "dbRedis": {
+        "host": "127.0.0.1",
+        "port": "6379",
+        "UnixSocketPath": "../../../../tmp/redis.sock",
+        "password": "Grd@4N!jd*0s"
+    },
+    "httpServer": {
+        "host": "192.168.13.3",
+        "port": "8080"
+    },
+    "downloadDirectory": {
+        "directoryName": "__FLASHLIGHT_DOWNLOAD_DIRECTORY"
+    },
+    "downloadDirectoryTmp": {
+        "directoryName": "__TMP"
+    },
+    "timeControllingConnectedSources": 600000
 }

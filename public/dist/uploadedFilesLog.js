@@ -21,13 +21,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__upload_files_log_submitQuery__ = __webpack_require__(174);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__upload_files_log_sortColumns__ = __webpack_require__(175);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__commons_processPagination__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__upload_files_log_openModalWindowDelete__ = __webpack_require__(40);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__commons_getBodyJournalOfFiltrations__ = __webpack_require__(58);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__upload_files_log_createTableTaskUploadedFiles__ = __webpack_require__(39);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__commons_createModalWindowFilterResults__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__upload_files_log_handlersButtonsTable__ = __webpack_require__(216);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__upload_files_log_openModalWindowDelete__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__commons_getBodyJournalOfFiltrations__ = __webpack_require__(58);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__upload_files_log_createTableTaskUploadedFiles__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__commons_createModalWindowFilterResults__ = __webpack_require__(32);
 
 
 __webpack_require__(15);
+
 
 
 
@@ -61,7 +63,7 @@ __webpack_require__(15);
 
     //вывод подробной информации о задаче на фильтрацию
     socket.on('all information for task index', function (data) {
-        Object(__WEBPACK_IMPORTED_MODULE_8__commons_createModalWindowFilterResults__["a" /* default */])(data);
+        Object(__WEBPACK_IMPORTED_MODULE_9__commons_createModalWindowFilterResults__["a" /* default */])(data);
     });
 
     socket.on('notify information', function (data) {
@@ -83,13 +85,13 @@ __webpack_require__(15);
             document.getElementById('field_table').innerHTML = '';
             Object(__WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__["a" /* showNotify */])('warning', 'Ничего найдено не было');
         } else {
-            Object(__WEBPACK_IMPORTED_MODULE_6__commons_getBodyJournalOfFiltrations__["a" /* default */])('uploaded_files_log', data.informationTasks);
+            Object(__WEBPACK_IMPORTED_MODULE_7__commons_getBodyJournalOfFiltrations__["a" /* default */])('uploaded_files_log', data.informationTasks);
         }
     });
 
     //обработка запроса следующей страницы
     socket.on('show new page upload', function (data) {
-        Object(__WEBPACK_IMPORTED_MODULE_7__upload_files_log_createTableTaskUploadedFiles__["a" /* default */])(data.informationTasks);
+        Object(__WEBPACK_IMPORTED_MODULE_8__upload_files_log_createTableTaskUploadedFiles__["a" /* default */])(data.informationTasks);
     });
 
     socket.on('change number uploaded files', function (data) {
@@ -121,35 +123,13 @@ __webpack_require__(15);
         })();
 
         //обработчик на кнопку 'полная информация'
-        (function () {
-            let buttonsImport = document.querySelectorAll('#field_table [name="buttonAllInformation"]');
-            buttonsImport.forEach(element => {
-                let taskIndex = element.parentElement.dataset.taskIndex;
-                element.onclick = function (taskIndex) {
-                    socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
-                }.bind(null, taskIndex);
-            });
-        })();
+        __WEBPACK_IMPORTED_MODULE_5__upload_files_log_handlersButtonsTable__["a" /* default */].handlerShowInfo();
 
         //обработчик на кнопку 'изменить статус'
-        (function () {
-            let buttonsImport = document.querySelectorAll('#field_table [name="buttonChangeStatus"]');
-            buttonsImport.forEach(element => {
-                let taskIndex = element.dataset.sourceIdTaskIndex;
-                element.onclick = function (taskIndex) {
-                    socket.emit('a mark of consideration', { processingType: 'changeStatusFile', taskIndex: taskIndex });
-                }.bind(null, taskIndex);
-            });
-        })();
+        __WEBPACK_IMPORTED_MODULE_5__upload_files_log_handlersButtonsTable__["a" /* default */].handlerChangeStatus();
 
         //обработчик на кнопку 'удалить'
-        (function () {
-            let buttonsImport = document.querySelectorAll('#field_table [name="buttonDelete"]');
-            buttonsImport.forEach(element => {
-                let taskIndex = element.parentElement.dataset.taskIndex;
-                element.onclick = __WEBPACK_IMPORTED_MODULE_5__upload_files_log_openModalWindowDelete__["a" /* default */].bind(null, taskIndex);
-            });
-        })();
+        __WEBPACK_IMPORTED_MODULE_5__upload_files_log_handlersButtonsTable__["a" /* default */].handlerDelete();
 
         //обработчик на кнопку 'удалить' модального окна
         (function () {
@@ -287,11 +267,14 @@ function submitQuery(globalObj) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = sortColumns;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__handlersButtonsTable__ = __webpack_require__(216);
 /**
  * Функция выполняющая сортировку
  * 
  * Версия 0.1, дата релиза 27.11.2017
  */
+
+
 
 
 
@@ -323,6 +306,15 @@ function sortColumns(event) {
     tableBody.innerHTML = newTableBody;
 
     $('[data-toggle="tooltip"]').tooltip();
+
+    //обработчик на кнопку 'полная информация'
+    __WEBPACK_IMPORTED_MODULE_0__handlersButtonsTable__["a" /* default */].handlerShowInfo();
+
+    //обработчик на кнопку 'изменить статус'
+    __WEBPACK_IMPORTED_MODULE_0__handlersButtonsTable__["a" /* default */].handlerChangeStatus();
+
+    //обработчик на кнопку 'удалить'
+    __WEBPACK_IMPORTED_MODULE_0__handlersButtonsTable__["a" /* default */].handlerDelete();
 
     function changeIcon() {
         let elementSpan = event.target;
@@ -418,6 +410,59 @@ function sortColumns(event) {
         $('#modalWindowTaskFilter').modal('hide');
     }
 });
+
+/***/ }),
+
+/***/ 216:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__common__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__openModalWindowDelete__ = __webpack_require__(40);
+/**
+ * Модуль содержит обработчики для кнопок "полная информация", "в рассмотренное"
+ * и "удаление" таблицы содержащей перечень задач по которым файлы были успешно выгружены 
+ * 
+ * Версия 0.1, дата релиза 26.11.2018
+ */
+
+
+
+
+
+
+const handlersButton = {
+    handlerShowInfo() {
+        let buttonsImport = document.querySelectorAll('#field_table [name="buttonAllInformation"]');
+        buttonsImport.forEach(element => {
+            let taskIndex = element.parentElement.dataset.taskIndex;
+            element.onclick = function (taskIndex) {
+                socket.emit('get all information for task index', { processingType: 'showInformationSource', taskIndex: taskIndex });
+            }.bind(null, taskIndex);
+        });
+    },
+
+    handlerChangeStatus() {
+        let buttonsImport = document.querySelectorAll('#field_table [name="buttonChangeStatus"]');
+        buttonsImport.forEach(element => {
+            let taskIndex = element.dataset.sourceIdTaskIndex;
+            element.onclick = function (taskIndex) {
+                socket.emit('a mark of consideration', { processingType: 'changeStatusFile', taskIndex: taskIndex });
+            }.bind(null, taskIndex);
+        });
+    },
+
+    handlerDelete() {
+        let buttonsImport = document.querySelectorAll('#field_table [name="buttonDelete"]');
+        buttonsImport.forEach(element => {
+            let taskIndex = element.parentElement.dataset.taskIndex;
+            element.onclick = __WEBPACK_IMPORTED_MODULE_1__openModalWindowDelete__["a" /* default */].bind(null, taskIndex);
+        });
+    }
+};
+
+/* harmony default export */ __webpack_exports__["a"] = (handlersButton);
 
 /***/ }),
 
