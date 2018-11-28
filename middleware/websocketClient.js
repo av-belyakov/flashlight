@@ -116,10 +116,23 @@ function createWebsocketConnect(redis, socketIo, hostId) {
     websocketTmp.on('connectFailed', err => {
         if (err) writeLogFile.writeLog(`\t${err.toString()}`);
 
-        checkSourceExist(redis, hostId, socketIo, trigger => {
-            if (trigger) {
-                redis.hset('remote_host:settings:' + hostId, 'numberConnectionAttempts', ++sourceInfo.numberConnectionAttempts);
-            }
+        //изменяем состояние соединения
+        writeConnectionStatus(hostId, 'disconnect', err => {
+            if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+
+            writeLogFile.writeLog('\tInfo: connection failed');
+
+            let remoteHost = `remote_host:${hostId}`;
+            if (typeof objWebsocket[remoteHost] !== 'undefined') delete objWebsocket[remoteHost];
+
+            //изменяем состояние источника
+            routeSocketIo.eventGenerator(socketIo, hostId, { messageType: 'close' });
+
+            checkSourceExist(redis, hostId, socketIo, trigger => {
+                if (trigger) {
+                    redis.hset('remote_host:settings:' + hostId, 'numberConnectionAttempts', ++sourceInfo.numberConnectionAttempts);
+                }
+            });
         });
     });
 
@@ -223,7 +236,6 @@ function addHandlerConnection(objSetup) {
 
             writeLogFile.writeLog(`\tInfo: connection with the remote host ${objSetup.hostId} terminated`);
             if (typeof objWebsocket[remoteHost] !== 'undefined') delete objWebsocket[remoteHost];
-
 
             new Promise((resolve, reject) => {
                 objSetup.redis.lrange('task_turn_downloading_files', [0, -1], (err, list) => {
