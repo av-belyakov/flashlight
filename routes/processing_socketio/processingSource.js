@@ -417,6 +417,24 @@ exports.readShortInformationSource = function(socketIo, obj) {
     });
 };
 
+//изменение информации об актуальной версии ПО
+exports.changeVersionApp = function(obj) {
+    let infoIsExist = ((typeof obj.information === 'undefined') || obj.information === null);
+    if (infoIsExist) return;
+
+    let versionIsExist = ((typeof obj.information.newValueApp === 'undefined') || (obj.information.newValueApp === null));
+    if (versionIsExist) return;
+
+    let newValue = obj.information.newValueApp;
+
+    let pattern = new RegExp('^\\d+\\.\\d+$');
+    if (pattern.test(newValue)) {
+        redis.hset('system_settings', 'currentVersionApp', newValue, err => {
+            if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
+        });
+    }
+}
+
 //информация о выбранном источнике
 function getInformationSource(socketIo, obj, callback) {
     if (!(new RegExp('^[0-9]{1,}$')).test(obj.sourceId)) {

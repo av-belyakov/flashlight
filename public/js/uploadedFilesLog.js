@@ -8,7 +8,6 @@ import submitQuery from './upload_files_log/submitQuery';
 import sortColumns from './upload_files_log/sortColumns';
 import processPagination from './commons/processPagination';
 import handlersButtonsTable from './upload_files_log/handlersButtonsTable';
-import openModalWindowDelete from './upload_files_log/openModalWindowDelete';
 import getBodyJournalOfFiltrations from './commons/getBodyJournalOfFiltrations';
 import createTableTaskUploadedFiles from './upload_files_log/createTableTaskUploadedFiles';
 import createModalWindowFilterResults from './commons/createModalWindowFilterResults';

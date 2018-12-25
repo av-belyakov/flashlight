@@ -163,22 +163,35 @@
                     let disabledCreate = (accessRights.create[0] === false) ? 'disabled="disabled"' : '';
                     let disabledEdit = (accessRights.edit[0] === false) ? 'disabled="disabled"' : '';
                     let disabledDelete = (accessRights.delete[0] === false) ? 'disabled="disabled"' : '';
-                    let countSources = Object.keys(mainContent).length;
+                    let countSources = Object.keys(mainContent.sources).length;
                     %>
                     <div class="table-responsive" style="margin-left: 10px; margin-right: 10px;">
                         <table class="table table-striped table-hover table-sm">
                             <caption>
                                 <div class="h4 text-uppercase">управление источниками</div>
-                                <div>Всего источников: <strong><%= countSources %></strong></div>
+                                <div>
+                                    Всего источников: <strong><%= countSources %></strong>,
+                                    актуальная версия приложения для источников 
+                                    <span id="versionApp" data-version-app="<%= mainContent.currentVersionApp %>">
+                                        <strong><%= mainContent.currentVersionApp %></strong>
+                                    </span>
+                                    &nbsp;
+                                    <button type="button" class="btn btn-default btn-sm" id="buttonChangeVersionApp">
+                                        <span class="glyphicon glyphicon-refresh"></span>
+                                    </button>
+                                </div>
                             </caption>
                             <thead>
                             <tr>
-                                <th>Идентификатор</th>
+                                <th class="text-center">Статус</th>
+                                <th class="text-right">Идентификатор</th>
                                 <th>Название</th>
+                                <th>Описание</th>
                                 <th>Дата создания</th>
                                 <th>Дата изменения</th>
                                 <th>Дата последнего соединения</th>
-                                <th>Количество попыток соединения</th>
+                                <th class="text-right">Попытки соединения</th>
+                                <th>Версия ПО</th>
                                 <th class="text-right">
                                     <!-- добавление информации -->
                                     <button type="button" id="buttonCreateSource" class="btn btn-default btn-sm" <%= disabledCreate %>>
@@ -197,29 +210,58 @@
                             </thead>
                             <%
                             let objKeyDate = {
+                                statusConnection : false,
                                 shortName : false,
+                                detailedDescription: false,
                                 dateCreate : true,
                                 dateChanges : true,
                                 dateLastConnected : true,
-                                numberConnectionAttempts : false
+                                numberConnectionAttempts : false,
+                                versionApp: false
                             };
                             countSources = 0;
+                            
+                            %><tbody><%
+
+                            let pattern = new RegExp('\\d+\\.\\d+');
+                            for(let hostId in mainContent.sources){ 
+                                let status = (mainContent.sources[hostId].statusConnection) ? 'my_circle_green': 'my_circle_red';    
                             %>
-                            <tbody>
-                            <% for(let hostId in mainContent){ %>
                                 <tr>
-                                    <td class="text-left" style="padding-top: 15px;"><%= hostId %></td>
+                                    <td class="text-center" name="<%= hostId %>"><canvas class="<%= status %>"></canvas></td>
+                                    <td class="text-right" style="padding-top: 15px;"><%= hostId %></td>
                                 <%
-                                let settings = mainContent[hostId];
-                                for(let key in settings){
-                                    let x = (new Date()).getTimezoneOffset() * 60000;
+                                let x = (new Date()).getTimezoneOffset() * 60000;
+                                let settings = mainContent.sources[hostId];
+
+                                for(let key in objKeyDate){                                   
+                                    if(key === 'statusConnection') continue;
+                                    let textLocation = (key === 'numberConnectionAttempts') ? 'text-right': 'text-left';
+
+                                    let keyIsNull = settings[key] === null;
+                                    let keyIsUndefined = (typeof settings[key] === 'undefined');
+
                                     let value = settings[key];
-                                    if(objKeyDate[key] === true){
-                                        value = (+settings[key] === 0) ? 'дата не определена' : (new Date((+settings[key]) - x)).toISOString().slice(0,-1).replace(/T/, ' ').replace(/\..+/, '');
+                                    let style = 'padding-top: 15px; ';
+                                    
+                                    if(key !== 'versionApp'){
+                                        if(!keyIsNull && !keyIsUndefined) {
+                                            if(objKeyDate[key] === true){
+                                                value = (+settings[key] === 0) ? 'дата не определена' : (new Date((+settings[key]) - x)).toISOString().slice(0,-1).replace(/T/, ' ').replace(/\..+/, '');
+                                            }
+                                        }
+                                    } else {
+                                        let va = settings[key].match(pattern);
+
+                                        if(va !== null){
+                                            style += (+va[0] >= +mainContent.currentVersionApp) ? 'color: #9FD783;' : 'color: #C78888;';
+                                            style += ' font-weight:bold;';
+                                        }
                                     }
+
+                                    %><td class="<%= textLocation %>" style="<%= style %>" name="<%= key %>"><%= value %></td><%
+                                } 
                                 %>
-                                    <td class="text-left" style="padding-top: 15px;"><%= value %></td>
-                                <% } %>
                                     <!-- просмотр информации, её редактирование и удаление -->
                                     <td class="text-right" data-source-id="<%= hostId %>">
                                         <button type="button" class="btn btn-default btn-sm" name="buttonShowInformation">

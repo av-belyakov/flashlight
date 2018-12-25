@@ -75,45 +75,4 @@ module.exports = function(socketIo, settingManagement, settingType, func) {
         writeLogFile.writeLog('\tError: ' + err.toString());
         func(false);
     }
-
-    /*if (typeof socketIo.request === 'undefined') return func(new Error('Error socketIo, incorrect request'));
-    if (typeof socketIo.request.headers === 'undefined') return func(new Error('Error socketIo,there is no title'));
-    if (typeof socketIo.request.headers.cookie === 'undefined') return func(new Error('Error socketIo, missing the cookie'));
-
-    if (!(~socketIo.request.headers.cookie.indexOf(';'))) return func(new Error('Error socketIo, incorrect cookie'));
-    let cookie = socketIo.request.headers.cookie.split('; ');
-
-    if (!(~cookie[1].indexOf('.'))) return func(new Error('Error socketIo, incorrect cookie'));
-    let id = cookie[1].slice(16).split('.');
-
-    async.waterfall([
-        function(callback) {
-            redis.get('socketio_id:' + id[0], function(err, user) {
-                if (err) callback(err);
-                else callback(null, user);
-            });
-        },
-        function(user, callback) {
-            redis.hget('user_authntication:' + user, 'group', function(err, group) {
-                if (err) callback(err);
-                else callback(null, group);
-            });
-        },
-        function(group, callback) {
-            redis.hget('user_group:' + group, settingManagement, function(err, setting) {
-                if (err) callback(err);
-                else callback(null, setting);
-            });
-        }
-    ], function(err, result) {
-        if (err) {
-            writeLogFile.writeLog('\tError: ' + err.toString());
-            func(false);
-        } else {
-            let obj = JSON.parse(result);
-
-            if (obj === null || !obj.hasOwnProperty('data')) func(false);
-            else func(obj.data[settingType][0]);
-        }
-    });*/
 };

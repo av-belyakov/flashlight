@@ -11,6 +11,7 @@ const process = require('process');
 
 const errorsType = require('../errors/errorsType');
 const controllers = require('../controllers');
+const writeLogFile = require('../libs/writeLogFile');
 const globalObject = require('../configure/globalObject');
 const processingToDownloadFiles = require('../libs/management_download_files/processingToDownloadFiles');
 const processingListFilesForFiltering = require('../libs/list_file_management/processingListFilesForFiltering');
@@ -164,7 +165,8 @@ let messageTypeInformation = function(redis, sourceID, func) {
         ['currentDateTime', 'string'],
         ['randomAccessMemory', 'object'],
         ['loadCPU', 'string'],
-        ['loadNetwork', 'object']
+        ['loadNetwork', 'object'],
+        ['versionApp', 'string']
     ];
     let objResult = {};
 
@@ -172,7 +174,9 @@ let messageTypeInformation = function(redis, sourceID, func) {
         let nameParameter = arrItemDataReceive[i][0];
 
         if (typeof self.info[nameParameter] === 'undefined') {
-            return func(new errorsType.errorRemoteHost(`some parameters for remote host ${sourceID} is not installed`));
+            writeLogFile.writeLog(`\tError: parameter "${nameParameter}" for remote host ${sourceID} is not installed. Message type "information".`);
+
+            continue;
         }
 
         if (arrItemDataReceive[i][1] === 'object') objResult[nameParameter] = JSON.stringify(self.info[nameParameter]);

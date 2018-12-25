@@ -56,6 +56,27 @@ module.exports = function(redis) {
     }, function(err) {
         if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
     });
+
+    //добавляем версию ПО
+    new Promise((resolve, reject) => {
+        redis.exists('system_settings', (err, isExist) => {
+            if (err) reject(err);
+            else resolve(isExist);
+        });
+    }).then(tableIsExist => {
+        if (tableIsExist) return;
+
+        return new Promise((resolve, reject) => {
+            redis.hset('system_settings', 'currentVersionApp', '0.0', err => {
+                if (err) reject(err);
+                else resolve(null);
+            });
+        });
+    }).then(() => {
+        writeLogFile.writeLog('\tInfo: create table "system_setting"');
+    }).catch(err => {
+        writeLogFile.writeLog(`\tError: ${err.toString()}`);
+    });
 };
 
 function changeElementToObject(obj, strSeach, strReplace) {

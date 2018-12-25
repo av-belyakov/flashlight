@@ -1,7 +1,7 @@
 var settingDashboard =
 webpackJsonp_name_([11],{
 
-/***/ 189:
+/***/ 192:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -67,5 +67,5 @@ let showNotify = function (type, message) {
 
 /***/ })
 
-},[189]);
+},[192]);
 //# sourceMappingURL=settingDashboard.js.map

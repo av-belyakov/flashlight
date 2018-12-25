@@ -37,8 +37,9 @@ module.exports = function(req, res, socketIo) {
             });
         },
         mainContent: function(callback) {
-            informationForPageManagementSources.getShortInformationForTable(redis, req, function(obj) {
-                callback(null, obj);
+            informationForPageManagementSources.getShortInformationForTable(redis, req, function(err, obj) {
+                if (err) callback(err);
+                else callback(null, obj);
             });
         }
     }, function(err, endObject) {

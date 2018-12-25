@@ -17,7 +17,7 @@ const getCountFilesUploadNotConsidered = require('../../libs/getCountFilesUpload
 const preparingVisualizationDownloadFiles = require('../processing_socketio/preparingVisualizationDownloadFiles');
 const sendMsgTaskDownloadChangeObjectStatus = require('../../libs/helpers/sendMsgTaskDownloadChangeObjectStatus');
 
-module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notifyMessage }) {
+module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID }) {
     let objTypeRequest = {
         'cancel': requestCancel,
         'ready': requestTypeReady,
@@ -95,66 +95,7 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
         });
     }
 
-    function requestTypeExecuteCompleted() {
-        /*try {
-
-            debug('generation event "download information" type "update count"');
-
-            let uploadEvents = globalObject.getData('processingTasks', taskIndex).uploadEvents;
-            uploadEvents.emit('download information', {
-                msgType: 'update count'
-            });
-        } catch (err) {
-            writeLogFile.writeLog('\tError: ' + err.toString() + ', routingRequestDownloadFiles.js');
-            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-        }*/
-
-        /*new Promise((resolve, reject) => {
-            preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
-                if (err) reject(err);
-                else resolve(data);
-            });
-        }).then(data => {
-            if (Object.keys(data).length > 0) {
-                socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
-            }
-        }).catch(err => {
-            writeLogFile.writeLog(`\tError: ${err.toString()}`);
-            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-        });*/
-
-        //увеличиваем на единицу количество загруженных файлов
-        /*globalObject.incrementNumberFiles(taskIndex, 'numberFilesUploaded');
-
-        let obj = globalObject.getData('processingTasks', taskIndex);
-
-        debug('type execute complete - increment number files');
-        debug((obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles) - obj.uploadInfo.numberFilesUploadedError);
-
-        new Promise((resolve, reject) => {
-            redis.hset(`task_filtering_all_information:${taskIndex}`,
-                'countFilesLoaded',
-                (obj.uploadInfo.numberFilesUploaded + obj.uploadInfo.numberPreviouslyDownloadedFiles) - obj.uploadInfo.numberFilesUploadedError,
-                err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-        }).then(() => {
-            return new Promise((resolve, reject) => {
-                preparingVisualizationDownloadFiles.preparingVisualizationExecuteCompleted(redis, taskIndex, sourceID, (err, data) => {
-                    if (err) reject(err);
-                    else resolve(data);
-                });
-            });
-        }).then(data => {
-            if (Object.keys(data).length > 0) {
-                socketIoS.emit('file successfully downloaded', { processingType: 'showInformationDownload', information: data });
-            }
-        }).catch(err => {
-            writeLogFile.writeLog(`\tError: ${err.toString()}`);
-            showNotify(socketIoS, 'danger', `Неопределенная ошибка источника №<strong>${sourceID}</strong>, контроль загрузки файлов не возможен`);
-        });*/
-    }
+    function requestTypeExecuteCompleted() {}
 
     function requestTypeComplete() {
         preparingVisualizationDownloadFiles.preparingVisualizationComplete(redis, taskIndex, sourceID, (err, data) => {
@@ -168,16 +109,9 @@ module.exports = function({ redis, socketIoS, req, remoteHostId: sourceID, notif
                     information: data
                 });
 
-                //сообщение о количестве нерассмотренных задач
-                if (typeof notifyMessage !== 'undefined') {
-                    let receivedIsSuccess = (typeof notifyMessage.receivedIsSuccess !== 'undefined');
-
-                    if (receivedIsSuccess && notifyMessage.receivedIsSuccess === true) {
-                        getCountFilesUploadNotConsidered(redis, numberUploadedFiles => {
-                            socketIoS.emit('change number uploaded files', { 'numberUploadedFiles': numberUploadedFiles });
-                        });
-                    }
-                }
+                getCountFilesUploadNotConsidered(redis, numberUploadedFiles => {
+                    socketIoS.emit('change number uploaded files', { 'numberUploadedFiles': numberUploadedFiles });
+                });
 
                 sendMsgTaskDownloadChangeObjectStatus(redis, taskIndex, socketIoS, err => {
                     if (err) {

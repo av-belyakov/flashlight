@@ -1,19 +1,69 @@
 var settingSourcesPage =
-webpackJsonp_name_([4],{
+webpackJsonp_name_([3],{
 
-/***/ 182:
+/***/ 16:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
+/**
+ * Модуль изменения иконки при проверки полей ввода
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+let managementIcon = {
+    showIcon(elements, trigger) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        if (!trigger) {
+            elem.parentNode.classList.add('has-error');
+            elem.parentNode.classList.remove('has-success');
+            span.classList.add('glyphicon-remove');
+            span.classList.remove('glyphicon-ok');
+        } else {
+            elem.parentNode.classList.add('has-success');
+            elem.parentNode.classList.remove('has-error');
+            span.classList.add('glyphicon-ok');
+            span.classList.remove('glyphicon-remove');
+        }
+    },
+
+    removeIcon(elements) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        elem.parentNode.classList.remove('has-success');
+        span.classList.remove('glyphicon-ok');
+        elem.parentNode.classList.remove('has-error');
+        span.classList.remove('glyphicon-remove');
+    }
+};
+
+
+
+/***/ }),
+
+/***/ 183:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__common_helpers_showNotify__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(183);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(184);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__ = __webpack_require__(185);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(187);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(188);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__commons_managementIcon__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_sources_page_importXmlFile__ = __webpack_require__(184);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_sources_page_exportXmlFile__ = __webpack_require__(185);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_changeStatusSource__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_transmissionInformationSource__ = __webpack_require__(187);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowAddOrEditSource__ = __webpack_require__(189);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__setting_sources_page_openModalWindowChangeVersionApp__ = __webpack_require__(190);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__setting_sources_page_openModalWindowSourceInformation__ = __webpack_require__(191);
+
+
 
 
 
@@ -57,20 +107,32 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
     socket.on('show source information', function (data) {
         let obj = JSON.parse(data.sourceInformation);
-        Object(__WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowSourceInformation__["a" /* default */])(obj.information.id, obj);
+        Object(__WEBPACK_IMPORTED_MODULE_9__setting_sources_page_openModalWindowSourceInformation__["a" /* default */])(obj.information.id, obj);
     });
 
     socket.on('show source information edit', function (data) {
         let obj = JSON.parse(data.sourceInformation);
-        Object(__WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__["a" /* default */])('editSource', obj.information.id, obj);
+        Object(__WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowAddOrEditSource__["a" /* default */])('editSource', obj.information.id, obj);
+    });
+
+    socket.on('status list sources', function (data) {
+        Object(__WEBPACK_IMPORTED_MODULE_5__setting_sources_page_changeStatusSource__["a" /* default */])(data.statusListSources);
     });
 
     document.addEventListener('DOMContentLoaded', function () {
+        //обработчик на кнопку для изменения номера версии ПО
+        (function () {
+            let buttonChangeVersionApp = document.getElementById('buttonChangeVersionApp');
+            if (buttonChangeVersionApp !== null) {
+                buttonChangeVersionApp.addEventListener('click', __WEBPACK_IMPORTED_MODULE_8__setting_sources_page_openModalWindowChangeVersionApp__["a" /* default */]);
+            }
+        })();
+
         //обработчик на кнопку для открытия модального окна создания нового источника
         (function () {
             let buttonCreateSource = document.getElementById('buttonCreateSource');
             if (buttonCreateSource !== null) {
-                buttonCreateSource.addEventListener('click', __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_openModalWindowAddOrEditSource__["a" /* default */].bind(null, 'addSource'));
+                buttonCreateSource.addEventListener('click', __WEBPACK_IMPORTED_MODULE_7__setting_sources_page_openModalWindowAddOrEditSource__["a" /* default */].bind(null, 'addSource'));
             }
         })();
 
@@ -78,7 +140,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         (function () {
             let buttonSubmit = document.getElementById('buttonSubmit');
             if (buttonSubmit !== null) {
-                buttonSubmit.addEventListener('click', __WEBPACK_IMPORTED_MODULE_5__setting_sources_page_transmissionInformationSource__["a" /* default */]);
+                buttonSubmit.addEventListener('click', __WEBPACK_IMPORTED_MODULE_6__setting_sources_page_transmissionInformationSource__["a" /* default */]);
             }
         })();
 
@@ -171,7 +233,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 183:
+/***/ 184:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -221,7 +283,7 @@ function importXmlFile() {
 
 /***/ }),
 
-/***/ 184:
+/***/ 185:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -252,15 +314,50 @@ function exportXmlFile() {
 
 /***/ }),
 
-/***/ 185:
+/***/ 186:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = changeStatusSource;
+/**
+ * Модуль изменяющий состояние источника
+ * 
+ * Версия 0.1, дата релиза 24.12.2018
+ */
+
+
+
+/**
+ * 
+ * @param {*} объект типа {
+ *      <sourceID>: {
+ *          statusConnection: true/flase,
+ *          shortName: <краткое название>,
+ *          detailedDescription: <полное название> 
+ *      } 
+ *  }
+ */
+
+function changeStatusSource(statusListsSources) {
+  for (let sourceID in statusListsSources) {
+    let status = statusListsSources[sourceID].statusConnection ? 'my_circle_green' : 'my_circle_red';
+
+    let element = document.querySelector('.table [name="' + sourceID + '"] > canvas');
+    element.className = status;
+  }
+}
+
+/***/ }),
+
+/***/ 187:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = transmissionInformationSource;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__getFormElements__ = __webpack_require__(60);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createObjectInformationSetting__ = __webpack_require__(188);
 /**
  * Передача информации необходимой для добавления источника
  * 
@@ -302,7 +399,7 @@ function transmissionInformationSource() {
 
 /***/ }),
 
-/***/ 186:
+/***/ 188:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -337,12 +434,12 @@ function createObjectInformationSetting() {
 
 /***/ }),
 
-/***/ 187:
+/***/ 189:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = addEditSource;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(60);
 /**
  * Модуль формирования и открытия модального окна преднозначенного для создания
@@ -409,7 +506,121 @@ function addEditSource(typeWindow, sourceId, object) {
 
 /***/ }),
 
-/***/ 188:
+/***/ 190:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindowChangeVersionApp;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(16);
+/**
+ * Модуль добавления или изменения номера актуальной версии приложения
+ * находящегося на источнике
+ * 
+ * Версия 0.1, дата релиза 24.12.2018 
+ */
+
+
+
+
+
+function openModalWindowChangeVersionApp() {
+    let currentVersionApp = document.getElementById('versionApp').dataset.versionApp;
+    let modalWindow = `<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Изменить версию программного обеспечения</h4>
+        </div>
+        <div class="modal-body">
+            <!-- основной контент -->
+            <form role="form" class="form-horizontal">
+                <!-- цифровой идентификатор хоста -->
+                <div class="form-group has-feedback">
+                    <label for="hostId" class="control-label col-sm-6 col-md-6 col-lg-6">версия программного обеспечения:</label>
+                    <div class="col-sm-5 col-md-5 col-lg-5">
+                        <div>
+                            <input type="text" class="form-control input-xs" id="newVersionApp" value="${currentVersionApp}">
+                        </div>
+                        <span class="glyphicon form-control-feedback"></span>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary" name="buttonSubmit">Сохранить</button>
+        </div>
+    </div>
+</div>`;
+
+    let mainDiv = document.createElement('div');
+    mainDiv.className = 'modal fade';
+    mainDiv.setAttribute('id', 'modalChangeVersionApp');
+    mainDiv.setAttribute('tabindex', '-1');
+    mainDiv.setAttribute('role', 'dialog');
+    mainDiv.setAttribute('aria-labelledby', 'myModalLabel');
+    mainDiv.setAttribute('data-show', 'data');
+    mainDiv.innerHTML = modalWindow;
+
+    document.getElementById('container').appendChild(mainDiv);
+
+    document.querySelector('#modalChangeVersionApp [name="buttonSubmit"]').addEventListener('click', changeVersionApp);
+
+    $('#modalChangeVersionApp').modal('show');
+}
+
+//изменение текущей версии
+function changeVersionApp() {
+    let changeColor = nva => {
+        let listVersionNumber = document.querySelectorAll('.table-responsive [name="versionApp"]');
+        let pattern = new RegExp('\\d+\\.\\d+');
+
+        for (let i = 0; i < listVersionNumber.length; i++) {
+            let va = listVersionNumber[i].innerHTML;
+            let version = va.match(pattern);
+
+            if (version !== null) {
+                let styleColor = +version[0] >= nva ? 'rgb(159,215,131)' : 'rgb(199,136,136)';
+                listVersionNumber[i].style.color = styleColor;
+            }
+        }
+    };
+
+    let elem = document.querySelector('#modalChangeVersionApp input');
+
+    if (checkVersionNumber(elem)) {
+        document.getElementById('versionApp').innerHTML = `<strong>${+elem.value}</strong>`;
+
+        //изменяем цвет номера версии приложения
+        changeColor(+elem.value);
+
+        socket.emit('change current version app', { processingType: 'changeValueApp', information: { newValueApp: +elem.value } });
+
+        $('#modalChangeVersionApp').modal('hide');
+    }
+}
+
+//проверка номера версии
+function checkVersionNumber(elem) {
+    let pattern = new RegExp('^\\d+\\.\\d+$');
+
+    if (elem.value.length === 0) {
+        __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__["a" /* managementIcon */].showIcon(elem, false);
+        return false;
+    } else {
+        if (pattern.test(elem.value)) {
+            __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__["a" /* managementIcon */].showIcon(elem, true);
+            return true;
+        } else {
+            __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__["a" /* managementIcon */].showIcon(elem, false);
+            return false;
+        }
+    }
+}
+
+/***/ }),
+
+/***/ 191:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -484,52 +695,6 @@ function showAllInformation(sourceId, object) {
     document.querySelector('#modalShowRemoteHosts .modal-body').appendChild(container);
     $('#modalShowRemoteHosts').modal('show');
 }
-
-/***/ }),
-
-/***/ 22:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
-/**
- * Модуль изменения иконки при проверки полей ввода
- * 
- * Версия 0.1, дата релиза 29.11.2017
- */
-
-
-
-let managementIcon = {
-    showIcon(elements, trigger) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        if (!trigger) {
-            elem.parentNode.classList.add('has-error');
-            elem.parentNode.classList.remove('has-success');
-            span.classList.add('glyphicon-remove');
-            span.classList.remove('glyphicon-ok');
-        } else {
-            elem.parentNode.classList.add('has-success');
-            elem.parentNode.classList.remove('has-error');
-            span.classList.add('glyphicon-ok');
-            span.classList.remove('glyphicon-remove');
-        }
-    },
-
-    removeIcon(elements) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        elem.parentNode.classList.remove('has-success');
-        span.classList.remove('glyphicon-ok');
-        elem.parentNode.classList.remove('has-error');
-        span.classList.remove('glyphicon-remove');
-    }
-};
-
-
 
 /***/ }),
 
@@ -715,5 +880,5 @@ function getFormElements() {
 
 /***/ })
 
-},[182]);
+},[183]);
 //# sourceMappingURL=settingSourcesPage.js.map

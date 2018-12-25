@@ -42,25 +42,21 @@ module.exports = function(redis, { taskIndex, sourceID }) {
         };
     }).then(({ countFilesAll, countFilesDownloaded }) => {
         return new Promise((resolve, reject) => {
-            if (countFilesAll === countFilesDownloaded) {
-                taskFullyCompleted(redis, taskIndex, sourceID, err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            } else {
-                taskNotFullCompleted(redis, taskIndex, sourceID, err => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            }
+            let typeUploadFiles = 'partially loaded';
+            if (countFilesAll === countFilesDownloaded) typeUploadFiles = 'uploaded';
+
+            taskCompleted(redis, taskIndex, sourceID, typeUploadFiles, err => {
+                if (err) reject(err);
+                else resolve();
+            });
         });
     }).catch(err => {
         throw (err);
     });
 };
 
-//когда не все файлы были загруженны
-function taskNotFullCompleted(redis, taskIndex, sourceID, feedBack) {
+//при выполнении задачи по загрузки файлов
+function taskCompleted(redis, taskIndex, sourceID, typeUploadFiles, feedBack) {
     async.parallel([
         callback => {
             redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
@@ -70,53 +66,26 @@ function taskNotFullCompleted(redis, taskIndex, sourceID, feedBack) {
         },
         callback => {
             redis.hmset(`task_filtering_all_information:${taskIndex}`, {
-                'uploadFiles': 'partially loaded',
-                'dateTimeEndUploadFiles': +new Date()
-            }, err => {
-                if (err) callback(err);
-                else callback(null);
-            });
-        }
-    ], err => {
-        if (err) feedBack(err);
-        else feedBack(null);
-    });
-}
-
-//выполняется когда все файлы были загруженны
-function taskFullyCompleted(redis, taskIndex, sourceID, feedBack) {
-    async.parallel([
-        //удаляем элемент из таблицы task_implementation_downloading_files
-        function(callback) {
-            redis.lrem('task_implementation_downloading_files', 0, `${sourceID}:${taskIndex}`, err => {
-                if (err) callback(err);
-                else callback(null);
-            });
-        },
-        function(callback) {
-            redis.hmset(`task_filtering_all_information:${taskIndex}`, {
-                'uploadFiles': 'uploaded',
+                'uploadFiles': typeUploadFiles,
                 'dateTimeEndUploadFiles': +new Date()
             }, err => {
                 if (err) callback(err);
                 else callback(null);
             });
         },
-        //добавляем в таблицу task_filtering_upload_not_considered хеш задачи
-        function(callback) {
+        callback => {
             redis.zadd('task_filtering_upload_not_considered', +new Date(), `${sourceID}:${taskIndex}`, err => {
                 if (err) callback(err);
                 else callback(null);
             });
         },
-        //создаем файл в формате XML
-        function(callback) {
+        callback => {
             createFileXml(redis, taskIndex, sourceID, err => {
                 if (err) callback(err);
                 else callback(null);
             });
         }
-    ], function(err) {
+    ], err => {
         if (err) feedBack(err);
         else feedBack(null);
     });

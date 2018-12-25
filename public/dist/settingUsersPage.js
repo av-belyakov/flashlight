@@ -1,16 +1,62 @@
 var settingUsersPage =
 webpackJsonp_name_([6],{
 
-/***/ 176:
+/***/ 16:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
+/**
+ * Модуль изменения иконки при проверки полей ввода
+ * 
+ * Версия 0.1, дата релиза 29.11.2017
+ */
+
+
+
+let managementIcon = {
+    showIcon(elements, trigger) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        if (!trigger) {
+            elem.parentNode.classList.add('has-error');
+            elem.parentNode.classList.remove('has-success');
+            span.classList.add('glyphicon-remove');
+            span.classList.remove('glyphicon-ok');
+        } else {
+            elem.parentNode.classList.add('has-success');
+            elem.parentNode.classList.remove('has-error');
+            span.classList.add('glyphicon-ok');
+            span.classList.remove('glyphicon-remove');
+        }
+    },
+
+    removeIcon(elements) {
+        let elem = elements.parentNode;
+        let span = elem.parentNode.children[1];
+
+        elem.parentNode.classList.remove('has-success');
+        span.classList.remove('glyphicon-ok');
+        elem.parentNode.classList.remove('has-error');
+        span.classList.remove('glyphicon-remove');
+    }
+};
+
+
+
+/***/ }),
+
+/***/ 177:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common_helpers_showNotify__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__commons_managementIcon__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__setting_users_page_getFormElements__ = __webpack_require__(59);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__ = __webpack_require__(177);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_users_page_openModalWindowAddEditUser__ = __webpack_require__(178);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__setting_users_page_openModalWindow__ = __webpack_require__(178);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__setting_users_page_openModalWindowAddEditUser__ = __webpack_require__(179);
 
 
 
@@ -111,12 +157,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ 177:
+/***/ 178:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindow;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_managementIcon__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getFormElements__ = __webpack_require__(59);
 /**
  * Модуль формирования и открытия модального окна
@@ -209,7 +255,7 @@ function openModalWindow(typeWindow, event) {
 
 /***/ }),
 
-/***/ 178:
+/***/ 179:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -223,7 +269,7 @@ function openModalWindow(typeWindow, event) {
 
 
 
-const md5js = __webpack_require__(29);
+const md5js = __webpack_require__(30);
 
 
 
@@ -268,59 +314,40 @@ function openModalWindowAddEditUser() {
 
 /***/ }),
 
-/***/ 22:
+/***/ 3:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return managementIcon; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
 /**
- * Модуль изменения иконки при проверки полей ввода
+ * Общий вид сообщений
  * 
- * Версия 0.1, дата релиза 29.11.2017
+ * Версия 0.1, дата релиза 23.11.2017
  */
 
 
 
-let managementIcon = {
-    showIcon(elements, trigger) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        if (!trigger) {
-            elem.parentNode.classList.add('has-error');
-            elem.parentNode.classList.remove('has-success');
-            span.classList.add('glyphicon-remove');
-            span.classList.remove('glyphicon-ok');
-        } else {
-            elem.parentNode.classList.add('has-success');
-            elem.parentNode.classList.remove('has-error');
-            span.classList.add('glyphicon-ok');
-            span.classList.remove('glyphicon-remove');
-        }
-    },
-
-    removeIcon(elements) {
-        let elem = elements.parentNode;
-        let span = elem.parentNode.children[1];
-
-        elem.parentNode.classList.remove('has-success');
-        span.classList.remove('glyphicon-ok');
-        elem.parentNode.classList.remove('has-error');
-        span.classList.remove('glyphicon-remove');
-    }
+let showNotify = function (type, message) {
+    $.notify({
+        message: message
+    }, {
+        type: type,
+        placement: { from: 'top', align: 'right' },
+        offset: { x: 0, y: 60 }
+    });
 };
 
 
 
 /***/ }),
 
-/***/ 29:
+/***/ 30:
 /***/ (function(module, exports, __webpack_require__) {
 
 ;(function (root, factory) {
 	if (true) {
 		// CommonJS
-		module.exports = exports = factory(__webpack_require__(30));
+		module.exports = exports = factory(__webpack_require__(31));
 	}
 	else if (typeof define === "function" && define.amd) {
 		// AMD
@@ -588,34 +615,7 @@ let managementIcon = {
 
 /***/ }),
 
-/***/ 3:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return showNotify; });
-/**
- * Общий вид сообщений
- * 
- * Версия 0.1, дата релиза 23.11.2017
- */
-
-
-
-let showNotify = function (type, message) {
-    $.notify({
-        message: message
-    }, {
-        type: type,
-        placement: { from: 'top', align: 'right' },
-        offset: { x: 0, y: 60 }
-    });
-};
-
-
-
-/***/ }),
-
-/***/ 30:
+/***/ 31:
 /***/ (function(module, exports, __webpack_require__) {
 
 ;(function (root, factory) {
@@ -1403,5 +1403,5 @@ function getFormElements() {
 
 /***/ })
 
-},[176]);
+},[177]);
 //# sourceMappingURL=settingUsersPage.js.map

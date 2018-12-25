@@ -5,8 +5,10 @@ import { showNotify } from './common_helpers/showNotify';
 import { managementIcon } from './commons/managementIcon';
 import importXmlFile from './setting_sources_page/importXmlFile';
 import exportXmlFile from './setting_sources_page/exportXmlFile';
+import changeStatusSource from './setting_sources_page/changeStatusSource';
 import transmissionInformationSource from './setting_sources_page/transmissionInformationSource';
 import openModalWindowAddOrEditSource from './setting_sources_page/openModalWindowAddOrEditSource';
+import openModalWindowChangeVersionApp from './setting_sources_page/openModalWindowChangeVersionApp';
 import openModalWindowSourceInformation from './setting_sources_page/openModalWindowSourceInformation';
 
 (function() {
@@ -49,7 +51,19 @@ import openModalWindowSourceInformation from './setting_sources_page/openModalWi
         openModalWindowAddOrEditSource('editSource', obj.information.id, obj);
     });
 
+    socket.on('status list sources', function(data) {
+        changeStatusSource(data.statusListSources);
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
+        //обработчик на кнопку для изменения номера версии ПО
+        (function() {
+            let buttonChangeVersionApp = document.getElementById('buttonChangeVersionApp');
+            if (buttonChangeVersionApp !== null) {
+                buttonChangeVersionApp.addEventListener('click', openModalWindowChangeVersionApp);
+            }
+        })();
+
         //обработчик на кнопку для открытия модального окна создания нового источника
         (function() {
             let buttonCreateSource = document.getElementById('buttonCreateSource');

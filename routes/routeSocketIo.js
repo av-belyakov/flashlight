@@ -6,6 +6,8 @@
 
 'use strict';
 
+const debug = require('debug')('routeSocketIo');
+
 const fs = require('fs');
 const path = require('path');
 
@@ -165,8 +167,7 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 redis: redis,
                 socketIoS: socketIoS,
                 req: stringMessage,
-                remoteHostId: remoteHostId,
-                notifyMessage: notifyMessage
+                remoteHostId: remoteHostId
             });
         },
         'error': function() {
@@ -301,6 +302,12 @@ module.exports.eventHandling = function(socketIo) {
     /*
      * УПРАВЛЕНИЕ УДАЛЕННЫМИ ИСТОЧНИКАМИ
      * */
+
+    /* изменение актуальной версии приложения */
+    socketIo.on('change current version app', function(data) {
+        processingSource.changeVersionApp(data);
+    });
+
     /* добавление информации об источнике */
     socketIo.on('add or edit setting', function(data) {
         let actionType;
