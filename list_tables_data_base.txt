@@ -118,6 +118,7 @@ remote_host:information:* (где * идентификатор источник�
     - randomAccessMemory
     - loadCPU
     - loadNetwork
+    - versionApp
 
 /* настройки пользователей и групп пользователей */
 user_authntication:* (где * идентификатор пользователя, например user_authntication:userid_administrator)

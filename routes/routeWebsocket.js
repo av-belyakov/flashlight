@@ -6,6 +6,8 @@
 
 'use strict';
 
+const debug = require('debug')('routeWebsocket');
+
 const async = require('async');
 const process = require('process');
 
@@ -159,6 +161,9 @@ let messagePong = function(redis, sourceID, func) {
 //обработка информации о состоянии источника
 let messageTypeInformation = function(redis, sourceID, func) {
     let self = this;
+
+    debug(this);
+
     let arrItemDataReceive = [
         ['diskSpace', 'object'],
         ['timeInterval', 'object'],

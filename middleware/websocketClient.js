@@ -257,40 +257,7 @@ function addHandlerConnection(objSetup) {
             }).then(() => {
                 //изменяем состояние 'uploadFiles' в таблицах 'task_filtering_all_information:*'
                 return processingDownloadFilesConnectionClosed(objSetup.redis, objSetup.hostId, objSetup.socketIo);
-            }).then(() => { //objListTasks => {
-                /*                let arrTaskIndex = [];
-                                for (let key in objListTasks) {
-                                    objListTasks[key].forEach(item => {
-                                        if (typeof item.taskIndex !== 'undefined') {
-                                            arrTaskIndex.push(item.taskIndex);
-                                        }
-                                    });
-                                }
-
-                                //генерируем событие удаляющее виджет визуализирующий загрузку файла
-                                arrTaskIndex.forEach(item => {
-                                    let objFileInfo = {
-                                        'information': {
-                                            'taskIndex': item
-                                        }
-                                    };
-
-                                    objSetup.socketIo.emit('task upload files cancel', objFileInfo);
-                                });
-
-                                async.each(arrTaskIndex, (item, callbackEach) => {
-                                    //изменяем состояние задачи на странице управления задачами
-                                    sendMsgTaskDownloadChangeObjectStatus(objSetup.redis, item, objSetup.socketIo, err => {
-                                        if (err) callbackEach(err);
-                                        else callbackEach(null);
-                                    });
-                                }, err => {
-                                    if (err) writeLogFile.writeLog(`\tError: ${err.toString()}, routingRequestDownloadFiles.js`);
-
-                                    //изменяем состояние источника
-                                    routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
-                                });*/
-
+            }).then(() => {
                 //изменяем состояние источника
                 routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });
             }).catch(err => {
