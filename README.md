@@ -1,22 +1,17 @@
-Flashlight, version 2.22
+Flashlight, version 2.221
 
-Модифицирован раздел загрузки файлов файлов. Теперь одновременно через канал могут скачиватся несколько файлов, а для того чтобы разделить их бинарные фрагменты используются специальные маркеры.
+Модифицирован раздел загрузки файлов.
+Теперь одновременно через канал могут скачиваться несколько файлов, а для того чтобы разделить их бинарные фрагменты используются специальные маркеры.
+Кроме того загружаемые файлы сразу пишутся на диск в директорию для долговременного хранения. Создавать и использовать временный TMP диск в ОЗУ более не требуется.
 
+
+/*** установка и настройка ***/
 Настройка /etc/rc.local
-
-/*
-часть ОЗУ используемая для временного хранения файлов при загрузке через flashlight
-должен совпадать с путем
-"downloadDirectoryTmp": {
-   "directoryName": "__TMP"
-}, из файла config.json flashlight
-*/
-mount -t tmpfs -o size=6000M tmpfs /__TMP
 
 /*
 запуск СУБД Redis с настройками указанными в redis.conf
 */
-/opt/redis-3.2.9/src/redis-server /opt/redis-3.2.9/redis.conf &
+/opt/redis-<версия СУБД>/src/redis-server /opt/redis-<версия СУБД>/redis.conf &
 
 /*
 запуск автоматом, аналог ./flashlight_management
@@ -43,15 +38,3 @@ WARNING при запуске сервера Redis
  - использовать unix socket
 
 4. Добавить в раздел requirepass пароль пользователя
-
-5. Создать ramdisk командой mount -t tmpfs -o size=2000M tmpfs /__TMP
-
-
-
-/*
-Приведение БД в "нормальное" состояние, где 0711679b41082313b2c4aed8ef8a9550 id события фильтрации
-*/
-HMSET task_filtering_all_information:b18cdbf8a25c261cc93b95e139ee9608 uploadFiles 'not loaded' countFilesLoaded 0 countFilesLoadedError 0 dateTimeStartUploadFiles null userNameStartUploadFiles null uploadDirectoryFiles null dateTimeEndUploadFiles null dateTimeStopUploadFiles null userNameStopUploadFiles null
-
-NODE_ENV='development' DEBUG=indexMiddleware,routeSocketIo.js,routeWebsocket.js,processingFilesUpload.js,websocketClient.js,processingFiltering node app.js
-webpack --display-error-details

@@ -13,8 +13,5 @@
     "downloadDirectory": {
         "directoryName": "__FLASHLIGHT_DOWNLOAD_DIRECTORY"
     },
-    "downloadDirectoryTmp": {
-        "directoryName": "__TMP"
-    },
     "timeControllingConnectedSources": 600000
 }

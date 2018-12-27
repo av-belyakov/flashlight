@@ -6,8 +6,6 @@
 
 'use strict';
 
-const debug = require('debug')('routeWebsocket');
-
 const async = require('async');
 const process = require('process');
 
@@ -130,7 +128,23 @@ let messagePong = function(redis, sourceID, func) {
         return func(new errorsType.receivedIncorrectData('the \'info\' field is missing in the json object'));
     }
 
-    async.series([
+    async.parallel([
+        callback => {
+            if (typeof self.info.versionApp === 'undefined') {
+                writeLogFile.writeLog(`\tInfo: source №${sourceID}, the 'versionApp' field is missing in the json object`);
+                return callback(null);
+            }
+
+            if (!new RegExp('^v\\d+\\.\\d+$').test(self.info.versionApp)) {
+                writeLogFile.writeLog(`\tInfo: incorrect data received from source №${sourceID}`);
+                return callback(null);
+            }
+
+            redis.hset('remote_host_version_list', sourceID, self.info.versionApp, err => {
+                if (err) callback(err);
+                else callback(null);
+            });
+        },
         callback => {
             redis.hget(`remote_host:settings:${sourceID}`,
                 'maxCountProcessFiltering',
@@ -161,17 +175,13 @@ let messagePong = function(redis, sourceID, func) {
 //обработка информации о состоянии источника
 let messageTypeInformation = function(redis, sourceID, func) {
     let self = this;
-
-    debug(this);
-
     let arrItemDataReceive = [
         ['diskSpace', 'object'],
         ['timeInterval', 'object'],
         ['currentDateTime', 'string'],
         ['randomAccessMemory', 'object'],
         ['loadCPU', 'string'],
-        ['loadNetwork', 'object'],
-        ['versionApp', 'string']
+        ['loadNetwork', 'object']
     ];
     let objResult = {};
 

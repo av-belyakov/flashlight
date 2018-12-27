@@ -28,8 +28,8 @@ exports.getShortInformationForTable = function(redis, req, cb) {
         return new Promise((resolve, reject) => {
             async.eachOf(listSources, (sourceID, key, callbackEachOf) => {
                 async.parallel({
-                    info: (callbackParallel) => {
-                        redis.hget(`remote_host:information:${sourceID}`, 'versionApp', (err, versionApp) => {
+                    version: (callbackParallel) => {
+                        redis.hget('remote_host_version_list', sourceID, (err, versionApp) => {
                             if (err) return callbackParallel(err);
 
                             if (versionApp === null) versionApp = 'нет данных';
@@ -56,7 +56,7 @@ exports.getShortInformationForTable = function(redis, req, cb) {
                 }, (err, result) => {
                     if (err) return callbackEachOf(err);
 
-                    Object.assign(objListSources[sourceID], result.info);
+                    Object.assign(objListSources[sourceID], result.version);
                     Object.assign(objListSources[sourceID], result.settings);
 
                     callbackEachOf(null);
