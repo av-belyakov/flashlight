@@ -20,6 +20,7 @@ const objWebsocket = require('../configure/objWebsocket');
 const writeLogFile = require('../libs/writeLogFile');
 const routeSocketIo = require('../routes/routeSocketIo');
 const routeWebsocket = require('../routes/routeWebsocket');
+const delVersionAppSource = require('../libs/delVersionAppSource');
 const downloadManagementFiles = require('../libs/management_download_files/downloadManagementFiles');
 const getRemoteHostSetupDbRedis = require('../libs/getRemoteHostSetupDbRedis');
 const controllingConnectedSources = require('../libs/controllingConnectedSources');
@@ -128,11 +129,16 @@ function createWebsocketConnect(redis, socketIo, hostId) {
             //изменяем состояние источника
             routeSocketIo.eventGenerator(socketIo, hostId, { messageType: 'close' });
 
-            checkSourceExist(redis, hostId, socketIo, trigger => {
-                if (trigger) {
-                    redis.hset('remote_host:settings:' + hostId, 'numberConnectionAttempts', ++sourceInfo.numberConnectionAttempts);
-                }
-            });
+            delVersionAppSource(redis, hostId)
+                .then(() => {
+                    checkSourceExist(redis, hostId, socketIo, trigger => {
+                        if (trigger) {
+                            redis.hset('remote_host:settings:' + hostId, 'numberConnectionAttempts', ++sourceInfo.numberConnectionAttempts);
+                        }
+                    });
+                }).catch(err => {
+                    if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
+                });
         });
     });
 
@@ -257,6 +263,9 @@ function addHandlerConnection(objSetup) {
             }).then(() => {
                 //изменяем состояние 'uploadFiles' в таблицах 'task_filtering_all_information:*'
                 return processingDownloadFilesConnectionClosed(objSetup.redis, objSetup.hostId, objSetup.socketIo);
+            }).then(() => {
+                //удаляем информацию о версии ПО источника из таблицы 'remote_host_version_list'
+                return delVersionAppSource(objSetup.redis, objSetup.hostId);
             }).then(() => {
                 //изменяем состояние источника
                 routeSocketIo.eventGenerator(objSetup.socketIo, objSetup.hostId, { messageType: 'close' });

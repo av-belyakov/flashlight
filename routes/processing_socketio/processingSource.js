@@ -5,7 +5,7 @@
  * - редактирование
  * - удаление
  *
- * Версия 0.2, дата релиза 07.11.2016
+ * Версия 0.21, дата релиза 28.12.2018
  * */
 
 'use strict';
@@ -19,6 +19,7 @@ const controllers = require('../../controllers');
 const writeLogFile = require('../../libs/writeLogFile');
 const globalObject = require('../../configure/globalObject');
 const objWebsocket = require('../../configure/objWebsocket');
+const delVersionAppSource = require('../../libs/delVersionAppSource');
 
 const redis = controllers.connectRedis();
 
@@ -246,156 +247,150 @@ exports.deleteSource = function(socketIo, obj) {
     }
 
     async.series([
-        //проверяем выполняется ли фильтрация на данном источнике
-        function(callback) {
-            let listTaskFilter = Object.keys(globalObject.getDataTaskFilter());
-
-            if (listTaskFilter.length === 0) return callback(null, true);
-
-            let isExist = false;
-            let processingTasks = globalObject.getData('processingTasks');
-            listTaskFilter.forEach((taskIndex) => {
-                if (processingTasks[taskIndex].sourceId === obj.sourceId) isExist = true;
-            });
-
-            if (!isExist) callback(null, true);
-            else callback(new errorsType.sourceIsBusy(`Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</strong>, идет процесс фильтрации`));
-
-            /*async.each(listTaskFilter, (item, callbackEach) => {
-                redis.hget('task_filtering_all_information:' + item, 'sourceId', (err, id) => {
-                    if (err) {
-                        callbackEach(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                    } else if (id === obj.sourceId) {
-                        callbackEach(new errorsType.sourceIsBusy(`Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</strong>, идет процесс фильтрации`));
-                    } else {
-                        callbackEach(null);
-                    }
-                });
-            }, function(err) {
-                if (err) callback(err);
-                else callback(null, true);
-            });*/
-        },
-        //проверяем выполняется ли загрузка файлов с данного источника (таблица task_implementation_downloading_files)
-        function(callback) {
-            redis.lrange('task_implementation_downloading_files', [0, -1], (err, arrayTask) => {
-                if (err) return callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                if (arrayTask.length === 0) return callback(null, true);
-
-                for (let i = 0; i < arrayTask.length; i++) {
-                    if (!(~arrayTask[i].indexOf(':'))) return callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                    if (arrayTask[i].split(':')[0] === obj.sourceId) return callback(new errorsType.sourceIsBusy(`Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</strong>, задача на загрузку файлов с данного источника уже выполняется`));
-                }
-                callback(null, true);
-            });
-        },
-        //проверяем находится ли данный источник в очереди на выгрузку файлов (таблица task_turn_downloading_files)
-        function(callback) {
-            redis.lrange('task_turn_downloading_files', [0, -1], (err, arrayTask) => {
-                if (err) callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                if (arrayTask.length === 0) return callback(null, true);
-
-                for (let i = 0; i < arrayTask.length; i++) {
-                    if (!(~arrayTask[i].indexOf(':'))) return callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                    if (arrayTask[i].split(':')[0] === obj.sourceId) return callback(new errorsType.sourceIsBusy(`Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</strong>, задача на загрузку файлов с данного источника находится в очереди`));
-                }
-                callback(null, true);
-            });
-        },
-        //закрываем соединение и удаляем линк из объекта objWebsocket
-        function(callback) {
-            let webSocketSourceId = objWebsocket['remote_host:' + obj.sourceId];
-
-            if (typeof webSocketSourceId !== 'undefined') {
-                webSocketSourceId.close();
-                delete objWebsocket['remote_host:' + obj.sourceId];
-            }
-            callback(null, true);
-        },
-        function(callback) {
-            if (!obj.hasOwnProperty('sourceId')) return callback(null, true);
-
-            globalObject.deleteData('sources', obj.sourceId);
-
-            callback(null, true);
-        },
-        function(callback) {
-            if (!obj.hasOwnProperty('sourceId')) return callback(null, true);
-
-            redis.lrem('remote_hosts_exist:id', 0, obj.sourceId, (err) => {
-                if (err) callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                else callback(null, true);
-            });
-        },
-        function(callback) {
-            redis.del('remote_host:settings:' + obj.sourceId, (err) => {
-                if (err) callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                else callback(null, true);
-            });
-        },
-        function(callback) {
-            redis.del('remote_host:information:' + obj.sourceId, (err) => {
-                if (err) callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                else callback(null, true);
-            });
-        }
-    ], function(err) {
-        if (err) {
-            if (err.name === 'UndefinedServerError') {
-                writeLogFile.writeLog('\tError: ' + err.cause);
-                return showNotify(socketIo, 'danger', err.message);
-            } else {
-                return showNotify(socketIo, 'danger', err.message);
-            }
-        }
-
-        async.waterfall([
+            //проверяем выполняется ли фильтрация на данном источнике
             function(callback) {
-                redis.keys('user_authntication:*', (err, users) => {
-                    if (err) callback(err);
-                    else callback(null, users);
+                let listTaskFilter = Object.keys(globalObject.getDataTaskFilter());
+
+                if (listTaskFilter.length === 0) return callback(null, true);
+
+                let isExist = false;
+                let processingTasks = globalObject.getData('processingTasks');
+                listTaskFilter.forEach((taskIndex) => {
+                    if (processingTasks[taskIndex].sourceId === obj.sourceId) isExist = true;
+                });
+
+                if (!isExist) callback(null);
+                else callback(new errorsType.sourceIsBusy(`Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</strong>, идет процесс фильтрации`));
+            },
+            //проверяем выполняется ли загрузка файлов с данного источника (таблица task_implementation_downloading_files)
+            function(callback) {
+                redis.lrange('task_implementation_downloading_files', [0, -1], (err, arrayTask) => {
+                    if (err) return callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
+                    if (arrayTask.length === 0) return callback(null, true);
+
+                    for (let i = 0; i < arrayTask.length; i++) {
+                        if (!(~arrayTask[i].indexOf(':'))) return callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
+                        if (arrayTask[i].split(':')[0] === obj.sourceId) return callback(new errorsType.sourceIsBusy(`Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</strong>, задача на загрузку файлов с данного источника уже выполняется`));
+                    }
+                    callback(null);
                 });
             },
-            function(arrayUsers, callback) {
-                async.eachOf(arrayUsers, (name, key, callbackForEachOf) => {
-                    redis.hget(name, 'settings', (err, object) => {
-                        if (err) {
-                            return callbackForEachOf(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
-                        }
+            //проверяем находится ли данный источник в очереди на выгрузку файлов (таблица task_turn_downloading_files)
+            function(callback) {
+                redis.lrange('task_turn_downloading_files', [0, -1], (err, arrayTask) => {
+                    if (err) callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
+                    if (arrayTask.length === 0) return callback(null, true);
 
-                        try {
-                            let objSettings = JSON.parse(object);
-                            if (objSettings.hasOwnProperty('remoteHosts') && objSettings.remoteHosts.length > 0) {
-                                for (let num = 0; num < objSettings.remoteHosts.length; num++) {
-                                    if (obj.sourceId === objSettings.remoteHosts[num]) {
-                                        objSettings.remoteHosts.splice(num, 1);
-                                        let newObjSettings = objSettings;
+                    for (let i = 0; i < arrayTask.length; i++) {
+                        if (!(~arrayTask[i].indexOf(':'))) return callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
+                        if (arrayTask[i].split(':')[0] === obj.sourceId) return callback(new errorsType.sourceIsBusy(`Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</strong>, задача на загрузку файлов с данного источника находится в очереди`));
+                    }
+                    callback(null);
+                });
+            },
+            //закрываем соединение и удаляем линк из объекта objWebsocket
+            function(callback) {
+                let webSocketSourceId = objWebsocket[`remote_host:${obj.sourceId}`];
 
-                                        redis.hset(name, 'settings', (JSON.stringify(newObjSettings)), (err) => {
-                                            if (err) return callbackForEachOf(err);
-                                        });
+                if (typeof webSocketSourceId !== 'undefined') {
+                    webSocketSourceId.close();
+                    delete objWebsocket['remote_host:' + obj.sourceId];
+                }
+                callback(null);
+            },
+            function(callback) {
+                if (!obj.hasOwnProperty('sourceId')) return callback(null, true);
+
+                globalObject.deleteData('sources', obj.sourceId);
+
+                callback(null);
+            },
+            function(callback) {
+                if (!obj.hasOwnProperty('sourceId')) return callback(null, true);
+
+                redis.lrem('remote_hosts_exist:id', 0, obj.sourceId, err => {
+                    if (err) callback(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
+                    else callback(null);
+                });
+            },
+            function(callback) {
+                const promises = [
+                        `remote_host:settings:${obj.sourceId}`,
+                        `remote_host:information:${obj.sourceId}`
+                    ]
+                    .map(tableName => {
+                        redis.del(tableName, err => {
+                            if (err) throw (err);
+                        });
+                    });
+
+                Promise.all(promises)
+                    .then(() => {
+                        return delVersionAppSource(redis, obj.sourceId);
+                    }).then(() => {
+                        callback(null);
+                    }).catch(err => {
+                        callback(err);
+                    });
+            }
+        ],
+        function(err) {
+            if (err) {
+                if (err.name === 'UndefinedServerError') {
+                    writeLogFile.writeLog('\tError: ' + err.cause);
+                    return showNotify(socketIo, 'danger', err.message);
+                } else {
+                    return showNotify(socketIo, 'danger', err.message);
+                }
+            }
+
+            async.waterfall([
+                function(callback) {
+                    redis.keys('user_authntication:*', (err, users) => {
+                        if (err) callback(err);
+                        else callback(null, users);
+                    });
+                },
+                function(arrayUsers, callback) {
+                    async.eachOf(arrayUsers, (name, key, callbackForEachOf) => {
+                        redis.hget(name, 'settings', (err, object) => {
+                            if (err) {
+                                return callbackForEachOf(new errorsType.undefinedServerError('Ошибка: невозможно удалить источник', err.toString()));
+                            }
+
+                            try {
+                                let objSettings = JSON.parse(object);
+                                if (objSettings.hasOwnProperty('remoteHosts') && objSettings.remoteHosts.length > 0) {
+                                    for (let num = 0; num < objSettings.remoteHosts.length; num++) {
+                                        if (obj.sourceId === objSettings.remoteHosts[num]) {
+                                            objSettings.remoteHosts.splice(num, 1);
+                                            let newObjSettings = objSettings;
+
+                                            redis.hset(name, 'settings', (JSON.stringify(newObjSettings)), (err) => {
+                                                if (err) return callbackForEachOf(err);
+                                            });
+                                        }
                                     }
                                 }
+                            } catch (error) {
+                                return callbackForEachOf(error);
                             }
-                        } catch (error) {
-                            return callbackForEachOf(error);
-                        }
-                        callbackForEachOf();
+                            callbackForEachOf();
+                        });
+                    }, function(err) {
+                        if (err) callback(err);
+                        else callback(null, true);
                     });
-                }, function(err) {
-                    if (err) callback(err);
-                    else callback(null, true);
-                });
-            }
-        ], function(err) {
-            if (err) {
-                writeLogFile.writeLog('\tError: ' + err.toString());
-                showNotify(socketIo, 'danger', `Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</storng>`);
-            } else {
-                showNotify(socketIo, 'info', `Информация об источнике №<strong>${obj.sourceId}</strong> успешно удалена`);
-            }
+                }
+            ], function(err) {
+                if (err) {
+                    writeLogFile.writeLog('\tError: ' + err.toString());
+                    showNotify(socketIo, 'danger', `Ошибка: невозможно удалить источник №<strong>${obj.sourceId}</storng>`);
+                } else {
+                    showNotify(socketIo, 'info', `Информация об источнике №<strong>${obj.sourceId}</strong> успешно удалена`);
+                }
+            });
         });
-    });
 };
 
 //вывод подробной информации о выбранном источнике
