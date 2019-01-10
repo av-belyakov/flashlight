@@ -243,19 +243,19 @@ __webpack_require__(15);
             });
         })();
 
-        //Обработчик на постраничные ссылки
+        //обработчик на постраничные ссылки
         (function () {
             let divPagination = document.getElementsByClassName('pagination')[0];
             if (typeof divPagination !== 'undefined') divPagination.addEventListener('click', __WEBPACK_IMPORTED_MODULE_4__commons_processPagination__["a" /* default */].bind('show the page number filtering'));
         })();
 
-        //Обработчик на кнопку 'Поиск'
+        //обработчик на кнопку 'поиск'
         (function () {
             let buttonSearch = document.getElementById('buttonSearch');
             if (typeof buttonSearch !== 'undefined') buttonSearch.addEventListener('click', __WEBPACK_IMPORTED_MODULE_2__job_log_submitQuery__["a" /* default */]);
         })();
 
-        //Обработчик на кнопку 'Удалить' модального окна
+        //обработчик на кнопку 'удалить' модального окна
         (function () {
             document.querySelector('#modalDelete .btn-primary').addEventListener('click', function () {
                 let taskIndex = document.querySelector('#modalDelete .modal-body p').dataset.taskIndex;
@@ -1275,7 +1275,7 @@ function createTableTaskResultFilter(objData) {
     let objJobStatus = {
         'start': ['выполняется', '#00acee'],
         'expect': ['oжидает', '#ffcc2f'],
-        'rejected': ['oтклонена', '#ffcc2f'],
+        'rejected': ['oтклонена', '#ef5734'],
         'execute': ['выполняется', '#00acee'],
         'complete': ['завершена', '#2baf2b'],
         'stop': ['остановлена', '#ef5734']
@@ -1352,6 +1352,13 @@ function createTableTaskResultFilter(objData) {
             tableBodyButton += `<button type="button" name="buttonImport" class="btn btn-default btn-sm btn-file" ${disabledImport} title="загрузить сетевой трафик"><span class="glyphicon glyphicon-import"></span> импорт </button>`;
         }
 
+        let valueJobStatus = objJobStatus[informationTaskIndex[taskIndex].jobStatus][0];
+        let valueJobStatusColor = objJobStatus[informationTaskIndex[taskIndex].jobStatus][1];
+        if (informationTaskIndex[taskIndex].dateTimeStartFilter === 'null') {
+            valueJobStatus = 'oтклонена';
+            valueJobStatusColor = '#ef5734';
+        }
+
         tableBodyButton += `<button type="button" name="buttonDelete" class="btn btn-default btn-sm" ${disabledDelete} title="удаление задачи">`;
         tableBodyButton += '<span class="glyphicon glyphicon-trash"></span></button><input type="hidden" data-taskInformation="' + dataAccessRights[1].split('=')[1] + ':' + informationTaskIndex[taskIndex].countFilesFound + '"></td>';
 
@@ -1361,7 +1368,7 @@ function createTableTaskResultFilter(objData) {
         tableBody += `<td class="text-left" style="padding-top: 15px;">${getName(informationTaskIndex[taskIndex].userName)}</td>`;
         tableBody += `<td class="text-left" style="padding-top: 15px;">${stringIpNetwork}</td>`;
         tableBody += `<td class="text-left" style="padding-top: 15px; color: ${objLoadingStatus[informationTaskIndex[taskIndex].uploadFiles][1]}">${objLoadingStatus[informationTaskIndex[taskIndex].uploadFiles][0]}</td>`;
-        tableBody += `<td class="text-left" style="padding-top: 15px; color: ${objJobStatus[informationTaskIndex[taskIndex].jobStatus][1]}">${objJobStatus[informationTaskIndex[taskIndex].jobStatus][0]}</td>`;
+        tableBody += `<td class="text-left" style="padding-top: 15px; color: ${valueJobStatusColor}">${valueJobStatus}</td>`;
         tableBody += `<td class="text-right" style="padding-top: 15px;">${countFilesFound}</td>`;
         tableBody += tableBodyButton + '</tr>';
     }

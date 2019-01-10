@@ -113,19 +113,19 @@ import createModalWindowListDownloadFiles from './job_log/createModalWindowListD
             });
         })();
 
-        //Обработчик на постраничные ссылки
+        //обработчик на постраничные ссылки
         (function() {
             let divPagination = document.getElementsByClassName('pagination')[0];
             if (typeof divPagination !== 'undefined') divPagination.addEventListener('click', processPagination.bind('show the page number filtering'));
         })();
 
-        //Обработчик на кнопку 'Поиск'
+        //обработчик на кнопку 'поиск'
         (function() {
             let buttonSearch = document.getElementById('buttonSearch');
             if (typeof buttonSearch !== 'undefined') buttonSearch.addEventListener('click', submitQuery);
         })();
 
-        //Обработчик на кнопку 'Удалить' модального окна
+        //обработчик на кнопку 'удалить' модального окна
         (function() {
             document.querySelector('#modalDelete .btn-primary').addEventListener('click', (function() {
                 let taskIndex = document.querySelector('#modalDelete .modal-body p').dataset.taskIndex;

@@ -90,6 +90,7 @@ module.exports.getAllInformation = function(redis, objReq, func) {
                         'uploadFiles',
                         'filterSettings',
                         'countFilesFound',
+                        'dateTimeStartFilter',
                         function(err, data) {
                             if (err) return callbackMap(err);
 
@@ -100,7 +101,8 @@ module.exports.getAllInformation = function(redis, objReq, func) {
                                 jobStatus: data[3],
                                 uploadFiles: data[4],
                                 filterSettings: data[5],
-                                countFilesFound: data[6]
+                                countFilesFound: data[6],
+                                dateTimeStartFilter: data[7]
                             };
 
                             callbackMap(null, {
@@ -146,6 +148,7 @@ module.exports.getAllInformation = function(redis, objReq, func) {
                 'uploadFiles',
                 'filterSettings',
                 'countFilesFound',
+                'dateTimeStartFilter',
                 function(err, data) {
                     if (err) return callbackMap(err);
 
@@ -156,7 +159,8 @@ module.exports.getAllInformation = function(redis, objReq, func) {
                         jobStatus: data[3],
                         uploadFiles: data[4],
                         filterSettings: data[5],
-                        countFilesFound: data[6]
+                        countFilesFound: data[6],
+                        dateTimeStartFilter: data[7]
                     };
 
                     callbackMap(null, {

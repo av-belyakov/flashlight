@@ -126,7 +126,7 @@
                             let objJobStatus = {
                                 'start' : [ 'выполняется', '#00acee' ],
                                 'expect' : [ 'oжидает', '#ffcc2f' ],
-                                'rejected' : [ 'oтклонена', '#ffcc2f' ],
+                                'rejected' : [ 'oтклонена', '#ef5734' ],
                                 'execute' : [ 'выполняется', '#00acee' ],
                                 'complete' : [ 'завершена', '#2baf2b' ],
                                 'stop' : [ 'остановлена', '#ef5734' ]
@@ -141,7 +141,7 @@
                                 'uploaded' : [ 'выполнен', '#2baf2b' ]
                             };
                             %><tbody><%
-                            for(let taskIndex in informationTaskIndex){
+                            for(let taskIndex in informationTaskIndex){                               
                                 let x = (new Date()).getTimezoneOffset() * 60000;
                                 let dateTimeAddTaskFilter = (new Date((+informationTaskIndex[taskIndex].dateTimeAddTaskFilter - x)).toISOString().slice(0, -1).replace(/T/, ' ').replace(/\..+/, ''));
 
@@ -171,7 +171,15 @@
                                     arrayIpNetwork.sort();
                                     return arrayIpNetwork.join('<br>');
                                 })();
+                                
                                 let countFilesFound = (+informationTaskIndex[taskIndex].countFilesFound === 0) ? informationTaskIndex[taskIndex].countFilesFound : '<strong>' + informationTaskIndex[taskIndex].countFilesFound + '</strong>';
+
+                                let valueJobStatus = objJobStatus[informationTaskIndex[taskIndex].jobStatus][0]
+                                let valueJobStatusColor = objJobStatus[informationTaskIndex[taskIndex].jobStatus][1];
+                                if(informationTaskIndex[taskIndex].dateTimeStartFilter === 'null'){
+                                    valueJobStatus = 'oтклонена';
+                                    valueJobStatusColor = '#ef5734';
+                                }
                             %>
                                 <tr id="task_<%= taskIndex %>" data-toggle="tooltip" title="<%= textSettings %>">
                                     <td style="padding-top: 15px;"><%= serialNumber++ %></td>
@@ -180,7 +188,7 @@
                                     <td class="text-left" style="padding-top: 15px;"><%= getName(informationTaskIndex[taskIndex].userName) %></td>
                                     <td class="text-left" style="padding-top: 15px;"><%- stringIpNetwork %></td>
                                     <td class="text-left" style="padding-top: 15px; color: <%= objLoadingStatus[informationTaskIndex[taskIndex].uploadFiles][1] %> "><%= objLoadingStatus[informationTaskIndex[taskIndex].uploadFiles][0] %></td>
-                                    <td class="text-left" style="padding-top: 15px; color: <%= objJobStatus[informationTaskIndex[taskIndex].jobStatus][1] %>"><%= objJobStatus[informationTaskIndex[taskIndex].jobStatus][0] %></td>
+                                    <td class="text-left" style="padding-top: 15px; color: <%= valueJobStatusColor %>"><%= valueJobStatus %></td>
                                     <td class="text-right" style="padding-top: 15px;"><%- countFilesFound %></td>
                                     <td class="text-right" data-task-index="<%= taskIndex %>">
                                         <!-- полная информация о задаче -->
