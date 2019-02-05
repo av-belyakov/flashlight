@@ -159,7 +159,7 @@ class GlobalObject {
     }
 
     /**
-     * дабавляет данные по выбранному типу, ID группы и ключу
+     * добавляет данные по выбранному типу, ID группы и ключу
      * @param type тип модифицированного объекта ('sources', 'processingTasks', 'downloadFilesTmp', 'writeStreamLinks')
      * @param group группа (может быть ID задачи  или источника)
      * @param key имя устанавливаемого поля

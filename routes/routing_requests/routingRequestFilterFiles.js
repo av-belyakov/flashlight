@@ -9,6 +9,7 @@
 
 const objWebsocket = require('../../configure/objWebsocket');
 const globalObject = require('../../configure/globalObject');
+const writeLogFile = require('../../libs/writeLogFile');
 
 /**
  * 
@@ -68,6 +69,8 @@ module.exports = function({
     //первое сообщение с информацией об общем количестве сегментов
     wsConnection.sendUTF(JSON.stringify(messagePattern));
 
+    writeLogFile.writeLog(`\tInfo: the first message with a filter request was sent successfully (sources ${sourceId})`);
+
     //последующие сообщения с сегментами сообщения
     for (let i = 0; i < arrayListFilesIndexes.length; i++) {
         messagePattern.info.settings = {
@@ -77,6 +80,8 @@ module.exports = function({
         };
 
         wsConnection.sendUTF(JSON.stringify(messagePattern));
+
+        writeLogFile.writeLog(`\tInfo: a subsequent message with a filter request was successfully sent (source ${sourceId})`);
     }
 
     //добавляем информацию о задаче в глобальный объект

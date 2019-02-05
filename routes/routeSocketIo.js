@@ -6,8 +6,6 @@
 
 'use strict';
 
-const debug = require('debug')('routeSocketIo');
-
 const fs = require('fs');
 const path = require('path');
 
