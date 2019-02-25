@@ -412,6 +412,29 @@ exports.readShortInformationSource = function(socketIo, obj) {
     });
 };
 
+//переподключение выбранного источника
+exports.reconnectionSource = function(sourceID, cb) {
+    //проверяем наличия выполняющихся задач по скачиванию файлов с данного источника
+    let tasksDownloadFiles = globalObject.getDataTaskDownloadFilesForSourceIP(sourceID);
+    if (tasksDownloadFiles.length > 0) {
+        return cb({
+            type: 'warning',
+            description: `C источника ${sourceID} выполняется выгрузка файлов, на время выполнения задачи отключение источника невозможно`
+        });
+    }
+
+    let webSocketSourceId = objWebsocket[`remote_host:${sourceID}`];
+
+    if (typeof webSocketSourceId !== 'undefined') {
+        webSocketSourceId.close();
+    }
+
+    return cb({
+        type: 'success',
+        description: `Выполняется переподключение источника ${sourceID}`
+    });
+};
+
 //изменение информации об актуальной версии ПО
 exports.changeVersionApp = function(obj) {
     let infoIsExist = ((typeof obj.information === 'undefined') || obj.information === null);

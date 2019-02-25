@@ -214,9 +214,6 @@ module.exports.execute = function(redis, objData, sourceID, callback) {
         //добавляем обработчик на событие "finish"
         getWriteStream(wsConnection.remoteAddress, obj)
             .once('finish', () => {
-
-                writeLogFile.writeLog(`Info: получено событие 'finish для файла ${dfi.fileName}, готовимся отправить сообщение о готовности принять следующий файл'`);
-
                 completeWriteBinaryData(redis, sourceID, err => {
                     if (err) writeLogFile.writeLog('\tError: ' + err.toString());
                 });

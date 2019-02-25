@@ -7,7 +7,7 @@ webpackJsonp_name_([2],{
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__common__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__openModalWindowDelete__ = __webpack_require__(33);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__openModalWindowDelete__ = __webpack_require__(40);
 /**
  * Модуль содержит обработчики для кнопок "полная информация", "в рассмотренное"
  * и "удаление" таблицы содержащей перечень задач по которым файлы были успешно выгружены 
@@ -76,7 +76,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__commons_processPagination__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__upload_files_log_handlersButtonsTable__ = __webpack_require__(103);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__commons_getBodyJournalOfFiltrations__ = __webpack_require__(58);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__upload_files_log_createTableTaskUploadedFiles__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__upload_files_log_createTableTaskUploadedFiles__ = __webpack_require__(39);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__commons_createModalWindowFilterResults__ = __webpack_require__(32);
 
 
@@ -809,31 +809,7 @@ function createModalWindowFilterResults(obj, objectTimers) {
 
 /***/ }),
 
-/***/ 33:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindowDelete;
-/**
- * Открытие модального окна подтверждающего удаление метаданных и файлов
- * 
- * Версия 0.1, дата релиза 27.11.2017
- */
-
-
-
-function openModalWindowDelete(taskIndex) {
-  document.querySelector('#modalLabelDelete .modal-title').innerHTML = 'Удаление';
-  let modalBody = document.querySelector('#modalDelete .modal-body');
-
-  modalBody.innerHTML = `<label class="checkbox-inline" data-task-index="${taskIndex}"><input type="checkbox" id="inlineCheckboxFileDelete"> удалить все файлы, связанные с выбранными метаданными </label>`;
-
-  $('#modalDelete').modal('show');
-}
-
-/***/ }),
-
-/***/ 38:
+/***/ 37:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -856,12 +832,12 @@ function openModalWindowDelete(taskIndex) {
 
 /***/ }),
 
-/***/ 39:
+/***/ 38:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createTableTaskResultFilter;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__openModalWindowDelete__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__openModalWindowDelete__ = __webpack_require__(37);
 /**
  * Создание новой таблицы содержащей результаты поиска
  * 
@@ -1042,13 +1018,13 @@ function createTableTaskResultFilter(objData) {
 
 /***/ }),
 
-/***/ 40:
+/***/ 39:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createTableTaskUploadedFiles;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__commons_processPagination__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__openModalWindowDelete__ = __webpack_require__(33);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__openModalWindowDelete__ = __webpack_require__(40);
 /**
  * Создание таблицы с информацией о задачах файлы по которым были загружены
  * 
@@ -1155,6 +1131,30 @@ function createTableTaskUploadedFiles(objData) {
     $('[data-toggle="tooltip"]').tooltip();
 
     divElement.previousElementSibling.innerHTML = `всего задач найдено:<strong> ${objData.informationPaginate.countElements}</strong>`;
+}
+
+/***/ }),
+
+/***/ 40:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = openModalWindowDelete;
+/**
+ * Открытие модального окна подтверждающего удаление метаданных и файлов
+ * 
+ * Версия 0.1, дата релиза 27.11.2017
+ */
+
+
+
+function openModalWindowDelete(taskIndex) {
+  document.querySelector('#modalLabelDelete .modal-title').innerHTML = 'Удаление';
+  let modalBody = document.querySelector('#modalDelete .modal-body');
+
+  modalBody.innerHTML = `<label class="checkbox-inline" data-task-index="${taskIndex}"><input type="checkbox" id="inlineCheckboxFileDelete"> удалить все файлы, связанные с выбранными метаданными </label>`;
+
+  $('#modalDelete').modal('show');
 }
 
 /***/ }),
@@ -1293,8 +1293,8 @@ let helpers = {
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = getBodyJournalOfFiltrations;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__processPagination__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__job_log_createTableTaskResultFilter__ = __webpack_require__(39);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__upload_files_log_createTableTaskUploadedFiles__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__job_log_createTableTaskResultFilter__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__upload_files_log_createTableTaskUploadedFiles__ = __webpack_require__(39);
 /**
  * Формирование таблицы с данными и пагинатор
  * 

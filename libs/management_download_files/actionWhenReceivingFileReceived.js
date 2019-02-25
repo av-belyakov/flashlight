@@ -65,8 +65,6 @@ module.exports = function(redis, taskIndex, sourceID, cb) {
                 });
         });
     }).then(() => {
-        writeLogFile.writeLog(`Debug: файл ${infoDownloadFile.fileName}, успешно загружен'`);
-
         cb(null);
     }).catch(err => {
         cb(err);

@@ -40,6 +40,7 @@ const processingStopTaskFiltering = require('./processing_socketio/processingSto
 const processingStartTaskFiltering = require('./processing_socketio/processingStartTaskFiltering');
 const processingResumeTaskFiltering = require('./processing_socketio/processingResumeTaskFiltering');
 const processingInformationTaskIndex = require('./processing_socketio/processingInformationTaskIndex');
+const processingResubmitTaskFiltering = require('./processing_socketio/processingResubmitTaskFiltering');
 const processingDeleteTaskInformation = require('./processing_socketio/processingDeleteTaskInformation');
 const processingStopTaskDownloadFiles = require('./processing_socketio/processingStopTaskDownloadFiles');
 const processingCancelTaskDownloadFiles = require('./processing_socketio/processingCancelTaskDownloadFiles');
@@ -71,9 +72,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
             }
 
             socketIoS.emit('change object status', {
-                processingType: 'showChangeObject',
-                informationPageJobLog: objTaskStatus,
-                informationPageAdmin: getListsTaskProcessing()
+                processingType: 'scontrollingConnectedSourcesowChangeObject',
+                informationPageJobcontrollingConnectedSourcesog: objTaskStatus,
+                informationPageAdmcontrollingConnectedSourcesn: getListsTaskProcessing()
             });
         });
     };
@@ -369,7 +370,20 @@ module.exports.eventHandling = function(socketIo) {
         });
     });
 
-    socketIo.on('disconnect', function() {});
+    /* переподключение выбранного источника */
+    socketIo.on('break the connection with the source', function(data) {
+        let sourceID = data.sourceId;
+
+        if (typeof sourceID === 'undefined') {
+            showNotify(socketIo, 'danger', 'Получен неверный идентификатор источника');
+
+            return;
+        }
+
+        processingSource.reconnectionSource(sourceID, message => {
+            showNotify(socketIo, message.type, message.description);
+        });
+    });
 
     /*
      * УПРАВЛЕНИЕ ЗАДАЧАМИ ПО ЗАГРУЗКЕ НАЙДЕННЫХ ФАЙЛОВ
@@ -519,6 +533,26 @@ module.exports.eventHandling = function(socketIo) {
     /* добавить задание на фильтрацию */
     socketIo.on('add start filter', data => {
         processingStartTaskFiltering(redis, data.filterTask, socketIo);
+    });
+
+    /* отправить повторно задачу по фильтрации */
+    socketIo.on('resubmit the task of filtering', function(data) {
+        processingResubmitTaskFiltering(redis, socketIo, data.taskIndex, (err, sourceID) => {
+            if (err) {
+
+                console.log(err);
+
+                writeLogFile.writeLog('\tError: ' + err.toString());
+                showNotify(socketIo, 'danger', 'Невозможно возобновить задачу, возможно источник не подключен');
+
+                return;
+            }
+
+            socketIo.emit('reload page', {});
+
+            writeLogFile.writeLog(`\tInfo: the index is not found, the data is successfully sent to the source ${sourceID}`);
+            //showNotify(socketIo, 'success', 'Запрос на фильтрацию успешно отправлен. Выполняется поиск файлов удовлетворяющих заданным условиям');
+        })
     });
 
     /* получить информацию по выбранной задачи фильтрации */

@@ -24,7 +24,7 @@ const delVersionAppSource = require('../libs/delVersionAppSource');
 const downloadManagementFiles = require('../libs/management_download_files/downloadManagementFiles');
 const getRemoteHostSetupDbRedis = require('../libs/getRemoteHostSetupDbRedis');
 const controllingConnectedSources = require('../libs/controllingConnectedSources');
-const sendMsgTaskDownloadChangeObjectStatus = require('../libs/helpers/sendMsgTaskDownloadChangeObjectStatus');
+//const sendMsgTaskDownloadChangeObjectStatus = require('../libs/helpers/sendMsgTaskDownloadChangeObjectStatus');
 const processingDownloadFilesConnectionClosed = require('../libs/management_download_files/processingDownloadFilesConnectionClosed');
 const processingFilteringFilesConnectionClosed = require('../libs/management_filtering_files/processingFilteringFilesConnectionClosed');
 
@@ -78,10 +78,10 @@ module.exports = function(socketIo) {
         //отслеживание соединений с источниками и сброс соединений по источникам по которым отсутствуют данные заданное количество времени
         let controllingConnected = controllingConnectedSources(redis, socketIo);
         setInterval(controllingConnected.bind(null, err => {
-            if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+            if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
         }), config.get('timeControllingConnectedSources'));
     }).catch((err) => {
-        if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+        if (err) writeLogFile.writeLog(`\tError: ${err.toString()}`);
     });
 };
 
@@ -119,7 +119,7 @@ function createWebsocketConnect(redis, socketIo, hostId) {
 
         //изменяем состояние соединения
         writeConnectionStatus(hostId, 'disconnect', err => {
-            if (err) writeLogFile.writeLog('\tError: ' + err.toString());
+            if (err) writeLogFile.writeLog(`\tError: ${err.toString()} (source ID ${hostId})`);
 
             writeLogFile.writeLog('\tInfo: connection failed');
 
@@ -353,7 +353,7 @@ function addHandlerConnection(objSetup) {
 
             //проверяем передан ли файл полностью
             if ((message.binaryData.length === 51) && (newBuffer.toString('utf8', 33) === 'moth say: file_EOF')) {
-                writeLogFile.writeLog(`Info: закрываем дискриптор потока на запись в файл ${infoDownloadFile.fileName}`);
+                writeLogFile.writeLog(`Info: close the stream descriptor for writing to the file ${infoDownloadFile.fileName}`);
 
                 //закрываем дискриптор потока на запись в файл
                 wsl.end();

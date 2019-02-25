@@ -237,7 +237,7 @@ module.exports = function(redis, obj, socketIo) {
 
             writeLogFile.writeLog(`\tError: ${err.cause}`);
         } else {
-            createTableIndexSettings(redis, taskIndex, (err) => {
+            createTableIndexSettings(redis, taskIndex, err => {
                 if (!err) return showNotify(socketIo, 'success', 'Запрос на фильтрацию успешно отправлен. Выполняется поиск файлов удовлетворяющих заданным условиям');
 
                 writeLogFile.writeLog(`\tError: ${err.message}`);

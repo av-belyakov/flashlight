@@ -1,8 +1,14 @@
 {
     "name": "flashlight",
-    "version": "2.2.1",
+    "version": "2.2.23",
     "description": "",
     "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node ./app.js",
+        "dev": "webpack --display-error-details --watch",
+        "build": "webpack --mode production"
+    },
     "dependencies": {
         "async": "~1.5.2",
         "babel-core": "~6.26.0",
@@ -54,11 +60,6 @@
         "style-loader": "^0.19.1",
         "url-loader": "~0.6.2",
         "webpack": "~3.8.1"
-    },
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "set NODE_ENV=production",
-        "start": "node ./app.js"
     },
     "author": "Artemij Belyakov",
     "license": "ISC"

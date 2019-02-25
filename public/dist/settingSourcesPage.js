@@ -79,7 +79,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     function addHandlerForButton(buttons, buttonType) {
         let objType = {
             show: 'get full information source',
-            edit: 'get short information source'
+            edit: 'get short information source',
+            dropConnection: 'break the connection with the source'
         };
 
         buttons.forEach(element => {
@@ -169,6 +170,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                     document.querySelector('#token strong').innerHTML = __WEBPACK_IMPORTED_MODULE_0__common_helpers_helpers__["a" /* helpers */].tokenRand();
                 });
             }
+        })();
+
+        //обработчик на кнопку принудительного разрыва соединения с источником
+        (function () {
+            let buttons = document.querySelectorAll('#main-content, [name="buttonDropConnection"]');
+            if (buttons.length === 0) return;
+
+            addHandlerForButton(buttons, 'dropConnection');
         })();
 
         //обработчик на кнопку получения полной информации об источнике
@@ -344,6 +353,9 @@ function changeStatusSource(statusListsSources) {
 
     let element = document.querySelector('.table [name="' + sourceID + '"] > canvas');
     element.className = status;
+
+    let elementButton = document.querySelector('.table [data-source-id="' + sourceID + '"] [name="buttonDropConnection"]');
+    elementButton.disabled = statusListsSources[sourceID].statusConnection ? '' : 'disabled';
   }
 }
 

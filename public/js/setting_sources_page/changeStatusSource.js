@@ -22,5 +22,8 @@ export default function changeStatusSource(statusListsSources) {
 
         let element = document.querySelector('.table [name="' + sourceID + '"] > canvas');
         element.className = status;
+
+        let elementButton = document.querySelector('.table [data-source-id="' + sourceID + '"] [name="buttonDropConnection"]');
+        elementButton.disabled = statusListsSources[sourceID].statusConnection ? '' : 'disabled';
     }
 }

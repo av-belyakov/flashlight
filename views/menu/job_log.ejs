@@ -174,8 +174,11 @@
                                 
                                 let countFilesFound = (+informationTaskIndex[taskIndex].countFilesFound === 0) ? informationTaskIndex[taskIndex].countFilesFound : '<strong>' + informationTaskIndex[taskIndex].countFilesFound + '</strong>';
 
-                                let valueJobStatus = objJobStatus[informationTaskIndex[taskIndex].jobStatus][0]
-                                let valueJobStatusColor = objJobStatus[informationTaskIndex[taskIndex].jobStatus][1];
+                                let jobStatus = informationTaskIndex[taskIndex].jobStatus
+
+                                let valueJobStatus = objJobStatus[jobStatus][0]
+                                let valueJobStatusColor = objJobStatus[jobStatus][1];
+                                let disabledRepeat = (jobStatus === 'start' || jobStatus === 'execute') ? 'disabled="disabled"':'';
                                 if(informationTaskIndex[taskIndex].dateTimeStartFilter === 'null'){
                                     valueJobStatus = 'oтклонена';
                                     valueJobStatusColor = '#ef5734';
@@ -191,6 +194,10 @@
                                     <td class="text-left" style="padding-top: 15px; color: <%= valueJobStatusColor %>"><%= valueJobStatus %></td>
                                     <td class="text-right" style="padding-top: 15px;"><%- countFilesFound %></td>
                                     <td class="text-right" data-task-index="<%= taskIndex %>">
+                                        <!-- отправить повторную задачу с новым ID -->
+                                        <button type="button" name="buttonTaskRepeat" class="btn btn-default btn-sm" <%= disabledRepeat %> title="отправить повторно">
+                                            <span class="glyphicon glyphicon-repeat"></span>
+                                        </button>
                                         <!-- полная информация о задаче -->
                                         <button type="button" name="buttonAllInformation" class="btn btn-default btn-sm" <%= disabledRead %> title="полная информация о задаче">
                                             <span class="glyphicon glyphicon-info-sign"></span>

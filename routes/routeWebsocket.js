@@ -228,9 +228,10 @@ let messageTypeFiltering = function(redis, sourceID, callback) {
         return callback(new errorsType.receivedIncorrectData('Error: received incorrect data'));
     }
 
-    writeLogFile.writeLog(`\tInfo: received message 'filtering' from source ${sourceID}, message type ${self.info.processing}`)
-
     if (self.info.processing === 'start') {
+
+        writeLogFile.writeLog(`\tInfo: received message 'filtering' from source ${sourceID}, message type '${self.info.processing.toUpperCase()}'`)
+
         //устанавливаем значение сообщающее о том что соединение с источником ранее не разрывалось
         globalObject.setData('sources', sourceID, 'wasThereConnectionBreak', false);
 

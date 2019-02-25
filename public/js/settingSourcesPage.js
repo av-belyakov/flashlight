@@ -15,7 +15,8 @@ import openModalWindowSourceInformation from './setting_sources_page/openModalWi
     function addHandlerForButton(buttons, buttonType) {
         let objType = {
             show: 'get full information source',
-            edit: 'get short information source'
+            edit: 'get short information source',
+            dropConnection: 'break the connection with the source'
         };
 
         buttons.forEach(element => {
@@ -105,6 +106,14 @@ import openModalWindowSourceInformation from './setting_sources_page/openModalWi
                     document.querySelector('#token strong').innerHTML = helpers.tokenRand();
                 });
             }
+        })();
+
+        //обработчик на кнопку принудительного разрыва соединения с источником
+        (function() {
+            let buttons = document.querySelectorAll('#main-content, [name="buttonDropConnection"]');
+            if (buttons.length === 0) return;
+
+            addHandlerForButton(buttons, 'dropConnection');
         })();
 
         //обработчик на кнопку получения полной информации об источнике

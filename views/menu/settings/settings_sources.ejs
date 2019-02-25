@@ -177,7 +177,7 @@
                                     </span>
                                     &nbsp;
                                     <button type="button" class="btn btn-default btn-sm" id="buttonChangeVersionApp">
-                                        <span class="glyphicon glyphicon-refresh"></span>
+                                        <span class="glyphicon glyphicon-cog"></span>
                                     </button>
                                 </div>
                             </caption>
@@ -225,7 +225,8 @@
 
                             let pattern = new RegExp('\\d+\\.\\d+');
                             for(let hostId in mainContent.sources){ 
-                                let status = (mainContent.sources[hostId].statusConnection) ? 'my_circle_green': 'my_circle_red';    
+                                let status = (mainContent.sources[hostId].statusConnection) ? 'my_circle_green': 'my_circle_red';
+                                let disableDropConnection = (mainContent.sources[hostId].statusConnection) ? '' : 'disabled="disabled"'
                             %>
                                 <tr>
                                     <td class="text-center" name="<%= hostId %>"><canvas class="<%= status %>"></canvas></td>
@@ -264,6 +265,10 @@
                                 %>
                                     <!-- просмотр информации, её редактирование и удаление -->
                                     <td class="text-right" data-source-id="<%= hostId %>">
+                                        <!-- принудительный разрыв соединения -->
+                                        <button type="button" class="btn btn-default btn-sm" name="buttonDropConnection" <%= disableDropConnection %>>
+                                            <span class="glyphicon glyphicon glyphicon glyphicon-refresh"></span>
+                                        </button>
                                         <button type="button" class="btn btn-default btn-sm" name="buttonShowInformation">
                                             <span class="glyphicon glyphicon glyphicon-info-sign"></span>
                                         </button>

@@ -22,6 +22,12 @@ import createModalWindowListDownloadFiles from './job_log/createModalWindowListD
         socket.emit('get list all files obtained result filtering', { processingType: 'importFiles', taskIndex: taskIndex });
     }
 
+    socket.on('reload page', function() {
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+    });
+
     //пользователь не авторизован
     socket.on('error authentication user', function() {
         window.location.reload();
@@ -84,6 +90,17 @@ import createModalWindowListDownloadFiles from './job_log/createModalWindowListD
     });
 
     document.addEventListener('DOMContentLoaded', function() {
+        //обработчик на кнопку отправить задачу повторно
+        (function() {
+            let buttonsImport = document.querySelectorAll('#field_table [name="buttonTaskRepeat"]');
+            buttonsImport.forEach((element) => {
+                let taskIndex = element.parentElement.dataset.taskIndex;
+                element.onclick = (function(taskIndex) {
+                    socket.emit('resubmit the task of filtering', { processingType: 'showInformationSource', taskIndex: taskIndex });
+                }).bind(null, taskIndex);
+            });
+        })();
+
         //обработчик на кнопку 'импорт'
         (function() {
             let buttonsImport = document.querySelectorAll('#field_table [name="buttonImport"]');
