@@ -201,7 +201,9 @@ module.exports.eventGenerator = function(socketIoS, remoteHostId, stringMessage,
                 });
             }
 
-            let errMsg = (stringMessage.errorMessage === null) ? objErrorMessage[stringMessage.errorCode] : stringMessage.errorMessage;
+            let errMsg = (objErrorMessage[stringMessage.errorCode] !== null) ? objErrorMessage[stringMessage.errorCode] : stringMessage.errorMessage;
+
+            writeLogFile.writeLog(`\tError: ${stringMessage.errorMessage}`);
 
             showNotify(socketIoS, 'danger', errMsg);
         },

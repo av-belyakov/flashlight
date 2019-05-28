@@ -53,7 +53,7 @@ module.exports = function(redis, socketIo, taskIndex, cb) {
                         userLogin: userSettings.userLogin,
                         sourceId: result[0],
                         filterSettings: result[1],
-                        filterUseIndex: result[2]
+                        filterUseIndex: (result[2] === 'false' ? false : true)
                     });
                 });
         });
