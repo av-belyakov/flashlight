@@ -10,7 +10,7 @@
         "build": "webpack --mode production"
     },
     "dependencies": {
-        "async": "~1.5.2",
+        "async": "~3.2.2",
         "babel-core": "~6.26.0",
         "babel-loader": "~7.1.2",
         "body-parser": "^1.18.3",
